@@ -1,65 +1,117 @@
-import Image from "next/image";
+'use client';
+
+import IncomeCard from '@/components/incomeCard';
+import { Button } from '@/components/ui/button';
+import type { EconomyData, Income } from '@/types';
+import { Plus } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    const [data, setData] = useState<EconomyData>({
+        incomes: [],
+        housingLoans: [],
+        loans: [],
+        fixedExpenses: [],
+        livingCosts: [],
+    });
+
+    const totalIncome = data.incomes.reduce(
+        (total, income) => total + income.amount,
+        0
+    );
+
+    const addIncome = useCallback(() => {
+        setData((prev) => ({
+            ...prev,
+            incomes: [...prev.incomes, { source: '', amount: 0 }],
+        }));
+    }, []);
+
+    const updateIncome = useCallback((index: number, updated: Income) => {
+        setData((prev) => {
+            const incomes = [...prev.incomes];
+            incomes[index] = updated;
+            return { ...prev, incomes };
+        });
+    }, []);
+
+    const deleteIncome = useCallback((index: number) => {
+        setData((prev) => {
+            const incomes = prev.incomes.filter((_, i) => i !== index);
+            return {
+                ...prev,
+                incomes:
+                    incomes.length === 0
+                        ? [{ source: '', amount: 0 }]
+                        : incomes,
+            };
+        });
+    }, []);
+
+    return (
+        <>
+            <div className='flex flex-col w-full m-auto justify-center'>
+                <h1 className='text-4xl mb-4 font-bold'>Økonomikalkulator</h1>
+                <p>
+                    Lorem ipsum dolor sit amet consectetur, adipisicing elit.
+                    Repellat sed tempora ea dolorem, nesciunt temporibus amet
+                    cum, error quaerat provident libero repudiandae aliquam odit
+                    similique harum hic consequuntur, minus vel.
+                </p>
+            </div>
+            <section className='mt-8'>
+                <div className='my-8'>
+                    <h2 className='text-3xl font-semibold mb-2'>
+                        Inntekter – {totalIncome} kr
+                    </h2>
+                    <p className='mb-4 border-l-2 pl-2 text-gray-500'>
+                        Dine faste inntektskilder, som lønn og andre
+                        regelmessige inntekter. Legg inn hvor mye du tjener per
+                        år.
+                    </p>
+                    <div className='grid grid-cols-4 gap-4 mb-4'>
+                        {data.incomes.length === 0 && (
+                            <IncomeCard
+                                initialIncome={{ source: '', amount: 0 }}
+                                onSubmit={(updated) => updateIncome(0, updated)}
+                                onDelete={() => deleteIncome(0)}
+                            />
+                        )}
+                        {data.incomes.map((income, index) => (
+                            <IncomeCard
+                                key={index}
+                                initialIncome={income}
+                                onSubmit={(updated) =>
+                                    updateIncome(index, updated)
+                                }
+                                onDelete={() => deleteIncome(index)}
+                            />
+                        ))}
+                        <div className='grid col-span-1 items-center'>
+                            <Button
+                                variant='outline'
+                                className='p-4 flex items-center justify-center'
+                                onClick={addIncome}
+                            >
+                                <Plus />
+                                Legg til ny inntekt
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h2 className='text-3xl font-semibold mb-4'>Boliglån</h2>
+                </div>
+                <h2 className='text-3xl font-semibold mb-4'>Studielån</h2>
+                <h2 className='text-3xl font-semibold mb-4'>
+                    Faste utgifter – bolig
+                </h2>
+                <h2 className='text-3xl font-semibold mb-4'>
+                    Faste utgifter – personlig
+                </h2>
+                <h2 className='text-3xl font-semibold mb-4'>Levekostnader</h2>
+                <h2 className='text-3xl font-semibold mb-4'>Skattedetaljer</h2>
+            </section>
+        </>
+    );
 }
