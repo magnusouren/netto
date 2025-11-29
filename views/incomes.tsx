@@ -1,17 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { EconomyData } from '@/types';
 import { Plus, Trash } from 'lucide-react';
+import useStore, { StoreState } from '@/lib/store';
+import type { Income } from '@/types';
 
-interface IncomesProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
+export default function Incomes() {
+    const incomes = useStore((s: StoreState) => s.data.incomes);
+    const addIncome = useStore((s: StoreState) => s.addIncome);
+    const updateIncome = useStore((s: StoreState) => s.updateIncome);
+    const deleteIncome = useStore((s: StoreState) => s.deleteIncome);
 
-export default function Incomes({ data, setData }: IncomesProps) {
-    const { incomes } = data;
     const totalIncome = incomes.reduce(
-        (total, income) => total + income.amount,
+        (total: number, income: Income) => total + income.amount,
         0
     );
 
@@ -21,26 +21,14 @@ export default function Incomes({ data, setData }: IncomesProps) {
                 <h2 className='text-xl font-semibold'>
                     Inntekter – {totalIncome.toLocaleString()} kr
                 </h2>
-                <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() =>
-                        setData((prev) => ({
-                            ...prev,
-                            incomes: [
-                                ...prev.incomes,
-                                { source: '', amount: 0 },
-                            ],
-                        }))
-                    }
-                >
+                <Button variant='outline' size='sm' onClick={() => addIncome()}>
                     <Plus /> Legg til inntekt
                 </Button>
             </div>
             <p className='mt-2 mb-4 text-muted-foreground'>
                 Legg til dine faste inntekter, per år
             </p>
-            {data.incomes.length !== 0 && (
+            {incomes.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
                     <table className='w-full table-fixed'>
                         <thead>
@@ -53,7 +41,7 @@ export default function Incomes({ data, setData }: IncomesProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {incomes.map((income, index) => (
+                            {incomes.map((income: Income, index: number) => (
                                 <tr
                                     key={index}
                                     className='odd:bg-background even:bg-muted/5'
@@ -65,18 +53,8 @@ export default function Incomes({ data, setData }: IncomesProps) {
                                             value={income.source}
                                             placeholder={`Fast jobb`}
                                             onChange={(e) =>
-                                                setData((prev) => {
-                                                    const list = [
-                                                        ...prev.incomes,
-                                                    ];
-                                                    list[index] = {
-                                                        ...list[index],
-                                                        source: e.target.value,
-                                                    };
-                                                    return {
-                                                        ...prev,
-                                                        incomes: list,
-                                                    };
+                                                updateIncome(index, {
+                                                    source: e.target.value,
                                                 })
                                             }
                                         />
@@ -88,20 +66,10 @@ export default function Incomes({ data, setData }: IncomesProps) {
                                             value={income.amount}
                                             placeholder='500 000'
                                             onChange={(e) =>
-                                                setData((prev) => {
-                                                    const list = [
-                                                        ...prev.incomes,
-                                                    ];
-                                                    list[index] = {
-                                                        ...list[index],
-                                                        amount: Number(
-                                                            e.target.value || 0
-                                                        ),
-                                                    };
-                                                    return {
-                                                        ...prev,
-                                                        incomes: list,
-                                                    };
+                                                updateIncome(index, {
+                                                    amount: Number(
+                                                        e.target.value || 0
+                                                    ),
                                                 })
                                             }
                                         />
@@ -111,19 +79,7 @@ export default function Incomes({ data, setData }: IncomesProps) {
                                             variant='outline'
                                             className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
                                             size='icon-sm'
-                                            onClick={() =>
-                                                setData((prev) => {
-                                                    const list =
-                                                        prev.incomes.filter(
-                                                            (_, i) =>
-                                                                i !== index
-                                                        );
-                                                    return {
-                                                        ...prev,
-                                                        incomes: list,
-                                                    };
-                                                })
-                                            }
+                                            onClick={() => deleteIncome(index)}
                                         >
                                             <Trash />
                                         </Button>

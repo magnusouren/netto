@@ -1,9 +1,6 @@
 import React from 'react';
-import type { EconomyData, Loan } from '@/types';
-
-interface SummaryProps {
-    data: EconomyData;
-}
+import useStore, { StoreState } from '@/lib/store';
+import type { Loan } from '@/types';
 
 function monthlyLoanPayment(loan: Loan): number {
     const principal = loan.loanAmount || 0;
@@ -24,7 +21,8 @@ function monthlyLoanPayment(loan: Loan): number {
     return monthly;
 }
 
-export default function Summary({ data }: SummaryProps) {
+export default function Summary() {
+    const data = useStore((s: StoreState) => s.data);
     // Annual / monthly incomes
     const totalIncomeAnnual = data.incomes.reduce((s, i) => s + i.amount, 0);
     const monthlyIncomeGross = totalIncomeAnnual / 12;

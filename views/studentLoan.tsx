@@ -1,48 +1,29 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { EconomyData, Loan } from '@/types';
 import { Trash } from 'lucide-react';
+import useStore, { StoreState } from '@/lib/store';
+import type { Loan } from '@/types';
 
-interface StudentLoanProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
+export default function StudentLoan() {
+    const loans = useStore((s: StoreState) => s.data.loans);
+    const addLoan = useStore((s: StoreState) => s.addLoan);
+    const updateLoan = useStore((s: StoreState) => s.updateLoan);
+    const deleteLoan = useStore((s: StoreState) => s.deleteLoan);
 
-export default function StudentLoan({ data, setData }: StudentLoanProps) {
-    function addLoan() {
-        setData((prev) => ({
-            ...prev,
-            loans: [
-                ...prev.loans,
-                {
-                    description: '',
-                    loanAmount: 0,
-                    interestRate: 4.841,
-                    termYears: 20,
-                    termsPerYear: 12,
-                    monthlyFee: 0,
-                } as Loan,
-            ],
-        }));
+    function handleAdd() {
+        addLoan();
     }
 
-    function updateLoan(index: number, patch: Partial<Loan>) {
-        setData((prev) => {
-            const loans = [...prev.loans];
-            loans[index] = { ...loans[index], ...patch } as Loan;
-            return { ...prev, loans };
-        });
+    function handleUpdate(index: number, patch: Partial<Loan>) {
+        updateLoan(index, patch);
     }
 
-    function deleteLoan(index: number) {
-        setData((prev) => {
-            const loans = prev.loans.filter((_, i) => i !== index);
-            return { ...prev, loans };
-        });
+    function handleDelete(index: number) {
+        deleteLoan(index);
     }
 
-    const totalLoanAmount = data.loans.reduce(
+    const totalLoanAmount = loans.reduce(
         (total, loan) => total + loan.loanAmount,
         0
     );
@@ -53,7 +34,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                 <h2 className='text-xl font-semibold'>
                     Studielån – {totalLoanAmount.toLocaleString()} kr
                 </h2>
-                <Button variant='outline' size='sm' onClick={addLoan}>
+                <Button variant='outline' size='sm' onClick={handleAdd}>
                     + Legg til lån
                 </Button>
             </div>
@@ -63,7 +44,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                 lån her dersom du har det.
             </p>
 
-            {data.loans.length !== 0 && (
+            {loans.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
                     <table className='w-full table-auto text-sm'>
                         <thead>
@@ -78,7 +59,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.loans.map((loan, idx) => (
+                            {loans.map((loan, idx) => (
                                 <tr key={idx} className='align-top'>
                                     <td className='p-2'>
                                         {loan.description ||
@@ -89,7 +70,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                             type='number'
                                             value={loan.loanAmount}
                                             onChange={(e) =>
-                                                updateLoan(idx, {
+                                                handleUpdate(idx, {
                                                     loanAmount: Number(
                                                         e.target.value || 0
                                                     ),
@@ -103,7 +84,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                             step='0.01'
                                             value={loan.interestRate}
                                             onChange={(e) =>
-                                                updateLoan(idx, {
+                                                handleUpdate(idx, {
                                                     interestRate: Number(
                                                         e.target.value || 0
                                                     ),
@@ -116,7 +97,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                             type='number'
                                             value={loan.termYears}
                                             onChange={(e) =>
-                                                updateLoan(idx, {
+                                                handleUpdate(idx, {
                                                     termYears: Number(
                                                         e.target.value || 0
                                                     ),
@@ -129,7 +110,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                             type='number'
                                             value={loan.termsPerYear}
                                             onChange={(e) =>
-                                                updateLoan(idx, {
+                                                handleUpdate(idx, {
                                                     termsPerYear: Number(
                                                         e.target.value || 0
                                                     ),
@@ -142,7 +123,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                             type='number'
                                             value={loan.monthlyFee ?? 0}
                                             onChange={(e) =>
-                                                updateLoan(idx, {
+                                                handleUpdate(idx, {
                                                     monthlyFee: Number(
                                                         e.target.value || 0
                                                     ),
@@ -154,7 +135,7 @@ export default function StudentLoan({ data, setData }: StudentLoanProps) {
                                         <Button
                                             variant='outline'
                                             size='icon-sm'
-                                            onClick={() => deleteLoan(idx)}
+                                            onClick={() => handleDelete(idx)}
                                             className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
                                         >
                                             <Trash />

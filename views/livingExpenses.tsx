@@ -1,17 +1,13 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { EconomyData, LivingCost } from '@/types';
+import useStore, { StoreState } from '@/lib/store';
+import type { LivingCost } from '@/types';
 import { Trash } from 'lucide-react';
-
-interface LivingExpensesProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
 
 // TODO - use https://kalkulator.referansebudsjett.no/php/resultat_as_json.php?select_year=2025&inntekt=0&antall_biler=0&antall_elbiler=0&kjonn0=m&alder0=30&barnehage0=0&sfo0=0&sfogratis0=0&gravid0=0&student0=0&pensjonist0=0&lang=no
 
-export default function LivingExpenses({ data, setData }: LivingExpensesProps) {
+export default function LivingExpenses() {
     // sensible defaults for living costs (one category only)
     const defaults = [
         'Dagligvarer',
@@ -19,9 +15,14 @@ export default function LivingExpenses({ data, setData }: LivingExpensesProps) {
         'Mobilabonnement',
         'Underholdning',
     ];
+    const livingCosts = useStore((s: StoreState) => s.data.livingCosts);
+    const setData = useStore((s: StoreState) => s.setData);
+    const addLivingCostAction = useStore((s: StoreState) => s.addLivingCost);
+    const updateLivingCost = useStore((s: StoreState) => s.updateLivingCost);
+    const deleteLivingCost = useStore((s: StoreState) => s.deleteLivingCost);
 
     useEffect(() => {
-        if (!data.livingCosts || data.livingCosts.length === 0) {
+        if (!livingCosts || livingCosts.length === 0) {
             const seeded: LivingCost[] = defaults.map((d) => ({
                 description: d,
                 amount: 0,
@@ -33,28 +34,10 @@ export default function LivingExpenses({ data, setData }: LivingExpensesProps) {
     }, []);
 
     function addLivingCost() {
-        setData((prev) => ({
-            ...prev,
-            livingCosts: [...prev.livingCosts, { description: '', amount: 0 }],
-        }));
+        addLivingCostAction({ description: '', amount: 0 });
     }
 
-    function updateLivingCost(index: number, patch: Partial<LivingCost>) {
-        setData((prev) => {
-            const list = [...prev.livingCosts];
-            list[index] = { ...list[index], ...patch };
-            return { ...prev, livingCosts: list };
-        });
-    }
-
-    function deleteLivingCost(index: number) {
-        setData((prev) => {
-            const list = prev.livingCosts.filter((_, i) => i !== index);
-            return { ...prev, livingCosts: list };
-        });
-    }
-
-    const totalLivingCosts = data.livingCosts.reduce(
+    const totalLivingCosts = livingCosts.reduce(
         (total, item) => total + item.amount,
         0
     );
@@ -83,7 +66,7 @@ export default function LivingExpenses({ data, setData }: LivingExpensesProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {data.livingCosts.map((item, index) => (
+                        {livingCosts.map((item, index) => (
                             <tr
                                 key={index}
                                 className='odd:bg-background even:bg-muted/5'

@@ -1,16 +1,20 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-// using Input and Button from ShadCN UI
-import type { EconomyData, FixedExpense } from '@/types';
+import useStore, { StoreState } from '@/lib/store';
+import type { FixedExpense } from '@/types';
 import { Trash } from 'lucide-react';
 
-interface FixedExpensesProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
-
-export default function FixedExpenses({ data, setData }: FixedExpensesProps) {
+export default function FixedExpenses() {
+    const fixedExpenses = useStore((s: StoreState) => s.data.fixedExpenses);
+    const setData = useStore((s: StoreState) => s.setData);
+    const addFixedExpense = useStore((s: StoreState) => s.addFixedExpense);
+    const updateFixedExpense = useStore(
+        (s: StoreState) => s.updateFixedExpense
+    );
+    const deleteFixedExpense = useStore(
+        (s: StoreState) => s.deleteFixedExpense
+    );
     // default items to add when none exist
     const housingDefaults = [
         'Strøm',
@@ -24,7 +28,7 @@ export default function FixedExpenses({ data, setData }: FixedExpensesProps) {
     const personalDefaults = ['Trening', 'Abonnementer'];
 
     useEffect(() => {
-        if (!data.fixedExpenses || data.fixedExpenses.length === 0) {
+        if (!fixedExpenses || fixedExpenses.length === 0) {
             const defaults: FixedExpense[] = [
                 ...housingDefaults.map((d) => ({
                     description: d,
@@ -44,39 +48,26 @@ export default function FixedExpenses({ data, setData }: FixedExpensesProps) {
     }, []);
 
     function addExpense(category: FixedExpense['category']) {
-        setData((prev) => ({
-            ...prev,
-            fixedExpenses: [
-                ...prev.fixedExpenses,
-                { description: '', amount: 0, category },
-            ],
-        }));
+        addFixedExpense({ description: '', amount: 0, category });
     }
 
     function updateExpense(index: number, patch: Partial<FixedExpense>) {
-        setData((prev) => {
-            const list = [...prev.fixedExpenses];
-            list[index] = { ...list[index], ...patch };
-            return { ...prev, fixedExpenses: list };
-        });
+        updateFixedExpense(index, patch);
     }
 
     function deleteExpense(index: number) {
-        setData((prev) => {
-            const list = prev.fixedExpenses.filter((_, i) => i !== index);
-            return { ...prev, fixedExpenses: list };
-        });
+        deleteFixedExpense(index);
     }
 
     // group items with their original index so updates/deletes work
     const housing: { item: FixedExpense; index: number }[] = [];
     const personal: { item: FixedExpense; index: number }[] = [];
-    data.fixedExpenses.forEach((item, i) => {
+    fixedExpenses.forEach((item, i) => {
         if (item.category === 'housing') housing.push({ item, index: i });
         else personal.push({ item, index: i });
     });
 
-    const totalFixedExpenses = data.fixedExpenses.reduce(
+    const totalFixedExpenses = fixedExpenses.reduce(
         (total, item) => total + item.amount,
         0
     );

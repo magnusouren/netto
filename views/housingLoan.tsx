@@ -1,49 +1,29 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { EconomyData, HousingLoan } from '@/types';
 import { Trash } from 'lucide-react';
+import useStore, { StoreState } from '@/lib/store';
+import type { HousingLoan } from '@/types';
 
-interface HousingLoanProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
+export default function HousingLoan() {
+    const housingLoans = useStore((s: StoreState) => s.data.housingLoans);
+    const addHousingLoan = useStore((s: StoreState) => s.addHousingLoan);
+    const updateHousingLoan = useStore((s: StoreState) => s.updateHousingLoan);
+    const deleteHousingLoan = useStore((s: StoreState) => s.deleteHousingLoan);
 
-export default function HousingLoan({ data, setData }: HousingLoanProps) {
     function addLoan() {
-        setData((prev) => ({
-            ...prev,
-            housingLoans: [
-                ...prev.housingLoans,
-                {
-                    capital: 0,
-                    description: '',
-                    loanAmount: 0,
-                    interestRate: 0,
-                    termYears: 25,
-                    termsPerYear: 12,
-                    monthlyFee: 65,
-                } as HousingLoan,
-            ],
-        }));
+        addHousingLoan();
     }
 
     function updateLoan(index: number, patch: Partial<HousingLoan>) {
-        setData((prev) => {
-            const loans = [...prev.housingLoans];
-            loans[index] = { ...loans[index], ...patch } as HousingLoan;
-            return { ...prev, housingLoans: loans };
-        });
+        updateHousingLoan(index, patch);
     }
 
     function deleteLoan(index: number) {
-        setData((prev) => {
-            const loans = prev.housingLoans.filter((_, i) => i !== index);
-            return { ...prev, housingLoans: loans };
-        });
+        deleteHousingLoan(index);
     }
 
-    const totalLoanAmount = data.housingLoans.reduce(
+    const totalLoanAmount = housingLoans.reduce(
         (total, loan) => total + loan.loanAmount,
         0
     );
@@ -63,7 +43,7 @@ export default function HousingLoan({ data, setData }: HousingLoanProps) {
                 data objekt direkte.
             </p>
 
-            {data.housingLoans.length !== 0 && (
+            {housingLoans.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
                     <table className='w-full table-auto text-sm'>
                         <thead>
@@ -79,7 +59,7 @@ export default function HousingLoan({ data, setData }: HousingLoanProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.housingLoans.map((loan, idx) => (
+                            {housingLoans.map((loan, idx) => (
                                 <tr key={idx} className='align-top'>
                                     <td className='p-2'>
                                         {loan.description ||

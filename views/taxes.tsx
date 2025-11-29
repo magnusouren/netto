@@ -1,20 +1,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import type { EconomyData, Loan } from '@/types';
+import useStore, { StoreState } from '@/lib/store';
+import type { Loan } from '@/types';
 
-interface TaxesProps {
-    data: EconomyData;
-    setData: React.Dispatch<React.SetStateAction<EconomyData>>;
-}
-
-export default function Taxes({ data }: TaxesProps) {
-    const totalIncome = data.incomes.reduce((s, i) => s + i.amount, 0);
+export default function Taxes() {
+    const incomes = useStore((s: StoreState) => s.data.incomes);
+    const loansArr = useStore((s: StoreState) => s.data.loans);
+    const housingLoans = useStore((s: StoreState) => s.data.housingLoans);
+    const totalIncome = incomes.reduce((s, i) => s + i.amount, 0);
 
     // minstefradrag: 46% av inntekt, maks 92 000
     const minstefradrag = Math.min(totalIncome * 0.46, 92000);
 
     // collect all loans (student + other + housing)
-    const loans: Loan[] = [...data.loans, ...data.housingLoans];
+    const loans: Loan[] = [...loansArr, ...housingLoans];
 
     const loanRows = loans.map((loan) => {
         // enkel beregning av betalte renter per år (approx): lånebeløp * rente%
@@ -83,7 +82,7 @@ export default function Taxes({ data }: TaxesProps) {
                             </td>
                         </tr>
                         {/* All incomes*/}
-                        {data.incomes.map((income, index) => (
+                        {incomes.map((income, index) => (
                             <tr
                                 key={index}
                                 className='odd:bg-background even:bg-muted/5'
