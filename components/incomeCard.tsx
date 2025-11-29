@@ -11,10 +11,14 @@ import { Cog, Plus, Save, Trash } from 'lucide-react';
 type Props = {
     initialIncome?: Income;
     onSubmit?: (income: Income) => void;
-    onDelete?: (income: Income) => void;
+    onDelete?: () => void;
 };
 
-export default function Income({ initialIncome, onSubmit, onDelete }: Props) {
+export default function IncomeCard({
+    initialIncome,
+    onSubmit,
+    onDelete,
+}: Props) {
     const [income, setIncome] = useState<Income>(
         () => initialIncome ?? { source: '', amount: 0 }
     );
@@ -40,7 +44,7 @@ export default function Income({ initialIncome, onSubmit, onDelete }: Props) {
     }
 
     function handleDelete() {
-        onDelete?.(income);
+        onDelete?.();
     }
 
     return (

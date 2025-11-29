@@ -3,6 +3,13 @@
 import IncomeCard from '@/components/incomeCard';
 import { Button } from '@/components/ui/button';
 import type { EconomyData, Income } from '@/types';
+import FixedExpenses from '@/views/fixedExpensen';
+import HousingLoan from '@/views/housingLoan';
+import Incomes from '@/views/incomes';
+import LivingExpenses from '@/views/livingExpenses';
+import StudentLoan from '@/views/studentLoan';
+import Summary from '@/views/summary';
+import Taxes from '@/views/taxes';
 import { Plus } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
@@ -36,6 +43,7 @@ export default function Home() {
     }, []);
 
     const deleteIncome = useCallback((index: number) => {
+        // TODO - fix correct deletion
         setData((prev) => {
             const incomes = prev.incomes.filter((_, i) => i !== index);
             return {
@@ -60,57 +68,13 @@ export default function Home() {
                 </p>
             </div>
             <section className='mt-8'>
-                <div className='my-8'>
-                    <h2 className='text-3xl font-semibold mb-2'>
-                        Inntekter – {totalIncome} kr
-                    </h2>
-                    <p className='mb-4 border-l-2 pl-2 text-gray-500'>
-                        Dine faste inntektskilder, som lønn og andre
-                        regelmessige inntekter. Legg inn hvor mye du tjener per
-                        år.
-                    </p>
-                    <div className='grid grid-cols-4 gap-4 mb-4'>
-                        {data.incomes.length === 0 && (
-                            <IncomeCard
-                                initialIncome={{ source: '', amount: 0 }}
-                                onSubmit={(updated) => updateIncome(0, updated)}
-                                onDelete={() => deleteIncome(0)}
-                            />
-                        )}
-                        {data.incomes.map((income, index) => (
-                            <IncomeCard
-                                key={index}
-                                initialIncome={income}
-                                onSubmit={(updated) =>
-                                    updateIncome(index, updated)
-                                }
-                                onDelete={() => deleteIncome(index)}
-                            />
-                        ))}
-                        <div className='grid col-span-1 items-center'>
-                            <Button
-                                variant='outline'
-                                className='p-4 flex items-center justify-center'
-                                onClick={addIncome}
-                            >
-                                <Plus />
-                                Legg til ny inntekt
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <h2 className='text-3xl font-semibold mb-4'>Boliglån</h2>
-                </div>
-                <h2 className='text-3xl font-semibold mb-4'>Studielån</h2>
-                <h2 className='text-3xl font-semibold mb-4'>
-                    Faste utgifter – bolig
-                </h2>
-                <h2 className='text-3xl font-semibold mb-4'>
-                    Faste utgifter – personlig
-                </h2>
-                <h2 className='text-3xl font-semibold mb-4'>Levekostnader</h2>
-                <h2 className='text-3xl font-semibold mb-4'>Skattedetaljer</h2>
+                <Incomes data={data} setData={setData} />
+                <HousingLoan data={data} setData={setData} />
+                <StudentLoan data={data} setData={setData} />
+                <FixedExpenses data={data} setData={setData} />
+                <LivingExpenses data={data} setData={setData} />
+                <Taxes data={data} setData={setData} />
+                <Summary data={data} />
             </section>
         </>
     );

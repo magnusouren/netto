@@ -12,12 +12,12 @@ export type Income = {
 };
 
 export type HousingLoan = Loan & {
-    downPayment: number; // Down payment
+    capital: number; // Egenkapital
 };
 
 export type Loan = {
     description: string;
-    principal: number; // Loan amount
+    loanAmount: number; // Loan amount
     interestRate: number; // Annual interest rate in percentage
     termYears: number; // Loan term in years
     termsPerYear: number; // Number of payment terms per year
