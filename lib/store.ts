@@ -122,7 +122,7 @@ export const useStore = create<StoreState>()(
             // Housing loans
             addHousingLoan: (
                 loan = {
-                    description: '',
+                    description: 'Boliglån',
                     loanAmount: 0,
                     interestRate: 0,
                     termYears: 0,

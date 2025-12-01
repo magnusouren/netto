@@ -186,6 +186,13 @@ export default function Taxes() {
 
                         {/* Skattekomponenter */}
                         <tr className='odd:bg-background even:bg-muted/5'>
+                            <td className='p-2'>Alminnelig inntekt</td>
+                            <td className='p-2 text-right'>
+                                {Math.round(alminnelig).toLocaleString()} kr
+                            </td>
+                        </tr>
+
+                        <tr className='odd:bg-background even:bg-muted/5'>
                             <td className='p-2'>Alminnelig skatt (17.72%)</td>
                             <td className='p-2 text-right'>
                                 {Math.round(skatt_alminnelig).toLocaleString()}{' '}

@@ -220,7 +220,7 @@ export default function FixedExpenses() {
                                                 }
                                             />
                                         </td>
-                                        <td className='p-2 text-center'>
+                                        <td className='p-1 text-center'>
                                             <Button
                                                 variant='outline'
                                                 size='icon-sm'

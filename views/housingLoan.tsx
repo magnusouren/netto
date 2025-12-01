@@ -60,8 +60,15 @@ export default function HousingLoan() {
                             {housingLoans.map((loan, idx) => (
                                 <tr key={idx} className='align-top'>
                                     <td className='p-2'>
-                                        {loan.description ||
-                                            `Boliglån ${idx + 1}`}
+                                        <Input
+                                            type='text'
+                                            value={loan.description}
+                                            onChange={(e) =>
+                                                updateLoan(idx, {
+                                                    description: e.target.value,
+                                                })
+                                            }
+                                        />
                                     </td>
                                     <td className='p-2'>
                                         <Input
