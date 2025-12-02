@@ -33,7 +33,7 @@ type AutoFormState = {
     gravid0: string;
     student0: string;
     pensjonist0: string;
-    lang: 'nb' | 'en';
+    lang: 'no' | 'en';
 };
 
 type BudgetResponse = {
@@ -77,7 +77,7 @@ export default function LivingExpenses() {
         gravid0: '0',
         student0: '0',
         pensjonist0: '0',
-        lang: 'nb',
+        lang: 'no',
     });
 
     useEffect(() => {
@@ -123,6 +123,8 @@ export default function LivingExpenses() {
                 gravid0: normalizeNumberInput(autoForm.gravid0),
                 student0: normalizeNumberInput(autoForm.student0),
                 pensjonist0: normalizeNumberInput(autoForm.pensjonist0),
+                // The API expects "lang=no"; other variants trigger PHP notices
+                lang: 'no',
             };
 
             const params = new URLSearchParams(normalizedForm);
