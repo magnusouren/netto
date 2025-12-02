@@ -169,12 +169,19 @@ export default function Summary() {
                         </tr>
 
                         <tr className='text-lg font-bold bg-muted/10'>
-                            <td className='p-2'>Balanse per måned</td>
+                            <td className='p-2'>
+                                Balanse per måned (cash flow)
+                            </td>
                             <td className='p-2 text-right'>{fmt(balance)}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <p className='ml-2 mt-4 text-sm text-muted-foreground'>
+                Mer detaljer basert på nedbetaling på boliglån samt prisstigning
+                på bolig kommer snart...
+            </p>
         </section>
     );
 }

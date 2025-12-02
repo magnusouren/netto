@@ -3,6 +3,7 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Navbar() {
     return (
@@ -11,11 +12,11 @@ export default function Navbar() {
                 <div className='flex items-center justify-between h-16'>
                     <div className='flex items-center gap-3'>
                         <div className='text-lg sm:text-2xl font-semibold text-brandBlue'>
-                            NETTO
+                            <Link href='/'>NETTO</Link>
                         </div>
                     </div>
 
-                    <div className='flex items-center gap-3'>
+                    {/* <div className='flex items-center gap-3'>
                         <Button
                             variant='ghost'
                             size='sm'
@@ -28,7 +29,7 @@ export default function Navbar() {
                         <div className='w-9 h-9 rounded-full bg-muted/10 flex items-center justify-center'>
                             <User className='w-5 h-5 text-muted-foreground' />
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </header>

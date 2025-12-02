@@ -25,11 +25,6 @@ export default function HousingLoan() {
         deleteHousingLoan(index);
     }
 
-    const totalLoanAmount = housingLoans.reduce(
-        (total, loan) => total + loan.loanAmount,
-        0
-    );
-
     return (
         <section className='w-full my-8'>
             <TypographyH2>Boliglån</TypographyH2>

@@ -56,11 +56,6 @@ export default function StudentLoan() {
         deleteLoan(index);
     }
 
-    const totalLoanAmount = loans.reduce(
-        (total, loan) => total + loan.loanAmount,
-        0
-    );
-
     const parseStartYear = (range: string) => Number(range.split('-')[0]);
 
     const sortedRanges = Object.entries(loanAmounts).sort((a, b) => {

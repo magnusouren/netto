@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
 import { TypographyH2 } from '@/components/typography/typographyH2';
-import { TypographyP } from '@/components/typography/typographyP';
 
 export default function Taxes() {
     const incomes = useStore((s: StoreState) => s.data.incomes);
