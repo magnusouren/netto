@@ -127,39 +127,27 @@ export default function LivingExpenses() {
                 lang: 'no',
             };
 
-            const params = new URLSearchParams(normalizedForm);
-
-            const parseBudgetResponse = (body: string): BudgetResponse => {
-                try {
-                    return JSON.parse(body) as BudgetResponse;
-                } catch (error) {
-                    const start = body.indexOf('{');
-                    const end = body.lastIndexOf('}');
-
-                    if (start !== -1 && end !== -1 && end > start) {
-                        return JSON.parse(
-                            body.slice(start, end + 1)
-                        ) as BudgetResponse;
-                    }
-
-                    throw error;
-                }
-            };
-
             try {
-                const response = await fetch(
-                    `https://kalkulator.referansebudsjett.no/php/resultat_as_json.php?${params.toString()}`,
-                    {
-                        // Prevent browser/Next.js from caching a previously failing response
-                        cache: 'no-store',
-                    }
-                );
+                const response = await fetch('/api/sifo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(normalizedForm),
+                });
 
                 if (!response.ok) {
-                    throw new Error('Klarte ikke å hente levekostnader');
+                    const payload = (await response.json().catch(() => null)) as
+                        | { error?: string }
+                        | null;
+
+                    throw new Error(
+                        payload?.error ??
+                            'Klarte ikke å hente levekostnader fra serveren'
+                    );
                 }
 
-                const data = parseBudgetResponse(await response.text());
+                const data = (await response.json()) as BudgetResponse;
 
                 const buildCosts = (
                     amounts: Record<string, number>,
