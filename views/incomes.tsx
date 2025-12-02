@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Plus, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Income } from '@/types';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 export default function Incomes() {
     const incomes = useStore((s: StoreState) => s.data.incomes);
@@ -17,15 +19,8 @@ export default function Incomes() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between'>
-                <h2 className='text-xl font-semibold'>Inntekter</h2>
-                <Button variant='outline' size='sm' onClick={() => addIncome()}>
-                    <Plus /> Legg til inntekt
-                </Button>
-            </div>
-            <p className='mt-2 mb-4 text-muted-foreground'>
-                Legg til dine faste inntekter, per år
-            </p>
+            <TypographyH2>Inntekter</TypographyH2>
+            <TypographyP>Legg til dine faste inntekter, per år</TypographyP>
             {incomes.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
                     <table className='w-full table-fixed text-sm'>
@@ -76,9 +71,9 @@ export default function Incomes() {
                                     </td>
                                     <td className='text-center'>
                                         <Button
-                                            variant='outline'
+                                            variant='ghost'
                                             className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                            size='icon-sm'
+                                            size='icon'
                                             onClick={() => deleteIncome(index)}
                                         >
                                             <Trash />
@@ -98,6 +93,14 @@ export default function Incomes() {
                     </table>
                 </div>
             )}
+            <Button
+                variant='outline'
+                size='sm'
+                className='mt-2 w-full'
+                onClick={() => addIncome()}
+            >
+                <Plus /> Legg til inntekt
+            </Button>
         </section>
     );
 }

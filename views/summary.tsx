@@ -1,3 +1,4 @@
+import { TypographyH2 } from '@/components/typography/typographyH2';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
 
@@ -83,9 +84,7 @@ export default function Summary() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-2xl font-semibold'>Månedsoppsummering</h2>
-            </div>
+            <TypographyH2>Oppsummering</TypographyH2>
 
             <div className='overflow-auto rounded-md border'>
                 <table className='w-full table-fixed text-sm'>
@@ -170,12 +169,19 @@ export default function Summary() {
                         </tr>
 
                         <tr className='text-lg font-bold bg-muted/10'>
-                            <td className='p-2'>Balanse per måned</td>
+                            <td className='p-2'>
+                                Balanse per måned (cash flow)
+                            </td>
                             <td className='p-2 text-right'>{fmt(balance)}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <p className='ml-2 mt-4 text-sm text-muted-foreground'>
+                Mer detaljer basert på nedbetaling på boliglån samt prisstigning
+                på bolig kommer snart...
+            </p>
         </section>
     );
 }

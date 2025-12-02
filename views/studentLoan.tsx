@@ -8,6 +8,8 @@ import {
     NativeSelectOption,
 } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 const loanAmounts: Record<string, number> = {
     '2025-2026': 166859,
@@ -54,11 +56,6 @@ export default function StudentLoan() {
         deleteLoan(index);
     }
 
-    const totalLoanAmount = loans.reduce(
-        (total, loan) => total + loan.loanAmount,
-        0
-    );
-
     const parseStartYear = (range: string) => Number(range.split('-')[0]);
 
     const sortedRanges = Object.entries(loanAmounts).sort((a, b) => {
@@ -101,23 +98,17 @@ export default function StudentLoan() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-xl font-semibold'>Studielån</h2>
-                <Button variant='outline' size='sm' onClick={handleAdd}>
-                    + Legg til lån
-                </Button>
-            </div>
-
-            <p className='mt-2 mb-4 text-muted-foreground'>
+            <TypographyH2>Studielån</TypographyH2>
+            <TypographyP>
                 Legg inn informasjon om ditt studielån her. Dersom du har tatt
                 opp maksimalt lån og fått tildelt fullt stipend, kan du bruke
                 knappen under for å autogenerere lånebeløpet basert på start- og
                 sluttdato for studielånet ditt. Har du tatt opp mer lån eller i
                 ulike perioder kan du manuelt endre lånet eller legge inn dette
                 som nye lån.
-            </p>
+            </TypographyP>
 
-            <div className='mt-2 mb-4 p-2 md:pl-4 border rounded-md'>
+            <div className='mt-2 p-2 md:pl-4 border rounded-md'>
                 <div className='flex justify-start gap-4 items-end md:items-center flex-wrap'>
                     {/* FROM */}
                     <div className='flex flex-col gap-2 md:flex-row'>
@@ -160,7 +151,7 @@ export default function StudentLoan() {
             </div>
 
             {loans.length !== 0 && (
-                <div className='overflow-auto rounded-md border'>
+                <div className='overflow-auto rounded-md border mt-2'>
                     <table className='w-full table-auto text-sm'>
                         <thead>
                             <tr className='text-left bg-muted'>
@@ -176,7 +167,7 @@ export default function StudentLoan() {
                         <tbody>
                             {loans.map((loan, idx) => (
                                 <tr key={idx} className='align-top'>
-                                    <td className='p-2'>
+                                    <td className='py-2 pl-2 pr-1 pb-0'>
                                         <Input
                                             type='text'
                                             value={loan.description}
@@ -187,7 +178,7 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.loanAmount}
@@ -200,7 +191,7 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             step='0.01'
@@ -214,7 +205,7 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.termYears}
@@ -227,7 +218,7 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.termsPerYear}
@@ -240,7 +231,7 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.monthlyFee ?? 0}
@@ -253,10 +244,10 @@ export default function StudentLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Button
-                                            variant='outline'
-                                            size='icon-sm'
+                                            variant='ghost'
+                                            size='icon'
                                             onClick={() => handleDelete(idx)}
                                             className='text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
                                         >
@@ -269,6 +260,14 @@ export default function StudentLoan() {
                     </table>
                 </div>
             )}
+            <Button
+                variant='outline'
+                className='mt-2 w-full'
+                size='sm'
+                onClick={handleAdd}
+            >
+                + Legg til lån
+            </Button>
         </section>
     );
 }

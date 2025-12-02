@@ -29,7 +29,6 @@ export default function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
             >
                 <Navbar />
-                <div className='-mt-16 w-full h-64 bg-chart-2 relative'></div>
                 <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'>
                     {children}
                 </main>
