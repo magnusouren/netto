@@ -100,11 +100,40 @@ export default function LivingExpenses() {
         () => async () => {
             setAutoError(null);
             setAutoLoading(true);
-            const params = new URLSearchParams(autoForm);
+
+            const normalizeNumberInput = (value: string) => {
+                const parsed = Number(value);
+
+                if (!Number.isFinite(parsed) || parsed < 0) {
+                    return '0';
+                }
+
+                return Math.trunc(parsed).toString();
+            };
+
+            const normalizedForm: AutoFormState = {
+                ...autoForm,
+                inntekt: normalizeNumberInput(autoForm.inntekt),
+                antall_biler: normalizeNumberInput(autoForm.antall_biler),
+                antall_elbiler: normalizeNumberInput(autoForm.antall_elbiler),
+                alder0: normalizeNumberInput(autoForm.alder0),
+                barnehage0: normalizeNumberInput(autoForm.barnehage0),
+                sfo0: normalizeNumberInput(autoForm.sfo0),
+                sfogratis0: normalizeNumberInput(autoForm.sfogratis0),
+                gravid0: normalizeNumberInput(autoForm.gravid0),
+                student0: normalizeNumberInput(autoForm.student0),
+                pensjonist0: normalizeNumberInput(autoForm.pensjonist0),
+            };
+
+            const params = new URLSearchParams(normalizedForm);
 
             try {
                 const response = await fetch(
-                    `https://kalkulator.referansebudsjett.no/php/resultat_as_json.php?${params.toString()}`
+                    `https://kalkulator.referansebudsjett.no/php/resultat_as_json.php?${params.toString()}`,
+                    {
+                        // Prevent browser/Next.js from caching a previously failing response
+                        cache: 'no-store',
+                    }
                 );
 
                 if (!response.ok) {
