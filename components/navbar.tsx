@@ -10,8 +10,8 @@ export default function Navbar() {
             <div className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'>
                 <div className='flex items-center justify-between h-16'>
                     <div className='flex items-center gap-3'>
-                        <div className='text-lg sm:text-2xl font-semibold'>
-                            Økonomikalkulator
+                        <div className='text-lg sm:text-2xl font-semibold text-brandBlue'>
+                            NETTO
                         </div>
                     </div>
 

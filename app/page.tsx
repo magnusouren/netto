@@ -12,22 +12,19 @@ import Taxes from '@/views/taxes';
 export default function Home() {
     return (
         <>
+            <div className='w-full h-16 mt-8 relative text-left'>
+                <h1 className='text-4xl md:text-5xl font-bold mb-4 text-brandBlue'>
+                    NETTO
+                </h1>
+            </div>
             <div className='flex flex-col w-full m-auto justify-center mt-2'>
-                <p className='max-w-3xl mt-4'>
+                <p className='w-full text-pretty'>
                     En økonomikalkulator for å få oversikt over din personlige
                     økonomi. Den hjelper deg å beregne inntekter, utgifter, lån
                     og skatter for å få en bedre forståelse av din økonomiske
-                    situasjon og muligheter.
-                </p>
-                <p>
-                    Begynn med å legge inn dine inntekter og utgifter i
-                    seksjonene under. Ved å legge til boliglån og studielån kan
-                    du få en mer nøyaktig oversikt over din totale økonomi.
-                </p>
-                <p>
-                    Skatteberegningene tar utgangspunkt i skattesatsene høsten
-                    2025 og kan avvike noe fra faktiske tall. Dette er kun ment
-                    som en veiledning.
+                    situasjon og muligheter. Ved å fylle inn feltene under vil
+                    du til slutt få en oppsummering av din netto økonomi, etter
+                    skatter, lån, og andre utgifter.
                 </p>
             </div>
             <section className='mt-8'>

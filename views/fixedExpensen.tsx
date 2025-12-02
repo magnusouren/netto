@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import useStore, { StoreState } from '@/lib/store';
 import type { FixedExpense } from '@/types';
 import { Trash } from 'lucide-react';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 export default function FixedExpenses() {
     const fixedExpenses = useStore((s: StoreState) => s.data.fixedExpenses);
@@ -67,22 +69,15 @@ export default function FixedExpenses() {
         else personal.push({ item, index: i });
     });
 
-    const totalFixedExpenses = fixedExpenses.reduce(
-        (total, item) => total + item.amount,
-        0
-    );
-
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-xl font-semibold'>Faste utgifter</h2>
-            </div>
-            <p className='mt-2 mb-4 text-muted-foreground'>
+            <TypographyH2>Faste utgifter</TypographyH2>
+            <TypographyP>
                 Legg til dine faste utgifter her. Du kan dele dem inn i
                 boligrelaterte og personlige utgifter for bedre oversikt. De
                 forhåndsutfylte utgiftene er bare forslag, og du kan endre eller
                 fjerne dem etter behov.
-            </p>
+            </TypographyP>
 
             <div className='grid gap-6 md:grid-cols-2'>
                 <div>
@@ -106,7 +101,7 @@ export default function FixedExpenses() {
                                         key={index}
                                         className='odd:bg-background even:bg-muted/5'
                                     >
-                                        <td className='p-2'>
+                                        <td className='p-2 pb-0'>
                                             <Input
                                                 id={`fixed-desc-${index}`}
                                                 value={item.description}
@@ -118,7 +113,7 @@ export default function FixedExpenses() {
                                                 }
                                             />
                                         </td>
-                                        <td className='p-2'>
+                                        <td className='p-2 pb-0 pl-0 pr-0'>
                                             <Input
                                                 id={`fixed-amount-${index}`}
                                                 type='number'
@@ -132,11 +127,11 @@ export default function FixedExpenses() {
                                                 }
                                             />
                                         </td>
-                                        <td className='p-2 text-center'>
+                                        <td className='p-2 pb-0 pl-0 pr-0 text-center'>
                                             <Button
-                                                variant='outline'
+                                                variant='ghost'
                                                 className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                                size='icon-sm'
+                                                size='icon'
                                                 onClick={() =>
                                                     deleteExpense(index)
                                                 }
@@ -146,6 +141,11 @@ export default function FixedExpenses() {
                                         </td>
                                     </tr>
                                 ))}
+                                <tr>
+                                    <td className='p-2 pb-0'> </td>
+                                    <td className='p-2 pb-0'> </td>
+                                    <td className='p-2 pb-0'> </td>
+                                </tr>
                                 <tr className='border-t font-semibold text-sm'>
                                     <td className='p-2 pl-4 '>Totalt</td>
                                     <td className='p-2 pl-4 ' colSpan={2}>
@@ -162,14 +162,14 @@ export default function FixedExpenses() {
                             </tbody>
                         </table>
                     </div>
-                    <div className='mt-2'>
-                        <Button
-                            variant='outline'
-                            onClick={() => addExpense('housing')}
-                        >
-                            + Legg til utgift
-                        </Button>
-                    </div>
+
+                    <Button
+                        variant='outline'
+                        onClick={() => addExpense('housing')}
+                        className='w-full mt-2'
+                    >
+                        + Legg til utgift
+                    </Button>
                 </div>
 
                 <div>
@@ -189,11 +189,8 @@ export default function FixedExpenses() {
                             </thead>
                             <tbody>
                                 {personal.map(({ item, index }) => (
-                                    <tr
-                                        key={index}
-                                        className='odd:bg-background even:bg-muted/5'
-                                    >
-                                        <td className='p-2'>
+                                    <tr key={index}>
+                                        <td className='p-2 pb-0'>
                                             <Input
                                                 id={`fixed-desc-${index}`}
                                                 value={item.description}
@@ -205,7 +202,7 @@ export default function FixedExpenses() {
                                                 }
                                             />
                                         </td>
-                                        <td className='p-2'>
+                                        <td className='p-2 pl-0 pb-0 pr-0'>
                                             <Input
                                                 id={`fixed-amount-${index}`}
                                                 type='number'
@@ -219,10 +216,10 @@ export default function FixedExpenses() {
                                                 }
                                             />
                                         </td>
-                                        <td className='p-1 text-center'>
+                                        <td className='p-2 pb-0 pl-0 pr-0 text-center'>
                                             <Button
-                                                variant='outline'
-                                                size='icon-sm'
+                                                variant='ghost'
+                                                size='icon'
                                                 className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
                                                 onClick={() =>
                                                     deleteExpense(index)
@@ -233,6 +230,12 @@ export default function FixedExpenses() {
                                         </td>
                                     </tr>
                                 ))}
+                                {/* TODO - refactor to not use empty rows for spacing */}
+                                <tr>
+                                    <td className='p-2 pb-0'> </td>
+                                    <td className='p-2 pb-0'> </td>
+                                    <td className='p-2 pb-0'> </td>
+                                </tr>
                                 <tr className='border-t font-semibold'>
                                     <td className='p-2 pl-4 '>Totalt</td>
                                     <td className='p-2 pl-4 ' colSpan={2}>
@@ -249,14 +252,14 @@ export default function FixedExpenses() {
                             </tbody>
                         </table>
                     </div>
-                    <div className='mt-2'>
-                        <Button
-                            variant='outline'
-                            onClick={() => addExpense('personal')}
-                        >
-                            + Legg til utgift
-                        </Button>
-                    </div>
+
+                    <Button
+                        variant='outline'
+                        className='w-full mt-2'
+                        onClick={() => addExpense('personal')}
+                    >
+                        + Legg til utgift
+                    </Button>
                 </div>
             </div>
         </section>

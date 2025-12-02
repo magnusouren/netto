@@ -2,6 +2,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 export default function Taxes() {
     const incomes = useStore((s: StoreState) => s.data.incomes);
@@ -63,9 +65,7 @@ export default function Taxes() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-2xl font-semibold'>Skatteoversikt</h2>
-            </div>
+            <TypographyH2>Skatteberegning</TypographyH2>
 
             <div className='overflow-auto rounded-md border'>
                 <table className='w-full table-fixed text-sm'>
@@ -256,11 +256,16 @@ export default function Taxes() {
                 </table>
             </div>
 
-            <div className='mt-2'>
-                <Button disabled variant='outline'>
-                    + Legg til fradrag (kommer snart)
+            <div className='my-2'>
+                <Button disabled variant='outline' className='w-full'>
+                    + Legg til fradrag (kommer senere)
                 </Button>
             </div>
+            <p className='text-sm text-muted-foreground mt-2'>
+                Skatteberegningene tar utgangspunkt i skattesatsene høsten 2025
+                og kan avvike noe fra faktiske tall. Dette er kun ment som en
+                veiledning.
+            </p>
         </section>
     );
 }

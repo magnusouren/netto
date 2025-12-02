@@ -18,7 +18,10 @@ import {
 } from '@/components/ui/native-select';
 import useStore, { StoreState } from '@/lib/store';
 import type { LivingCost } from '@/types';
-import { Trash } from 'lucide-react';
+import { Cog, Trash } from 'lucide-react';
+import Link from 'next/link';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 type AutoFormState = {
     select_year: string;
@@ -137,9 +140,9 @@ export default function LivingExpenses() {
                 });
 
                 if (!response.ok) {
-                    const payload = (await response.json().catch(() => null)) as
-                        | { error?: string }
-                        | null;
+                    const payload = (await response
+                        .json()
+                        .catch(() => null)) as { error?: string } | null;
 
                     throw new Error(
                         payload?.error ??
@@ -156,8 +159,7 @@ export default function LivingExpenses() {
                     Object.entries(amounts)
                         .filter(([, value]) => typeof value === 'number')
                         .map(([key, value]) => ({
-                            description:
-                                descriptions[key]?.beskrivelse ?? key,
+                            description: descriptions[key]?.beskrivelse ?? key,
                             amount: value,
                         }));
 
@@ -190,10 +192,7 @@ export default function LivingExpenses() {
         [autoForm, setData]
     );
 
-    const handleAutoFormChange = (
-        key: keyof AutoFormState,
-        value: string
-    ) => {
+    const handleAutoFormChange = (key: keyof AutoFormState, value: string) => {
         setAutoForm((prev) => ({ ...prev, [key]: value }));
     };
 
@@ -204,265 +203,188 @@ export default function LivingExpenses() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-xl font-semibold'>Levekostnader</h2>
-                <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant='outline' size='sm'>
-                            Autogenerer levekostnader
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent className='sm:max-w-lg'>
-                        <DialogHeader>
-                            <DialogTitle>
-                                Hent forslag fra referansebudsjett
-                            </DialogTitle>
-                            <DialogDescription>
-                                Velg alder, kjønn og eventuelle tilpasninger
-                                for husholdningen. Tallene er hentet fra
-                                SIFOs referansebudsjett.
-                            </DialogDescription>
-                        </DialogHeader>
+            <TypographyH2>Levekostnader</TypographyH2>
+            <TypographyP>
+                Legg inn løpende levekostnader her. Første kolonne er en
+                beskrivelse, og beløp kan endres direkte. Du kan hente forslag
+                fra referansebudsjettet til{' '}
+                <Link
+                    href='https://www.oslomet.no/om/sifo/referansebudsjettet'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='underline hover:text-foreground'
+                >
+                    SIFO
+                </Link>{' '}
+                via knappen under tabellen og bruke de som et utgangspunkt for
+                dine egne kostnader.
+            </TypographyP>
 
-                        <div className='grid gap-4 py-4'>
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='select_year'>År</Label>
-                                    <NativeSelect
-                                        id='select_year'
-                                        value={autoForm.select_year}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'select_year',
-                                                e.target.value
-                                            )
-                                        }
-                                    >
-                                        <NativeSelectOption value='2025'>
-                                            2025
-                                        </NativeSelectOption>
-                                        <NativeSelectOption value='2024'>
-                                            2024
-                                        </NativeSelectOption>
-                                    </NativeSelect>
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='inntekt'>Skattepliktig inntekt</Label>
-                                    <Input
-                                        id='inntekt'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.inntekt}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'inntekt',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
+            <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button className=' w-full mb-4'>
+                        Autogenerer levekostnader <Cog />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className='sm:max-w-lg'>
+                    <DialogHeader>
+                        <DialogTitle>
+                            Hent forslag fra referansebudsjett
+                        </DialogTitle>
+                        <DialogDescription>
+                            Velg alder, kjønn og eventuelle tilpasninger for
+                            husholdningen. Tallene er hentet fra SIFOs
+                            referansebudsjett.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className='grid gap-4 py-4'>
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='select_year'>År</Label>
+                                <NativeSelect
+                                    id='select_year'
+                                    value={autoForm.select_year}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'select_year',
+                                            e.target.value
+                                        )
+                                    }
+                                >
+                                    <NativeSelectOption value='2025'>
+                                        2025
+                                    </NativeSelectOption>
+                                    <NativeSelectOption value='2024'>
+                                        2024
+                                    </NativeSelectOption>
+                                </NativeSelect>
                             </div>
-
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='kjonn0'>Kjønn</Label>
-                                    <NativeSelect
-                                        id='kjonn0'
-                                        value={autoForm.kjonn0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'kjonn0',
-                                                e.target.value as 'm' | 'k'
-                                            )
-                                        }
-                                    >
-                                        <NativeSelectOption value='m'>
-                                            Mann
-                                        </NativeSelectOption>
-                                        <NativeSelectOption value='k'>
-                                            Kvinne
-                                        </NativeSelectOption>
-                                    </NativeSelect>
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='alder0'>Alder</Label>
-                                    <Input
-                                        id='alder0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.alder0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'alder0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='antall_biler'>Antall biler</Label>
-                                    <Input
-                                        id='antall_biler'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.antall_biler}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'antall_biler',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='antall_elbiler'>Antall elbiler</Label>
-                                    <Input
-                                        id='antall_elbiler'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.antall_elbiler}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'antall_elbiler',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='barnehage0'>Barn i barnehage</Label>
-                                    <Input
-                                        id='barnehage0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.barnehage0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'barnehage0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='sfo0'>Barn på SFO</Label>
-                                    <Input
-                                        id='sfo0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.sfo0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'sfo0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='sfogratis0'>Gratis SFO (antall)</Label>
-                                    <Input
-                                        id='sfogratis0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.sfogratis0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'sfogratis0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='gravid0'>Gravid (uker)</Label>
-                                    <Input
-                                        id='gravid0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.gravid0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'gravid0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='student0'>Studenter (antall)</Label>
-                                    <Input
-                                        id='student0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.student0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'student0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className='space-y-1'>
-                                    <Label htmlFor='pensjonist0'>Pensjonister (antall)</Label>
-                                    <Input
-                                        id='pensjonist0'
-                                        type='number'
-                                        inputMode='numeric'
-                                        value={autoForm.pensjonist0}
-                                        onChange={(e) =>
-                                            handleAutoFormChange(
-                                                'pensjonist0',
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            {autoError && (
-                                <p className='text-sm text-destructive'>{autoError}</p>
-                            )}
                         </div>
 
-                        <DialogFooter className='sm:justify-start gap-2'>
-                            <DialogClose asChild>
-                                <Button type='button' variant='secondary'>
-                                    Avbryt
-                                </Button>
-                            </DialogClose>
-                            <Button
-                                type='button'
-                                onClick={autoGenerateLivingCosts}
-                                disabled={autoLoading}
-                            >
-                                {autoLoading
-                                    ? 'Henter forslag...'
-                                    : 'Hent levekostnader'}
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='kjonn0'>Kjønn</Label>
+                                <NativeSelect
+                                    id='kjonn0'
+                                    value={autoForm.kjonn0}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'kjonn0',
+                                            e.target.value as 'm' | 'k'
+                                        )
+                                    }
+                                >
+                                    <NativeSelectOption value='m'>
+                                        Mann
+                                    </NativeSelectOption>
+                                    <NativeSelectOption value='k'>
+                                        Kvinne
+                                    </NativeSelectOption>
+                                </NativeSelect>
+                            </div>
+                            <div className='space-y-1'>
+                                <Label htmlFor='alder0'>Alder</Label>
+                                <Input
+                                    id='alder0'
+                                    type='number'
+                                    inputMode='numeric'
+                                    value={autoForm.alder0}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'alder0',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='student0'>Student</Label>
+                                <NativeSelect
+                                    id='student0'
+                                    value={autoForm.student0}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'student0',
+                                            e.target.value
+                                        )
+                                    }
+                                >
+                                    <NativeSelectOption value='0'>
+                                        Nei
+                                    </NativeSelectOption>
+                                    <NativeSelectOption value='1'>
+                                        Ja
+                                    </NativeSelectOption>
+                                </NativeSelect>
+                            </div>
+                        </div>
+
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='antall_biler'>
+                                    Antall fossilbiler
+                                </Label>
+                                <Input
+                                    id='antall_biler'
+                                    type='number'
+                                    inputMode='numeric'
+                                    value={autoForm.antall_biler}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'antall_biler',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+                            </div>
+                            <div className='space-y-1'>
+                                <Label htmlFor='antall_elbiler'>
+                                    Antall elbiler
+                                </Label>
+                                <Input
+                                    id='antall_elbiler'
+                                    type='number'
+                                    inputMode='numeric'
+                                    value={autoForm.antall_elbiler}
+                                    onChange={(e) =>
+                                        handleAutoFormChange(
+                                            'antall_elbiler',
+                                            e.target.value
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+
+                        {autoError && (
+                            <p className='text-sm text-destructive'>
+                                {autoError}
+                            </p>
+                        )}
+                    </div>
+
+                    <DialogFooter className='sm:justify-start gap-2'>
+                        <DialogClose asChild>
+                            <Button type='button' variant='secondary'>
+                                Avbryt
                             </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
-            <p className='mt-2 mb-4 text-muted-foreground'>
-                Legg inn løpende levekostnader her. Første kolonne er en
-                beskrivelse (statisk tekst) og beløp kan endres direkte. Du kan
-                hente forslag fra referansebudsjettet til SIFO via knappen over
-                og bruke de som et utgangspunkt.
-            </p>
+                        </DialogClose>
+                        <Button
+                            type='button'
+                            onClick={autoGenerateLivingCosts}
+                            disabled={autoLoading}
+                        >
+                            {autoLoading
+                                ? 'Henter forslag...'
+                                : 'Beregn levekostnader'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             <div className='overflow-auto rounded-md border'>
                 <table className='w-full table-fixed'>
@@ -479,7 +401,7 @@ export default function LivingExpenses() {
                                 key={index}
                                 className='odd:bg-background even:bg-muted/5'
                             >
-                                <td className='p-2'>
+                                <td className='p-2 pb-0'>
                                     <Input
                                         id={`living-description-${index}`}
                                         type='text'
@@ -492,7 +414,7 @@ export default function LivingExpenses() {
                                         }
                                     />
                                 </td>
-                                <td className='p-2'>
+                                <td className='p-2 pb-0 pr-0 pl-0'>
                                     <Input
                                         id={`living-amount-${index}`}
                                         type='number'
@@ -506,11 +428,11 @@ export default function LivingExpenses() {
                                         }
                                     />
                                 </td>
-                                <td className='p-2 text-center'>
+                                <td className='p-2 text-center pr-0 pl-0 pb-0'>
                                     <Button
-                                        variant='outline'
+                                        variant='ghost'
                                         className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                        size='icon-sm'
+                                        size='icon'
                                         onClick={() => deleteLivingCost(index)}
                                     >
                                         <Trash />
@@ -518,6 +440,11 @@ export default function LivingExpenses() {
                                 </td>
                             </tr>
                         ))}
+                        <tr>
+                            <td className='p-2 pb-0'> </td>
+                            <td className='p-2 pb-0'> </td>
+                            <td className='p-2 pb-0'> </td>
+                        </tr>
                         <tr className='border-t font-semibold text-sm'>
                             <td className='p-2 pl-4 '>Totalt</td>
                             <td className='p-2 pl-4 ' colSpan={2}>
@@ -528,11 +455,13 @@ export default function LivingExpenses() {
                 </table>
             </div>
 
-            <div className='mt-2'>
-                <Button variant='outline' onClick={addLivingCost}>
-                    + Legg til kostnad
-                </Button>
-            </div>
+            <Button
+                variant='outline'
+                className='w-full mt-2'
+                onClick={addLivingCost}
+            >
+                + Legg til kostnad
+            </Button>
         </section>
     );
 }

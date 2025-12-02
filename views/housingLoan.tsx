@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { HousingLoan } from '@/types';
+import { TypographyH2 } from '@/components/typography/typographyH2';
+import { TypographyP } from '@/components/typography/typographyP';
 
 export default function HousingLoan() {
     const housingLoans = useStore((s: StoreState) => s.data.housingLoans);
@@ -30,18 +32,13 @@ export default function HousingLoan() {
 
     return (
         <section className='w-full my-8'>
-            <div className='flex items-center justify-between mb-2'>
-                <h2 className='text-xl font-semibold'>Boliglån</h2>
-                <Button variant='outline' size='sm' onClick={addLoan}>
-                    + Legg til lån
-                </Button>
-            </div>
-            <p className='mt-2 mb-4 text-muted-foreground'>
+            <TypographyH2>Boliglån</TypographyH2>
+            <TypographyP>
                 Legg til informasjon om boliglån. Du kan legge til flere lån
                 dersom du har det. Per nå støttes kun lån med en lånetaker,
                 dersom det er flere lånetakere på lånet må du legge inn dine
                 andeler av lånet her.
-            </p>
+            </TypographyP>
 
             {housingLoans.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
@@ -61,7 +58,7 @@ export default function HousingLoan() {
                         <tbody>
                             {housingLoans.map((loan, idx) => (
                                 <tr key={idx} className='align-top'>
-                                    <td className='p-2'>
+                                    <td className='pl-2 pr-1 py-2'>
                                         <Input
                                             type='text'
                                             value={loan.description}
@@ -72,7 +69,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.capital}
@@ -85,7 +82,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.loanAmount}
@@ -98,7 +95,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             step='0.01'
@@ -112,7 +109,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.termYears}
@@ -125,7 +122,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.termsPerYear}
@@ -138,7 +135,7 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Input
                                             type='number'
                                             value={loan.monthlyFee ?? 0}
@@ -151,11 +148,11 @@ export default function HousingLoan() {
                                             }
                                         />
                                     </td>
-                                    <td className='p-2'>
+                                    <td className='py-2 px-1'>
                                         <Button
-                                            variant='outline'
+                                            variant='ghost'
                                             className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                            size='icon-sm'
+                                            size='icon'
                                             onClick={() => deleteLoan(idx)}
                                         >
                                             <Trash />
@@ -167,6 +164,14 @@ export default function HousingLoan() {
                     </table>
                 </div>
             )}
+            <Button
+                variant='outline'
+                size='sm'
+                className='mt-2 w-full'
+                onClick={addLoan}
+            >
+                + Legg til lån
+            </Button>
         </section>
     );
 }
