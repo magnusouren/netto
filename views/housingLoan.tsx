@@ -40,13 +40,15 @@ export default function HousingLoan() {
                     <table className='w-full table-auto text-sm'>
                         <thead>
                             <tr className='text-left bg-muted'>
-                                <th className='p-2'>Beskrivelse</th>
-                                <th className='p-2'>Egenkapital (kr)</th>
-                                <th className='p-2'>Lånebeløp (kr)</th>
-                                <th className='p-2'>Rente (%)</th>
-                                <th className='p-2'>År</th>
-                                <th className='p-2'>Betalinger/år</th>
-                                <th className='p-2'>Månedsavgift</th>
+                                <th className='p-2 min-w-32'>Beskrivelse</th>
+                                <th className='p-2 min-w-32'>
+                                    Egenkapital (kr)
+                                </th>
+                                <th className='p-2 min-w-32'>Lånebeløp (kr)</th>
+                                <th className='p-2 min-w-24'>Rente (%)</th>
+                                <th className='p-2 min-w-24'>År</th>
+                                <th className='p-2 min-w-28'>Betalinger/år</th>
+                                <th className='p-2 min-w-24'>Månedsavgift</th>
                                 <th className='w-12'></th>
                             </tr>
                         </thead>
