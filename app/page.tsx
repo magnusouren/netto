@@ -1,6 +1,6 @@
 'use client';
 
-import FixedExpenses from '@/views/fixedExpensen';
+import FixedExpenses from '@/views/fixedExpenses';
 import HousingLoan from '@/views/housingLoan';
 import Incomes from '@/views/incomes';
 import LivingExpenses from '@/views/livingExpenses';

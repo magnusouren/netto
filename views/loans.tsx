@@ -1,6 +1,7 @@
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Trash } from 'lucide-react';
+import { GraduationCap, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
 import {
@@ -8,9 +9,19 @@ import {
     NativeSelectOption,
 } from '@/components/ui/native-select';
 import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogTrigger,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogClose,
+} from '@/components/ui/dialog';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
 import { TypographyH3 } from '@/components/typography/typographyH3';
+import { Questionmark } from '@/components/Questionmark';
 
 const loanAmounts: Record<string, number> = {
     '2025-2026': 166859,
@@ -45,8 +56,34 @@ export default function Loans() {
     const updateLoan = useStore((s: StoreState) => s.updateLoan);
     const deleteLoan = useStore((s: StoreState) => s.deleteLoan);
 
-    function handleAdd() {
-        addLoan();
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    const [form, setForm] = useState<Partial<Loan>>({
+        description: '',
+        loanAmount: 0,
+        interestRate: 4.698,
+        termYears: 20,
+        termsPerYear: 12,
+        monthlyFee: 0,
+        startDate: '',
+    });
+
+    function openAddDialog() {
+        setForm({
+            description: '',
+            loanAmount: 0,
+            interestRate: 4.698,
+            termYears: 20,
+            termsPerYear: 12,
+            monthlyFee: 0,
+            startDate: new Date().toISOString().slice(0, 10),
+        });
+        setDialogOpen(true);
+    }
+
+    function submitAdd() {
+        addLoan(form as Loan);
+        setDialogOpen(false);
     }
 
     function handleUpdate(index: number, patch: Partial<Loan>) {
@@ -65,15 +102,19 @@ export default function Loans() {
         return ay - by; // eldste -> nyeste
     });
 
-    function handleAutoFill() {
-        const selects = document.getElementsByTagName('select');
-        const fromLabel =
-            selects[selects.length - 2].selectedOptions[0].textContent!;
-        const toLabel =
-            selects[selects.length - 1].selectedOptions[0].textContent!;
+    const [autoDialogOpen, setAutoDialogOpen] = useState(false);
+    const [autoFrom, setAutoFrom] = useState<string>(
+        sortedRanges[0]?.[0] ?? Object.keys(loanAmounts)[0]
+    );
+    const [autoTo, setAutoTo] = useState<string>(
+        sortedRanges[sortedRanges.length - 1]?.[0] ??
+            Object.keys(loanAmounts)[0]
+    );
+    const [extraStudentLoan, setExtraStudentLoan] = useState<number>(0);
 
-        const fromYear = parseStartYear(fromLabel);
-        const toYear = parseStartYear(toLabel);
+    function handleAddStudentLoan() {
+        const fromYear = parseStartYear(autoFrom);
+        const toYear = parseStartYear(autoTo);
 
         let total = 0;
 
@@ -84,17 +125,22 @@ export default function Loans() {
             }
         }
 
-        const loanAmount = total * 0.6;
+        const loanAmount = total * 0.6 + extraStudentLoan;
 
-        handleAdd();
-        handleUpdate(loans.length, {
+        const startDate = `${toYear + 2}-01-01`;
+
+        // add directly with calculated values
+        addLoan({
             description: `Studielån ${loans.length + 1}`,
             loanAmount: loanAmount,
             interestRate: 4.698,
             termYears: 20,
             termsPerYear: 12,
             monthlyFee: 0,
-        });
+            startDate: startDate,
+        } as Loan);
+
+        setAutoDialogOpen(false);
     }
 
     return (
@@ -106,54 +152,96 @@ export default function Loans() {
                 flere lån dersom du har det.
             </TypographyP>
 
-            <div className='mt-2 p-2 md:pl-4 border rounded-md'>
-                <TypographyH3>Beregn ditt studielån </TypographyH3>
-                <TypographyP>
-                    Bruk denne funksjonen for å automatisk fylle ut lånebeløpet
-                    basert på start- og sluttdato for studielånet ditt. Denne
-                    tar utgangspunkt i at du har tatt maksimalt studielån i
-                    perioden, og fått 40% av dette omgjort til stipend.
-                </TypographyP>
-                <div className='flex justify-start gap-4 items-end md:items-center flex-wrap'>
-                    {/* FROM */}
-                    <div className='flex flex-col gap-2 md:flex-row'>
-                        <Label htmlFor='from-year'>Fra:</Label>
-                        <NativeSelect name='from-year'>
-                            {Object.entries(loanAmounts).map(
-                                ([year, amount]) => (
-                                    <NativeSelectOption
-                                        key={year}
-                                        value={amount}
-                                    >
-                                        {year}
-                                    </NativeSelectOption>
-                                )
-                            )}
-                        </NativeSelect>
-                    </div>
-
-                    {/* TO */}
-                    <div className='flex flex-col gap-2 md:flex-row'>
-                        <Label htmlFor='to-year'>Til:</Label>
-                        <NativeSelect name='to-year'>
-                            {Object.entries(loanAmounts).map(
-                                ([year, amount]) => (
-                                    <NativeSelectOption
-                                        key={year}
-                                        value={amount}
-                                    >
-                                        {year}
-                                    </NativeSelectOption>
-                                )
-                            )}
-                        </NativeSelect>
-                    </div>
-
-                    <Button variant='default' onClick={handleAutoFill}>
-                        Sett lånebeløp
+            <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button className='w-full mb-2'>
+                        Beregn ditt studielån <GraduationCap className='ml-2' />
                     </Button>
-                </div>
-            </div>
+                </DialogTrigger>
+
+                <DialogContent className='sm:max-w-lg'>
+                    <DialogHeader>
+                        <DialogTitle>Beregn studielån</DialogTitle>
+                        <TypographyP>
+                            Velg tidsperiode for studielånet ditt og eventuelt
+                            ekstra lånebeløp. Du vil da få lagt til et studielån
+                            som tilsvarer 60% av lånebeløpene for de valgte
+                            årene. Tallene er basert på Lånekassens satser for
+                            hvert studieår.
+                        </TypographyP>
+                    </DialogHeader>
+
+                    <div className='grid gap-4'>
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='from-year'>Studier fra</Label>
+                                <NativeSelect
+                                    id='from-year'
+                                    value={autoFrom}
+                                    onChange={(e) =>
+                                        setAutoFrom(e.target.value)
+                                    }
+                                >
+                                    {sortedRanges.map(([year]) => (
+                                        <NativeSelectOption
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                            </div>
+
+                            <div className='space-y-1'>
+                                <Label htmlFor='to-year'>Studier til</Label>
+                                <NativeSelect
+                                    id='to-year'
+                                    value={autoTo}
+                                    onChange={(e) => setAutoTo(e.target.value)}
+                                >
+                                    {sortedRanges.map(([year]) => (
+                                        <NativeSelectOption
+                                            key={year}
+                                            value={year}
+                                        >
+                                            {year}
+                                        </NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                            </div>
+
+                            <div className='space-y-1 col-span-2'>
+                                <Label htmlFor='extra-loan'>
+                                    Ekstra lånebeløp – uten stipend (kr)
+                                    <Questionmark helptext='Dersom du har ekstra lån som ikke kan omgjøres til stipend, kan du legge til det ekstra beløpet her.' />
+                                </Label>
+                                <Input
+                                    id='extra-loan'
+                                    type='number'
+                                    value={extraStudentLoan}
+                                    onChange={(e) =>
+                                        setExtraStudentLoan(
+                                            Number(e.target.value || 0)
+                                        )
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className='sm:justify-start gap-2'>
+                        <DialogClose asChild>
+                            <Button type='button' variant='secondary'>
+                                Avbryt
+                            </Button>
+                        </DialogClose>
+                        <Button type='button' onClick={handleAddStudentLoan}>
+                            Sett lånebeløp
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {loans.length !== 0 && (
                 <div className='overflow-auto rounded-md border mt-2'>
@@ -277,14 +365,172 @@ export default function Loans() {
                     </table>
                 </div>
             )}
-            <Button
-                variant='outline'
-                className='mt-2 w-full'
-                size='sm'
-                onClick={handleAdd}
-            >
-                + Legg til lån
-            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button
+                        variant='outline'
+                        className='mt-2 w-full'
+                        size='sm'
+                        onClick={openAddDialog}
+                    >
+                        + Legg til lån
+                    </Button>
+                </DialogTrigger>
+
+                <DialogContent className='sm:max-w-lg'>
+                    <DialogHeader>
+                        <DialogTitle>Legg til lån</DialogTitle>
+                    </DialogHeader>
+
+                    <div className='grid gap-4 py-4'>
+                        <div className='space-y-1'>
+                            <Label htmlFor='loan-desc' className='gap-1'>
+                                Beskrivelse
+                                <Questionmark helptext='En beskrivelse av lånet, f.eks. hva det brukes til.' />
+                            </Label>
+                            <Input
+                                id='loan-desc'
+                                type='text'
+                                value={form.description}
+                                onChange={(e) =>
+                                    setForm((p) => ({
+                                        ...p,
+                                        description: e.target.value,
+                                    }))
+                                }
+                            />
+                        </div>
+
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-amount' className='gap-1'>
+                                    Lånebeløp (kr)
+                                    <Questionmark helptext='Det totale lånebeløpet' />
+                                </Label>
+                                <Input
+                                    id='loan-amount'
+                                    type='number'
+                                    value={form.loanAmount}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            loanAmount: Number(
+                                                e.target.value || 0
+                                            ),
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-rate' className='gap-1'>
+                                    Rente (%)
+                                    <Questionmark helptext='Den nominelle renten på lånet.' />
+                                </Label>
+                                <Input
+                                    id='loan-rate'
+                                    step='0.01'
+                                    type='number'
+                                    value={form.interestRate}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            interestRate: Number(
+                                                e.target.value || 0
+                                            ),
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
+
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-years'>
+                                    Nedbetalingstid
+                                </Label>
+                                <Input
+                                    id='loan-years'
+                                    type='number'
+                                    value={form.termYears}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            termYears: Number(
+                                                e.target.value || 0
+                                            ),
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-terms'>
+                                    Betalinger/år
+                                </Label>
+                                <Input
+                                    id='loan-terms'
+                                    type='number'
+                                    value={form.termsPerYear}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            termsPerYear: Number(
+                                                e.target.value || 0
+                                            ),
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-startdate'>
+                                    Startdato
+                                </Label>
+                                <Input
+                                    id='loan-startdate'
+                                    type='date'
+                                    value={form.startDate}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            startDate: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+
+                            <div className='space-y-1'>
+                                <Label htmlFor='loan-monthly'>
+                                    Månedsavgift
+                                </Label>
+                                <Input
+                                    id='loan-monthly'
+                                    type='number'
+                                    value={form.monthlyFee}
+                                    onChange={(e) =>
+                                        setForm((p) => ({
+                                            ...p,
+                                            monthlyFee: Number(
+                                                e.target.value || 0
+                                            ),
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <DialogFooter className='sm:justify-start gap-2'>
+                        <DialogClose asChild>
+                            <Button type='button' variant='secondary'>
+                                Avbryt
+                            </Button>
+                        </DialogClose>
+                        <Button type='button' onClick={submitAdd}>
+                            Legg til lån
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </section>
     );
 }
