@@ -63,6 +63,7 @@ export default function LivingExpenses() {
     const addLivingCostAction = useStore((s: StoreState) => s.addLivingCost);
     const updateLivingCost = useStore((s: StoreState) => s.updateLivingCost);
     const deleteLivingCost = useStore((s: StoreState) => s.deleteLivingCost);
+    const hasHydrated = useStore((s) => s._hasHydrated);
 
     const [autoDialogOpen, setAutoDialogOpen] = useState(false);
     const [autoLoading, setAutoLoading] = useState(false);
@@ -84,6 +85,8 @@ export default function LivingExpenses() {
     });
 
     useEffect(() => {
+        if (!hasHydrated) return; // ⛔ wait for localStorage to be ready
+
         if (!livingCosts || livingCosts.length === 0) {
             const seeded: LivingCost[] = defaults.map((d) => ({
                 description: d,
@@ -91,9 +94,7 @@ export default function LivingExpenses() {
             }));
             setData((prev) => ({ ...prev, livingCosts: seeded }));
         }
-        // run only on mount
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    });
 
     function addLivingCost() {
         addLivingCostAction({ description: '', amount: 0 });

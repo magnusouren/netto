@@ -10,6 +10,7 @@ import { TypographyP } from '@/components/typography/typographyP';
 export default function FixedExpenses() {
     const fixedExpenses = useStore((s: StoreState) => s.data.fixedExpenses);
     const setData = useStore((s: StoreState) => s.setData);
+    const hasHydrated = useStore((s) => s._hasHydrated);
     const addFixedExpense = useStore((s: StoreState) => s.addFixedExpense);
     const updateFixedExpense = useStore(
         (s: StoreState) => s.updateFixedExpense
@@ -30,24 +31,27 @@ export default function FixedExpenses() {
     const personalDefaults = ['Trening', 'Abonnementer'];
 
     useEffect(() => {
-        if (!fixedExpenses || fixedExpenses.length === 0) {
+        if (!hasHydrated) return; // ⛔ wait for localStorage to be ready
+
+        if (fixedExpenses.length === 0) {
             const defaults: FixedExpense[] = [
-                ...housingDefaults.map((d) => ({
+                ...housingDefaults.map<FixedExpense>((d) => ({
                     description: d,
                     amount: 0,
-                    category: 'housing' as const,
+                    category: 'housing',
                 })),
-                ...personalDefaults.map((d) => ({
+                ...personalDefaults.map<FixedExpense>((d) => ({
                     description: d,
                     amount: 0,
-                    category: 'personal' as const,
+                    category: 'personal',
                 })),
             ];
-            setData((prev) => ({ ...prev, fixedExpenses: defaults }));
+            setData((prev) => ({
+                ...prev,
+                fixedExpenses: defaults,
+            }));
         }
-        // only run once on mount
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    });
 
     function addExpense(category: FixedExpense['category']) {
         addFixedExpense({ description: '', amount: 0, category });

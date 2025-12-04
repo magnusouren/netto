@@ -25,12 +25,15 @@ export interface StoreState {
     data: EconomyData;
     setData: (updater: EconomyData | Updater) => void;
 
+    _hasHydrated: boolean;
+    setHasHydrated: (value: boolean) => void;
+
     // Incomes
     addIncome: (inc?: Partial<Income>) => void;
     updateIncome: (index: number, patch: Partial<Income>) => void;
     deleteIncome: (index: number) => void;
 
-    // Loans (student + other)
+    // Loans
     addLoan: (loan?: Partial<Loan>) => void;
     updateLoan: (index: number, patch: Partial<Loan>) => void;
     deleteLoan: (index: number) => void;
@@ -52,9 +55,13 @@ export interface StoreState {
 }
 
 export const useStore = create<StoreState>()(
-    persist<StoreState>(
-        (set) => ({
+    persist(
+        (set, get) => ({
             data: defaultData,
+
+            // Hydration flags
+            _hasHydrated: false,
+            setHasHydrated: (v) => set({ _hasHydrated: v }),
 
             setData: (updater) => {
                 set((state) => {
@@ -216,8 +223,15 @@ export const useStore = create<StoreState>()(
                     },
                 })),
         }),
+
+        // Persist config
         {
             name: 'economics-store',
+
+            onRehydrateStorage: () => (state) => {
+                // mark hydration complete
+                state?.setHasHydrated(true);
+            },
         }
     )
 );
