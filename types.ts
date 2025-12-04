@@ -22,6 +22,7 @@ export type Loan = {
     termYears: number; // Loan term in years
     termsPerYear: number; // Number of payment terms per year
     monthlyFee?: number; // Optional monthly fee
+    startDate: string; // Optional start date in YYYY-MM-DD format
 };
 
 export type FixedExpense = {

@@ -98,6 +98,7 @@ export const useStore = create<StoreState>()(
                     interestRate: 0,
                     termYears: 0,
                     termsPerYear: 12,
+                    startDate: new Date().toISOString().slice(0, 10),
                 }
             ) =>
                 set((s) => ({
@@ -128,6 +129,7 @@ export const useStore = create<StoreState>()(
                     termYears: 0,
                     termsPerYear: 12,
                     capital: 0,
+                    startDate: new Date().toISOString().slice(0, 10),
                 }
             ) =>
                 set((s) => ({

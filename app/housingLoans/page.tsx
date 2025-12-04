@@ -15,6 +15,7 @@ function generateAmortizationSchedule(loan: {
     termYears: number;
     termsPerYear: number;
     monthlyFee?: number;
+    startDate: string;
 }) {
     const {
         loanAmount,
@@ -22,6 +23,7 @@ function generateAmortizationSchedule(loan: {
         termYears,
         termsPerYear,
         monthlyFee = 0,
+        startDate,
     } = loan;
 
     const numberOfTerms = termYears * termsPerYear;
@@ -37,13 +39,28 @@ function generateAmortizationSchedule(loan: {
     const first12Months: HousingLoanDataRowMonthly[] = [];
     const yearGroups: HousingLoanDataRowYearly[] = [];
 
-    let currentYear = 1;
+    // Parse start date
+    let currentDate = new Date(startDate);
+    const addMonths = (d: Date, n: number) =>
+        new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
+
+    const calculateTermsLeftThisYear = (date: Date) => {
+        const currentYear = date.getFullYear();
+        const monthsLeft = 12 - date.getMonth();
+        const termsLeft = Math.ceil((monthsLeft / 12) * termsPerYear);
+
+        console.log({ currentYear, monthsLeft, termsLeft });
+
+        return Math.min(termsLeft, numberOfTerms);
+    };
+    const termsLeftThisYearValue = calculateTermsLeftThisYear(currentDate);
+
     let yearInterest = 0;
     let yearPrincipal = 0;
     let yearFees = 0;
     let yearPaid = 0;
 
-    for (let term = 1; term <= numberOfTerms; term++) {
+    for (let term = 0; term <= numberOfTerms; term++) {
         const interest = balance * ratePerTerm;
         const principal = termPayment - interest;
         balance -= principal;
@@ -51,10 +68,16 @@ function generateAmortizationSchedule(loan: {
 
         const payment = termPayment + monthlyFee;
 
-        // Collect month stats
-        if (term <= 12) {
+        // Format date as "MMM YYYY"
+        const formattedDate = currentDate.toLocaleString('no-NO', {
+            year: 'numeric',
+            month: 'short',
+        });
+
+        if (term < termsLeftThisYearValue) {
             first12Months.push({
                 term,
+                date: formattedDate,
                 payment,
                 interest,
                 principal,
@@ -63,17 +86,21 @@ function generateAmortizationSchedule(loan: {
             });
         }
 
-        // Accumulate for year summary
+        // Accumulate yearly summary values
+        const entryYear = currentDate.getFullYear();
+
         yearInterest += interest;
         yearPrincipal += principal;
         yearFees += monthlyFee;
         yearPaid += payment;
 
-        const endOfYearTerm = currentYear * termsPerYear;
+        // If the next payment will be next year → close this year
+        const nextDate = addMonths(currentDate, 1);
+        const nextYear = nextDate.getFullYear();
 
-        if (term === endOfYearTerm) {
+        if (nextYear !== entryYear || term === numberOfTerms) {
             yearGroups.push({
-                year: currentYear,
+                year: entryYear,
                 totalInterest: yearInterest,
                 totalPrincipal: yearPrincipal,
                 totalFees: yearFees,
@@ -81,16 +108,17 @@ function generateAmortizationSchedule(loan: {
                 endBalance: balance,
             });
 
-            // Reset for next year
-            currentYear++;
+            // Reset accumulators
             yearInterest = 0;
             yearPrincipal = 0;
             yearFees = 0;
             yearPaid = 0;
         }
+
+        currentDate = nextDate;
     }
 
-    // Totals across entire loan
+    // Compute totals across entire loan
     const totals = yearGroups.reduce(
         (acc, y) => {
             acc.totalInterest += y.totalInterest;
@@ -124,6 +152,7 @@ const formatNumberToNOK = (num: number) => {
 
 interface HousingLoanDataRowMonthly {
     term: number;
+    date: string;
     payment: number;
     interest: number;
     principal: number;
@@ -165,7 +194,8 @@ export default function HousingLoans() {
 
                 {housingLoans.length === 0 && (
                     <TypographyP>
-                        Du har ikke lagt til noen boliglån enda.
+                        Du har ikke lagt til noen boliglån enda. Legg til et
+                        boliglån på forsiden for å se nedbetalingsplanen her.
                     </TypographyP>
                 )}
 
@@ -211,7 +241,7 @@ export default function HousingLoans() {
                                                 className='border-b'
                                             >
                                                 <td className='p-2'>
-                                                    Måned {row.term}
+                                                    {row.date}
                                                 </td>
                                                 <td className='p-2'>
                                                     {formatNumberToNOK(
@@ -251,7 +281,7 @@ export default function HousingLoans() {
                                                 className='border-b bg-gray-50 font-semibold'
                                             >
                                                 <td className='p-2'>
-                                                    År {year.year}
+                                                    {year.year}
                                                 </td>
                                                 <td className='p-2'>
                                                     {formatNumberToNOK(

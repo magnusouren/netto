@@ -161,6 +161,7 @@ export default function StudentLoan() {
                                 <th className='p-2 min-w-24'>År</th>
                                 <th className='p-2 min-w-28'>Betalinger/år</th>
                                 <th className='p-2 min-w-32'>Månedsavgift</th>
+                                <th className='p-2 min-w-32'>Startdato</th>
                                 <th className='w-12'></th>
                             </tr>
                         </thead>
@@ -240,6 +241,17 @@ export default function StudentLoan() {
                                                     monthlyFee: Number(
                                                         e.target.value || 0
                                                     ),
+                                                })
+                                            }
+                                        />
+                                    </td>
+                                    <td className='py-2 px-1'>
+                                        <Input
+                                            type='date'
+                                            value={loan.startDate}
+                                            onChange={(e) =>
+                                                handleUpdate(idx, {
+                                                    startDate: e.target.value,
                                                 })
                                             }
                                         />
