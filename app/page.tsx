@@ -26,22 +26,6 @@ import { formatNumberToNOK } from '@/lib/utils';
 import type { Loan } from '@/types';
 import { generatePaymentPlan } from '@/lib/monthlyPaymentPlan';
 
-function monthlyLoanPayment(loan: Loan): number {
-    const principal = loan.loanAmount || 0;
-    const termsPerYear = loan.termsPerYear || 12;
-    const termYears = loan.termYears || 0;
-    const n = termYears * termsPerYear;
-    if (n <= 0 || principal <= 0) return 0;
-
-    const r = (loan.interestRate || 0) / 100 / termsPerYear;
-
-    let paymentPerTerm = 0;
-    if (r === 0) paymentPerTerm = principal / n;
-    else paymentPerTerm = (principal * r) / (1 - Math.pow(1 + r, -n));
-
-    return paymentPerTerm * (12 / termsPerYear) + (loan.monthlyFee || 0);
-}
-
 export default function Home() {
     const data = useStore((s: StoreState) => s.data);
 
@@ -51,38 +35,46 @@ export default function Home() {
     );
     const monthlyIncomeGross = totalIncomeAnnual / 12;
 
-    const tax = calculateAnnualTaxes(data);
+    const annualTaxableIncome = data.incomes
+        .filter((income) => !income.taxFree)
+        .reduce((sum, income) => sum + income.amount, 0);
+    const annualTaxFreeIncome = data.incomes
+        .filter((income) => income.taxFree)
+        .reduce((sum, income) => sum + income.amount, 0);
+
+    const taxInput = {
+        ...data,
+        incomes: [
+            {
+                source: 'Taxable Income',
+                amount: annualTaxableIncome,
+            },
+        ],
+    };
+
+    const tax = calculateAnnualTaxes(taxInput);
     const monthlyTax = tax.totalTaxes / 12;
     const effectiveTaxRate = tax.effectiveTaxRate;
 
+    const netMonthlyIncome =
+        annualTaxableIncome / 12 - monthlyTax + annualTaxFreeIncome / 12;
+
     const loans: Loan[] = [...data.loans, ...data.housingLoans];
-    const loanMonthlyPayments = loans.reduce(
-        (sum, loan) => sum + monthlyLoanPayment(loan),
-        0
-    );
 
-    const housingFixed = data.fixedExpenses
-        .filter((exp) => exp.category === 'housing')
-        .reduce((sum, exp) => sum + exp.amount, 0);
-    const personalFixed = data.fixedExpenses
-        .filter((exp) => exp.category === 'personal')
-        .reduce((sum, exp) => sum + exp.amount, 0);
-    const livingMonthly = data.livingCosts.reduce(
-        (sum, cost) => sum + cost.amount,
-        0
-    );
-
-    const totalMonthlyExpenses =
-        housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
-    const netMonthlyIncome = monthlyIncomeGross - monthlyTax;
-    const cashflow = netMonthlyIncome - totalMonthlyExpenses;
-
+    const startDate = new Date();
+    startDate.setDate(1);
     const paymentPlan = generatePaymentPlan(
         data,
         0,
-        new Date().toISOString().slice(0, 10),
-        3
+        startDate.toISOString().slice(0, 10),
+        1
     );
+
+    const currentMonthPlan = paymentPlan[0];
+    const totalMonthlyExpenses = currentMonthPlan?.expenses ?? 0;
+    const cashflow = currentMonthPlan?.balance ?? 0;
+    const monthlyNetIncomePlan = currentMonthPlan?.income ?? netMonthlyIncome;
+
 
     const hasData =
         data.incomes.length > 0 ||
@@ -137,7 +129,7 @@ export default function Home() {
                                     Netto inntekt / mnd
                                 </p>
                                 <p className='text-2xl font-semibold'>
-                                    {formatNumberToNOK(netMonthlyIncome)}
+                                    {formatNumberToNOK(monthlyNetIncomePlan)}
                                 </p>
                             </div>
                             <div className='rounded-lg bg-background p-4 border'>

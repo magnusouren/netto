@@ -1,23 +1,7 @@
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import useStore, { StoreState } from '@/lib/store';
-import type { Loan } from '@/types';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
-
-function monthlyLoanPayment(loan: Loan): number {
-    const principal = loan.loanAmount || 0;
-    const termsPerYear = loan.termsPerYear || 12;
-    const termYears = loan.termYears || 0;
-    const n = termYears * termsPerYear;
-    if (n <= 0 || principal <= 0) return 0;
-
-    const r = (loan.interestRate || 0) / 100 / termsPerYear;
-
-    let paymentPerTerm = 0;
-    if (r === 0) paymentPerTerm = principal / n;
-    else paymentPerTerm = (principal * r) / (1 - Math.pow(1 + r, -n));
-
-    return paymentPerTerm * (12 / termsPerYear) + (loan.monthlyFee || 0);
-}
+import { generatePaymentPlan } from '@/lib/monthlyPaymentPlan';
 
 export default function Summary() {
     const data = useStore((s: StoreState) => s.data);
@@ -26,18 +10,37 @@ export default function Summary() {
     const totalIncomeAnnual = data.incomes.reduce((s, i) => s + i.amount, 0);
     const monthlyIncomeGross = totalIncomeAnnual / 12;
 
+    const annualTaxableIncome = data.incomes
+        .filter((income) => !income.taxFree)
+        .reduce((sum, income) => sum + income.amount, 0);
+
+    const taxInput = {
+        ...data,
+        incomes: [
+            {
+                source: 'Taxable Income',
+                amount: annualTaxableIncome,
+            },
+        ],
+    };
+
     // ---- TAX (NEW: use your function) ----
-    const tax = calculateAnnualTaxes(data);
+    const tax = calculateAnnualTaxes(taxInput);
     const monthlyTax = tax.totalTaxes / 12;
 
-    // ---- Loan monthly payments ----
-    const loans: Loan[] = [...data.loans, ...data.housingLoans];
-    const loanMonthlyPayments = loans.reduce(
-        (s, l) => s + monthlyLoanPayment(l),
-        0
+    const startDate = new Date();
+    startDate.setDate(1);
+    const [currentMonthPlan] = generatePaymentPlan(
+        data,
+        0,
+        startDate.toISOString().slice(0, 10),
+        1
     );
 
-    // ---- Fixed monthly expenses ----
+    const loanMonthlyPayments =
+        (currentMonthPlan?.totalInterest ?? 0) +
+        (currentMonthPlan?.totalPrincipal ?? 0);
+
     const housingFixed = data.fixedExpenses
         .filter((f) => f.category === 'housing')
         .reduce((s, f) => s + f.amount, 0);
@@ -48,10 +51,13 @@ export default function Summary() {
 
     const livingMonthly = data.livingCosts.reduce((s, l) => s + l.amount, 0);
 
-    const totalMonthlyExpenses =
-        housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
+    const totalMonthlyExpenses = currentMonthPlan?.expenses
+        ? currentMonthPlan.expenses
+        : housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
 
-    const balance = monthlyIncomeGross - monthlyTax - totalMonthlyExpenses;
+    const balance = currentMonthPlan?.balance
+        ? currentMonthPlan.balance
+        : monthlyIncomeGross - monthlyTax - totalMonthlyExpenses;
 
     function fmt(n: number) {
         return Math.round(n).toLocaleString();
