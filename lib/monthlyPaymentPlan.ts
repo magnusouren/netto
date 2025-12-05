@@ -1,5 +1,6 @@
 import { EconomyData } from '@/types';
 import { calculateAnnualTaxes } from './calcTaxes';
+import { computeLoanAmortization } from './amortization';
 
 export const generatePaymentPlan = (
     data: EconomyData,
@@ -8,118 +9,91 @@ export const generatePaymentPlan = (
     years = 30
 ) => {
     const incomes = data.incomes;
-    const housingLoans = data.housingLoans;
-    const loans = [...housingLoans, ...data.loans];
+    const loans = [...data.housingLoans, ...data.loans];
     const fixed = data.fixedExpenses;
     const living = data.livingCosts;
 
-    // Fixed monthly costs
     const baseFixedCosts =
-        fixed.reduce((sum, f) => sum + f.amount, 0) +
-        living.reduce((sum, l) => sum + l.amount, 0);
+        fixed.reduce((s, f) => s + f.amount, 0) +
+        living.reduce((s, l) => s + l.amount, 0);
 
-    // Start range
     const start = new Date(startDate);
     start.setDate(1);
     const totalMonths = years * 12;
 
-    // Prepare loan amortization trackers
-    const loanStates = loans.map((loan) => {
-        const startDate = new Date(loan.startDate);
-        const totalTerms = loan.termYears * loan.termsPerYear;
-        const termRate = loan.interestRate / 100 / loan.termsPerYear;
+    // Precompute amortization for all loans
+    const amortizations = loans.map((loan) => ({
+        loan,
+        startDate: new Date(loan.startDate),
+        amort: computeLoanAmortization(loan),
+    }));
 
-        const monthlyPayment =
-            (loan.loanAmount * termRate) /
-                (1 - Math.pow(1 + termRate, -totalTerms)) +
-            (loan.monthlyFee ?? 0);
-
-        return {
-            loan,
-            startDate,
-            remaining: loan.loanAmount,
-            monthlyPayment,
-            termRate,
-        };
-    });
-
-    // Annual taxable & tax-free income
+    // Income setup
     let annualTaxableIncome = incomes
         .filter((i) => !i.taxFree)
-        .reduce((sum, i) => sum + i.amount, 0);
+        .reduce((s, i) => s + i.amount, 0);
 
     const annualTaxFreeIncome = incomes
         .filter((i) => i.taxFree)
-        .reduce((sum, i) => sum + i.amount, 0);
+        .reduce((s, i) => s + i.amount, 0);
 
     const rows = [];
 
     for (let i = 0; i < totalMonths; i++) {
         const date = new Date(start);
         date.setMonth(start.getMonth() + i);
-        const monthIndex = date.getMonth();
 
-        const monthStr = date.toLocaleDateString('no-NO', {
+        const monthStr = date.toLocaleString('no-NO', {
             year: 'numeric',
             month: 'short',
         });
 
-        // Salary raise in August (monthIndex === 7)
-        if (monthIndex === 7 && i !== 0) {
+        // salary raise in August
+        if (date.getMonth() === 7 && i !== 0) {
             annualTaxableIncome *= 1 + salaryAnnualGrowth / 100;
         }
 
-        // Compute tax ONLY on taxable income
         const taxResult = calculateAnnualTaxes({
             ...data,
-            incomes: [
-                {
-                    source: 'Taxable Income',
-                    amount: annualTaxableIncome,
-                },
-            ],
+            incomes: [{ source: 'Taxable', amount: annualTaxableIncome }],
         });
 
-        // Net monthly income after tax
-        const monthlyTaxedIncome = taxResult.netMonthlyIncome;
-
-        // Add tax-free monthly income
-        const monthlyTaxFreeIncome = annualTaxFreeIncome / 12;
-
-        const monthlyIncome = monthlyTaxedIncome + monthlyTaxFreeIncome;
+        const monthlyIncome =
+            taxResult.netMonthlyIncome + annualTaxFreeIncome / 12;
 
         let totalInterest = 0;
         let totalPrincipal = 0;
+        let totalFees = 0;
         let housingPrincipal = 0;
 
-        loanStates.forEach((ls) => {
-            if (date < ls.startDate || ls.remaining <= 0) return;
+        // pull exact loan month from amortization
+        amortizations.forEach(({ loan, startDate, amort }) => {
+            if (date < startDate) return;
 
-            const interest = ls.remaining * ls.termRate;
-            const principal = Math.min(
-                ls.monthlyPayment - interest,
-                ls.remaining
-            );
+            const monthIndex =
+                (date.getFullYear() - startDate.getFullYear()) * 12 +
+                (date.getMonth() - startDate.getMonth());
 
-            ls.remaining -= principal;
+            const row = amort.monthly[monthIndex];
+            if (!row) return; // loan ended
 
-            totalInterest += interest;
-            totalPrincipal += principal;
+            totalInterest += row.interest;
+            totalPrincipal += row.principal;
+            totalFees += row.fee;
 
-            // Housing principal = equity growth
-            if ('capital' in ls.loan) {
-                housingPrincipal += principal;
+            if ('capital' in loan) {
+                housingPrincipal += row.principal;
             }
         });
 
-        const loanCosts = totalInterest + totalPrincipal;
-        const totalExpenses = baseFixedCosts + loanCosts;
-        const balance = monthlyIncome - totalExpenses;
+        const loanCosts = totalInterest + totalPrincipal + totalFees;
+        const expenses = baseFixedCosts + loanCosts;
+        const balance = monthlyIncome - expenses;
 
         rows.push({
             month: monthStr,
             income: Math.round(monthlyIncome),
-            expenses: Math.round(totalExpenses),
+            expenses: Math.round(expenses),
             balance: Math.round(balance),
             totalInterest: Math.round(totalInterest),
             totalPrincipal: Math.round(totalPrincipal),

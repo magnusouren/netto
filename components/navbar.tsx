@@ -46,21 +46,6 @@ export default function Navbar() {
                             </Link>
                         </nav>
                     </div>
-
-                    {/* <div className='flex items-center gap-3'>
-                        <Button
-                            variant='ghost'
-                            size='sm'
-                            className='hidden md:inline-flex text-muted-foreground'
-                            disabled
-                        >
-                            Innstillinger
-                        </Button>
-
-                        <div className='w-9 h-9 rounded-full bg-muted/10 flex items-center justify-center'>
-                            <User className='w-5 h-5 text-muted-foreground' />
-                        </div>
-                    </div> */}
                 </div>
             </div>
         </header>

@@ -1,90 +1,84 @@
 import type { EconomyData, Loan } from '@/types';
+import { computeLoanAmortization } from './amortization';
 
 /**
- * Calculates annual tax and returns:
- * - net annual income
- * - net monthly income
- * - total taxes
- * - all intermediate values
+ * Calculates annual taxes using real amortization interest.
  */
 export const calculateAnnualTaxes = (data: EconomyData) => {
     const incomes = data.incomes;
-    const loansArr = data.loans;
-    const housingLoans = data.housingLoans;
 
+    // ------ TAXABLE INCOME ------
     const totalIncome = incomes
-        .filter((income) => !income.taxFree)
-        .reduce((s, i) => s + i.amount, 0);
+        .filter((inc) => !inc.taxFree)
+        .reduce((sum, inc) => sum + inc.amount, 0);
 
-    // ----- Fradrag -----
-    const minstefradrag = Math.min(totalIncome * 0.46, 92000);
+    const taxFreeIncome = incomes
+        .filter((inc) => inc.taxFree)
+        .reduce((sum, inc) => sum + inc.amount, 0);
 
-    const loans: Loan[] = [...loansArr, ...housingLoans];
+    // ------ REAL INTEREST DEDUCTION ------
+    const allLoans: Loan[] = [...data.loans, ...data.housingLoans];
 
-    // Årlige renter (for fradrag)
-    const loanRows = loans.map((loan) => {
-        const paidInterest =
-            ((loan.loanAmount || 0) * (loan.interestRate || 0)) / 100;
-        return {
-            description: loan.description,
-            paidInterest,
-            taxDeduction: paidInterest * 0.22,
-        };
+    let totalPaidInterest = 0;
+
+    allLoans.forEach((loan) => {
+        const amort = computeLoanAmortization(loan);
+
+        // Only take 12 months of interest for tax purpose
+        const loanAnnualInterest = amort.monthly
+            .slice(0, 12)
+            .reduce((s, r) => s + r.interest, 0);
+
+        totalPaidInterest += loanAnnualInterest;
     });
 
-    const totalPaidInterest = loanRows.reduce((s, r) => s + r.paidInterest, 0);
-    const totalInterestDeduction = loanRows.reduce(
-        (s, r) => s + r.taxDeduction,
-        0
-    );
+    const totalInterestDeduction = totalPaidInterest * 0.22; // Skattefradrag
+
+    // ------ MINSTEFRADRAG ------
+    const minstefradrag = Math.min(totalIncome * 0.46, 92000);
 
     const totalDeductions = minstefradrag + totalInterestDeduction;
 
-    // ----- Skatteberegning -----
-    const inntekt = totalIncome;
-    const fradrag = totalDeductions;
-    const alminnelig = Math.max(inntekt - fradrag, 0);
+    // ------ ALMINNELIG INNTEKT ------
+    const alminnelig = Math.max(totalIncome - totalDeductions, 0);
 
     const skatt_alminnelig = alminnelig * 0.1772;
-    const trygdeavgift = inntekt * 0.077;
+    const trygdeavgift = totalIncome * 0.077;
 
-    const trinn1 = Math.max(Math.min(inntekt, 306050) - 217400, 0) * 0.017;
-    const trinn2 = Math.max(Math.min(inntekt, 697150) - 306050, 0) * 0.04;
-    const trinn3 = Math.max(Math.min(inntekt, 942400) - 697150, 0) * 0.137;
-    const trinn4 = Math.max(Math.min(inntekt, 1410750) - 942400, 0) * 0.167;
-    const trinn5 = Math.max(inntekt - 1410750, 0) * 0.177;
+    // ------ TRINNSKATT ------
+    const trinn1 = Math.max(Math.min(totalIncome, 306050) - 217400, 0) * 0.017;
+    const trinn2 = Math.max(Math.min(totalIncome, 697150) - 306050, 0) * 0.04;
+    const trinn3 = Math.max(Math.min(totalIncome, 942400) - 697150, 0) * 0.137;
+    const trinn4 = Math.max(Math.min(totalIncome, 1410750) - 942400, 0) * 0.167;
+    const trinn5 = Math.max(totalIncome - 1410750, 0) * 0.177;
 
     const trinnskatt = trinn1 + trinn2 + trinn3 + trinn4 + trinn5;
 
     const totalTaxes = skatt_alminnelig + trygdeavgift + trinnskatt;
     const netAnnualIncome = totalIncome - totalTaxes;
+    const netMonthlyIncome = netAnnualIncome / 12;
 
-    const effectiveTaxRate = (totalTaxes / totalIncome) * 100;
+    const effectiveTaxRate =
+        totalIncome > 0 ? (totalTaxes / totalIncome) * 100 : 0;
 
     return {
         totalIncome,
-        totalTaxes,
         netAnnualIncome,
-        netMonthlyIncome: netAnnualIncome / 12,
+        netMonthlyIncome,
+        totalTaxes,
+
+        // Deductions
         minstefradrag,
         totalPaidInterest,
         totalInterestDeduction,
-        loanRows,
+        totalDeductions,
+        alminnelig,
+
+        // Components
         skatt_alminnelig,
         trygdeavgift,
         trinnskatt,
-        alminnelig,
-        totalDeductions,
+
         effectiveTaxRate,
     };
-};
-
-export const calculateMonthlyTaxDistribution = (
-    annualTaxes: number,
-    currentDate: Date
-) => {
-    const month = currentDate.getMonth(); // 0 = Jan, 7 = Aug
-    const monthsLeft = 12 - month;
-
-    return annualTaxes / monthsLeft; // taxes spread across remaining months
 };

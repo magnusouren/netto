@@ -1,18 +1,14 @@
 import { HousingLoan } from '@/types';
+import { computeLoanAmortization } from './amortization';
 
 export function loanPaymentPlan(
     loan: HousingLoan,
     priceIncrease: number, // annual %
     yearsToShow: number
 ) {
-    const {
-        loanAmount,
-        interestRate,
-        termYears,
-        termsPerYear,
-        monthlyFee = 0,
-        startDate,
-    } = loan;
+    const amort = computeLoanAmortization(loan);
+
+    const { loanAmount, capital, startDate, termsPerYear, termYears } = loan;
 
     const totalPayments = termYears * termsPerYear;
     const maxPaymentsToShow = Math.min(
@@ -20,18 +16,14 @@ export function loanPaymentPlan(
         totalPayments
     );
 
-    const ratePerTerm = interestRate / 100 / termsPerYear;
+    // Base housing value = loan + equity contribution
+    let housingValue = loanAmount + capital;
 
-    // --- Annuitetsbeløp (fixed payment per term) ---
-    const annuityPayment =
-        (loanAmount * ratePerTerm) /
-            (1 - Math.pow(1 + ratePerTerm, -totalPayments)) +
-        monthlyFee;
-
-    let remainingDebt = loanAmount;
-
-    // Parse start date
     const start = new Date(startDate);
+    start.setDate(1);
+
+    const monthlyGrowthRate = Math.pow(1 + priceIncrease / 100, 1 / 12);
+
     const entries: {
         monthYear: string;
         remainingDebt: number;
@@ -39,33 +31,23 @@ export function loanPaymentPlan(
         equity: number;
     }[] = [];
 
-    // Start housing value = loan + kapital
-    let housingValue = loan.loanAmount + loan.capital;
-
     for (let i = 0; i < maxPaymentsToShow; i++) {
-        // --- Month-year formatting ---
+        const row = amort.monthly[i];
+        if (!row) break; // loan finished early
+
+        // Format month
         const currentDate = new Date(start);
         currentDate.setMonth(start.getMonth() + i);
+
         const monthYear = currentDate.toLocaleString('no-NO', {
             month: 'short',
             year: 'numeric',
         });
 
-        // --- Calculate interest + principal ---
-        const interest = remainingDebt * ratePerTerm;
-        const principal = annuityPayment - interest;
-
-        // Stop going negative on last payments
-        if (principal >= remainingDebt) {
-            remainingDebt = 0;
-        } else {
-            remainingDebt -= principal;
-        }
-
-        // --- Housing price growth (monthly) ---
-        const monthlyGrowthRate = Math.pow(1 + priceIncrease / 100, 1 / 12);
+        // Update housing value
         housingValue *= monthlyGrowthRate;
 
+        const remainingDebt = row.balance;
         const equity = housingValue - remainingDebt;
 
         entries.push({
@@ -74,9 +56,6 @@ export function loanPaymentPlan(
             housingValue: Math.round(housingValue),
             equity: Math.round(equity),
         });
-
-        // If the loan is paid off early, we stop
-        if (remainingDebt <= 0) break;
     }
 
     return entries;

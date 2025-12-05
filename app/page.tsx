@@ -120,7 +120,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                <Card className='border-primary/20 shadow-md bg-linear-to-br from-background to-muted/60'>
+                <Card className='border-primary/20 shadow-md bg-linear-to-br from-background to-brandBlue/10'>
                     <CardHeader>
                         <CardTitle className='text-xl'>
                             Det viktigste i et blikk
@@ -230,88 +230,106 @@ export default function Home() {
 
                 {hasData ? (
                     <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
-                                <CardTitle>Brutto inntekt / mnd</CardTitle>
+                                <CardTitle className='text-brandBlue'>
+                                    Brutto inntekt / mnd
+                                </CardTitle>
                                 <CardDescription>
                                     Summen av alle inntektskilder.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {formatNumberToNOK(monthlyIncomeGross)}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Skatt / mnd</CardTitle>
                                 <CardDescription>
                                     Beregnede skatter og avgifter.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {formatNumberToNOK(monthlyTax)}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Totale utgifter / mnd</CardTitle>
                                 <CardDescription>
                                     Lån, faste kostnader og levekostnader.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {formatNumberToNOK(totalMonthlyExpenses)}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Kontantstrøm / mnd</CardTitle>
                                 <CardDescription>
                                     Det du har igjen etter skatt og utgifter.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {formatNumberToNOK(cashflow)}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Aktive lån</CardTitle>
                                 <CardDescription>
                                     Antall lån og boliglån registrert.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {loans.length}
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Effektiv skattesats</CardTitle>
                                 <CardDescription>
                                     Din beregnede gjennomsnittsskatt.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {effectiveTaxRate.toFixed(1)} %
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
                             <CardHeader>
                                 <CardTitle>Nedbetaling denne måneden</CardTitle>
                                 <CardDescription>
-                                    Sparing på lån i inneværende måned.
+                                    Sparing på boliglån i inneværende måned.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className='text-2xl font-semibold'>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
                                 {formatNumberToNOK(
                                     paymentPlan[0].totalPrincipal
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
+                            <CardHeader>
+                                <CardTitle>
+                                    Netto regnskap denne måneden
+                                </CardTitle>
+                                <CardDescription>
+                                    Cashflow + nedbetaling på lån.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className='text-2xl font-semibold text-brandBlue'>
+                                {formatNumberToNOK(
+                                    paymentPlan[0].balancePlusPrincipal
                                 )}
                             </CardContent>
                         </Card>

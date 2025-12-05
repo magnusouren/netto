@@ -4,6 +4,7 @@ import useStore, { StoreState } from '@/lib/store';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
+import { formatNumberToNOK } from '@/lib/utils';
 
 export default function Taxes() {
     const data = useStore((s: StoreState) => s.data);
@@ -33,7 +34,7 @@ export default function Taxes() {
                             <tr key={i}>
                                 <td className='p-2'>{inc.source}</td>
                                 <td className='p-2 text-right'>
-                                    {inc.amount.toLocaleString()} kr
+                                    {formatNumberToNOK(inc.amount)}
                                 </td>
                             </tr>
                         ))}
@@ -41,7 +42,7 @@ export default function Taxes() {
                         <tr className='border-t italic'>
                             <td className='p-2'>Total brutto inntekt</td>
                             <td className='p-2 text-right'>
-                                {tax.totalIncome.toLocaleString()} kr
+                                {formatNumberToNOK(tax.totalIncome)}
                             </td>
                         </tr>
 
@@ -52,27 +53,17 @@ export default function Taxes() {
                             </td>
                         </tr>
 
-                        {tax.loanRows.map((row, i) => (
-                            <tr key={i}>
-                                <td className='p-2'>
-                                    Renter {row.description}
-                                </td>
-                                <td className='p-2 text-right'>
-                                    {Math.round(
-                                        row.paidInterest
-                                    ).toLocaleString()}{' '}
-                                    kr
-                                </td>
-                            </tr>
-                        ))}
+                        <tr>
+                            <td className='p-2'>Renter</td>
+                            <td className='p-2 text-right'>
+                                {formatNumberToNOK(tax.totalPaidInterest)}
+                            </td>
+                        </tr>
 
                         <tr className='border-t italic'>
                             <td className='p-2'>Totalt renter</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.totalPaidInterest
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.totalPaidInterest)}
                             </td>
                         </tr>
 
@@ -86,28 +77,21 @@ export default function Taxes() {
                         <tr>
                             <td className='p-2'>Minstefradrag</td>
                             <td className='p-2 text-right'>
-                                {Math.round(tax.minstefradrag).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.minstefradrag)}
                             </td>
                         </tr>
 
                         <tr>
                             <td className='p-2'>Rentefradrag</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.totalInterestDeduction
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.totalInterestDeduction)}
                             </td>
                         </tr>
 
                         <tr className='border-t italic'>
                             <td className='p-2'>Totale fradrag</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.totalDeductions
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.totalDeductions)}
                             </td>
                         </tr>
 
@@ -123,32 +107,28 @@ export default function Taxes() {
                                 Skattegrunnlag (alminnelig inntekt)
                             </td>
                             <td className='p-2 text-right'>
-                                {Math.round(tax.alminnelig).toLocaleString()} kr
+                                {formatNumberToNOK(tax.alminnelig)}
                             </td>
                         </tr>
 
                         <tr>
                             <td className='p-2'>Alminnelig skatt (17.72%)</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.skatt_alminnelig
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.skatt_alminnelig)}
                             </td>
                         </tr>
 
                         <tr>
                             <td className='p-2'>Trygdeavgift (7.7%)</td>
                             <td className='p-2 text-right'>
-                                {Math.round(tax.trygdeavgift).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.trygdeavgift)}
                             </td>
                         </tr>
 
                         <tr>
                             <td className='p-2'>Trinnskatt</td>
                             <td className='p-2 text-right'>
-                                {Math.round(tax.trinnskatt).toLocaleString()} kr
+                                {formatNumberToNOK(tax.trinnskatt)}
                             </td>
                         </tr>
 
@@ -162,7 +142,7 @@ export default function Taxes() {
                         <tr className='border-t italic'>
                             <td className='p-2'>Totale skatter</td>
                             <td className='p-2 text-right'>
-                                {Math.round(tax.totalTaxes).toLocaleString()} kr
+                                {formatNumberToNOK(tax.totalTaxes)}
                             </td>
                         </tr>
 
@@ -176,20 +156,14 @@ export default function Taxes() {
                         <tr>
                             <td className='p-2'>Netto årsinntekt</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.netAnnualIncome
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.netAnnualIncome)}
                             </td>
                         </tr>
 
                         <tr>
                             <td className='p-2'>Netto månedsinntekt</td>
                             <td className='p-2 text-right'>
-                                {Math.round(
-                                    tax.netMonthlyIncome
-                                ).toLocaleString()}{' '}
-                                kr
+                                {formatNumberToNOK(tax.netMonthlyIncome)}
                             </td>
                         </tr>
                     </tbody>
