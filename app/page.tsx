@@ -1,17 +1,30 @@
 'use client';
 
 import Link from 'next/link';
-import { Calculator, PiggyBank, Sparkles, TrendingUp } from 'lucide-react';
+import {
+    Calculator,
+    HandCoins,
+    PiggyBank,
+    Sparkles,
+    TrendingUp,
+} from 'lucide-react';
 
 import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
 import useStore, { StoreState } from '@/lib/store';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
 import { formatNumberToNOK } from '@/lib/utils';
 import type { Loan } from '@/types';
+import { generatePaymentPlan } from '@/lib/monthlyPaymentPlan';
 
 function monthlyLoanPayment(loan: Loan): number {
     const principal = loan.loanAmount || 0;
@@ -32,14 +45,21 @@ function monthlyLoanPayment(loan: Loan): number {
 export default function Home() {
     const data = useStore((s: StoreState) => s.data);
 
-    const totalIncomeAnnual = data.incomes.reduce((sum, income) => sum + income.amount, 0);
+    const totalIncomeAnnual = data.incomes.reduce(
+        (sum, income) => sum + income.amount,
+        0
+    );
     const monthlyIncomeGross = totalIncomeAnnual / 12;
 
     const tax = calculateAnnualTaxes(data);
     const monthlyTax = tax.totalTaxes / 12;
+    const effectiveTaxRate = tax.effectiveTaxRate;
 
     const loans: Loan[] = [...data.loans, ...data.housingLoans];
-    const loanMonthlyPayments = loans.reduce((sum, loan) => sum + monthlyLoanPayment(loan), 0);
+    const loanMonthlyPayments = loans.reduce(
+        (sum, loan) => sum + monthlyLoanPayment(loan),
+        0
+    );
 
     const housingFixed = data.fixedExpenses
         .filter((exp) => exp.category === 'housing')
@@ -47,11 +67,22 @@ export default function Home() {
     const personalFixed = data.fixedExpenses
         .filter((exp) => exp.category === 'personal')
         .reduce((sum, exp) => sum + exp.amount, 0);
-    const livingMonthly = data.livingCosts.reduce((sum, cost) => sum + cost.amount, 0);
+    const livingMonthly = data.livingCosts.reduce(
+        (sum, cost) => sum + cost.amount,
+        0
+    );
 
-    const totalMonthlyExpenses = housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
+    const totalMonthlyExpenses =
+        housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
     const netMonthlyIncome = monthlyIncomeGross - monthlyTax;
     const cashflow = netMonthlyIncome - totalMonthlyExpenses;
+
+    const paymentPlan = generatePaymentPlan(
+        data,
+        0,
+        new Date().toISOString().slice(0, 10),
+        3
+    );
 
     const hasData =
         data.incomes.length > 0 ||
@@ -64,15 +95,16 @@ export default function Home() {
         <div className='w-full py-10 space-y-12'>
             <section className='grid gap-8 lg:grid-cols-[1.1fr_0.9fr] items-center'>
                 <div className='space-y-6'>
-                    <div className='inline-flex items-center rounded-full bg-muted px-3 py-1 text-sm font-medium text-muted-foreground'>
-                        <Sparkles className='mr-2 h-4 w-4' />
+                    <div className='inline-flex items-center rounded-full bg-brandOrange/20 px-3 py-1 text-sm font-medium text-brandBlue'>
+                        <HandCoins className='mr-2 h-4 w-4 ' />
                         Nettbasert økonomiverktøy
                     </div>
                     <TypographyH1>Få oversikt over økonomien din</TypographyH1>
                     <TypographyP>
-                        NETTO hjelper deg å samle inntekter, utgifter og lån på ett sted
-                        slik at du raskt ser hvordan nøkkeltallene dine utvikler seg. Legg inn
-                        grunnlagsdata og utforsk kalkulatorene for å ta bedre beslutninger.
+                        NETTO hjelper deg å samle inntekter, utgifter og lån på
+                        ett sted slik at du raskt ser hvordan nøkkeltallene dine
+                        utvikler seg. Legg inn grunnlagsdata og utforsk
+                        kalkulatorene for å ta bedre beslutninger.
                     </TypographyP>
 
                     <div className='flex flex-wrap gap-3'>
@@ -82,38 +114,55 @@ export default function Home() {
                         <Button asChild variant='outline'>
                             <Link href='/tax'>Se skattekalkulator</Link>
                         </Button>
-                        <Button asChild variant='ghost'>
+                        <Button asChild variant='outline'>
                             <Link href='/plan'>Egenkapital-plan</Link>
                         </Button>
                     </div>
                 </div>
 
-                <Card className='border-primary/20 shadow-md bg-gradient-to-br from-background to-muted/60'>
+                <Card className='border-primary/20 shadow-md bg-linear-to-br from-background to-muted/60'>
                     <CardHeader>
-                        <CardTitle className='text-xl'>Det viktigste i et blikk</CardTitle>
+                        <CardTitle className='text-xl'>
+                            Det viktigste i et blikk
+                        </CardTitle>
                         <CardDescription>
-                            Følg med på nettoinntekt, løpende utgifter og hvor mye som er igjen til sparing.
+                            Følg med på nettoinntekt, løpende utgifter og hvor
+                            mye som er igjen til sparing.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className='grid gap-4 sm:grid-cols-2'>
                             <div className='rounded-lg bg-background p-4 border'>
-                                <p className='text-sm text-muted-foreground'>Netto inntekt / mnd</p>
-                                <p className='text-2xl font-semibold'>{formatNumberToNOK(netMonthlyIncome)}</p>
+                                <p className='text-sm text-muted-foreground'>
+                                    Netto inntekt / mnd
+                                </p>
+                                <p className='text-2xl font-semibold'>
+                                    {formatNumberToNOK(netMonthlyIncome)}
+                                </p>
                             </div>
                             <div className='rounded-lg bg-background p-4 border'>
-                                <p className='text-sm text-muted-foreground'>Løpende utgifter / mnd</p>
+                                <p className='text-sm text-muted-foreground'>
+                                    Løpende utgifter / mnd
+                                </p>
                                 <p className='text-2xl font-semibold'>
                                     {formatNumberToNOK(totalMonthlyExpenses)}
                                 </p>
                             </div>
                             <div className='rounded-lg bg-background p-4 border'>
-                                <p className='text-sm text-muted-foreground'>Aktive lån</p>
-                                <p className='text-2xl font-semibold'>{loans.length}</p>
+                                <p className='text-sm text-muted-foreground'>
+                                    Aktive lån
+                                </p>
+                                <p className='text-2xl font-semibold'>
+                                    {loans.length}
+                                </p>
                             </div>
                             <div className='rounded-lg bg-background p-4 border'>
-                                <p className='text-sm text-muted-foreground'>Disponibelt etter alt</p>
-                                <p className='text-2xl font-semibold'>{formatNumberToNOK(cashflow)}</p>
+                                <p className='text-sm text-muted-foreground'>
+                                    Kontantstrøm / mnd
+                                </p>
+                                <p className='text-2xl font-semibold'>
+                                    {formatNumberToNOK(cashflow)}
+                                </p>
                             </div>
                         </div>
                     </CardContent>
@@ -122,16 +171,17 @@ export default function Home() {
 
             <section className='space-y-6'>
                 <TypographyH2>Hvorfor bruke NETTO?</TypographyH2>
-                <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3 mt-4'>
                     <Card>
                         <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-primary/10 p-2 text-primary'>
+                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
                                 <Calculator className='h-5 w-5' />
                             </div>
                             <div>
                                 <CardTitle>Presise kalkulatorer</CardTitle>
                                 <CardDescription>
-                                    Beregn skatt, lån og nedbetalingsplaner med norske forutsetninger og oppdaterte satser.
+                                    Beregn skatt, lån og nedbetalingsplaner med
+                                    norske forutsetninger og oppdaterte satser.
                                 </CardDescription>
                             </div>
                         </CardHeader>
@@ -139,13 +189,15 @@ export default function Home() {
 
                     <Card>
                         <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-primary/10 p-2 text-primary'>
+                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
                                 <TrendingUp className='h-5 w-5' />
                             </div>
                             <div>
                                 <CardTitle>Helhetlig oversikt</CardTitle>
                                 <CardDescription>
-                                    Kombiner inntekter, lån og utgifter for å se hvordan kontantstrømmen din faktisk ser ut per måned.
+                                    Kombiner inntekter, lån og utgifter for å se
+                                    hvordan kontantstrømmen din faktisk ser ut
+                                    per måned.
                                 </CardDescription>
                             </div>
                         </CardHeader>
@@ -153,13 +205,15 @@ export default function Home() {
 
                     <Card>
                         <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-primary/10 p-2 text-primary'>
+                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
                                 <PiggyBank className='h-5 w-5' />
                             </div>
                             <div>
                                 <CardTitle>Plan for sparing</CardTitle>
                                 <CardDescription>
-                                    Følg egenkapital over tid og se hvordan små justeringer påvirker hvor mye du kan legge til side.
+                                    Følg egenkapital over tid og se hvordan små
+                                    justeringer påvirker hvor mye du kan legge
+                                    til side.
                                 </CardDescription>
                             </div>
                         </CardHeader>
@@ -170,7 +224,8 @@ export default function Home() {
             <section className='space-y-4'>
                 <TypographyH2>Nøkkeltall fra dine data</TypographyH2>
                 <TypographyP>
-                    Har du lagt inn inntekter, lån eller utgifter, viser vi et raskt overblikk under. Tallene lagres kun lokalt i nettleseren din.
+                    Har du lagt inn inntekter, lån eller utgifter, viser vi et
+                    raskt overblikk under.
                 </TypographyP>
 
                 {hasData ? (
@@ -178,7 +233,9 @@ export default function Home() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Brutto inntekt / mnd</CardTitle>
-                                <CardDescription>Summen av alle inntektskilder.</CardDescription>
+                                <CardDescription>
+                                    Summen av alle inntektskilder.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className='text-2xl font-semibold'>
                                 {formatNumberToNOK(monthlyIncomeGross)}
@@ -188,7 +245,9 @@ export default function Home() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Skatt / mnd</CardTitle>
-                                <CardDescription>Beregnede skatter og avgifter.</CardDescription>
+                                <CardDescription>
+                                    Beregnede skatter og avgifter.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className='text-2xl font-semibold'>
                                 {formatNumberToNOK(monthlyTax)}
@@ -198,7 +257,9 @@ export default function Home() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Totale utgifter / mnd</CardTitle>
-                                <CardDescription>Lån, faste kostnader og levekostnader.</CardDescription>
+                                <CardDescription>
+                                    Lån, faste kostnader og levekostnader.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className='text-2xl font-semibold'>
                                 {formatNumberToNOK(totalMonthlyExpenses)}
@@ -208,10 +269,50 @@ export default function Home() {
                         <Card>
                             <CardHeader>
                                 <CardTitle>Kontantstrøm / mnd</CardTitle>
-                                <CardDescription>Det du har igjen etter skatt og utgifter.</CardDescription>
+                                <CardDescription>
+                                    Det du har igjen etter skatt og utgifter.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className='text-2xl font-semibold'>
                                 {formatNumberToNOK(cashflow)}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Aktive lån</CardTitle>
+                                <CardDescription>
+                                    Antall lån og boliglån registrert.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className='text-2xl font-semibold'>
+                                {loans.length}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Effektiv skattesats</CardTitle>
+                                <CardDescription>
+                                    Din beregnede gjennomsnittsskatt.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className='text-2xl font-semibold'>
+                                {effectiveTaxRate.toFixed(1)} %
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Nedbetaling denne måneden</CardTitle>
+                                <CardDescription>
+                                    Sparing på lån i inneværende måned.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className='text-2xl font-semibold'>
+                                {formatNumberToNOK(
+                                    paymentPlan[0].totalPrincipal
+                                )}
                             </CardContent>
                         </Card>
                     </div>
@@ -220,12 +321,16 @@ export default function Home() {
                         <CardHeader>
                             <CardTitle>Ingen nøkkeltall ennå</CardTitle>
                             <CardDescription>
-                                Legg inn inntekter, lån og utgifter under «Grunnlagsdata» så fylles nøkkeltallene automatisk ut.
+                                Legg inn inntekter, lån og utgifter under
+                                «Grunnlagsdata» så fylles nøkkeltallene
+                                automatisk ut.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button asChild>
-                                <Link href='/data'>Start med å legge inn data</Link>
+                                <Link href='/data'>
+                                    Start med å legge inn data
+                                </Link>
                             </Button>
                         </CardContent>
                     </Card>
