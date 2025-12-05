@@ -54,17 +54,20 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
             <Link href='/data' className={base} onClick={onClick}>
                 Grunnlagsdata
             </Link>
-            <Link href='/tax' className={base} onClick={onClick}>
+            <Link href='/tax-details' className={base} onClick={onClick}>
                 Skattedetaljer
             </Link>
-            <Link href='/loan' className={base} onClick={onClick}>
+            <Link href='/repayment-plans' className={base} onClick={onClick}>
                 Nedbetalingsplaner
             </Link>
-            <Link href='/plan' className={base} onClick={onClick}>
+            <Link href='/equity-development' className={base} onClick={onClick}>
                 Egenkapitalutvikling
             </Link>
-            <Link href='/paymentPlan' className={base} onClick={onClick}>
+            <Link href='/monthly-economy' className={base} onClick={onClick}>
                 Månedlig økonomi
+            </Link>
+            <Link href='/summary' className={base} onClick={onClick}>
+                Oppsummering
             </Link>
         </>
     );
