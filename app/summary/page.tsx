@@ -47,7 +47,7 @@ function monthlyLoanBreakdown(loan: Loan) {
 export default function SummaryPage() {
     const data = useStore((s: StoreState) => s.data);
 
-    const priceGrowth = 2; // annual % used for housing appreciation snapshot
+    const priceGrowth = 3.5; // annual % used for housing appreciation snapshot
 
     const totalIncomeAnnual = data.incomes.reduce((s, i) => s + i.amount, 0);
     const taxFreeIncome = data.incomes
@@ -90,10 +90,7 @@ export default function SummaryPage() {
     const livingMonthly = data.livingCosts.reduce((s, l) => s + l.amount, 0);
 
     const totalMonthlyExpenses =
-        housingFixed +
-        personalFixed +
-        livingMonthly +
-        loanMonthlyTotals.total;
+        housingFixed + personalFixed + livingMonthly + loanMonthlyTotals.total;
 
     const balance = netMonthlyIncome - totalMonthlyExpenses;
 
@@ -117,19 +114,36 @@ export default function SummaryPage() {
         <div className='py-10 space-y-10'>
             <section className='space-y-4'>
                 <div className='flex flex-wrap items-center gap-3'>
-                    <Badge variant='outline' className='text-brandBlue bg-brandOrange/15'>
+                    <Badge
+                        variant='outline'
+                        className='text-brandBlue bg-brandOrange/15'
+                    >
                         <Sparkles className='mr-2 h-4 w-4' />
                         Oppsummering
                     </Badge>
                     <TypographyH1>Din økonomiske status nå</TypographyH1>
-                    <TypographyP className='max-w-2xl'>
+                    <TypographyP>
                         Se alle inntekter, utgifter og lån på ett sted. Vi viser
-                        både månedlige beløp og hvordan boliglån bygger egenkapital
-                        gjennom avdrag og prisvekst.
+                        både månedlige beløp og hvordan boliglån bygger
+                        egenkapital gjennom avdrag og prisvekst.
                     </TypographyP>
                 </div>
 
                 <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+                    <Card className='border-primary/20 shadow-sm'>
+                        <CardHeader className='pb-2'>
+                            <CardDescription className='flex items-center gap-2 text-xs uppercase tracking-wide'>
+                                <ArrowUpCircle className='h-4 w-4 text-brandBlue' />
+                                Brutto inntekt / mnd
+                            </CardDescription>
+                            <CardTitle className='text-2xl'>
+                                {fmt(monthlyIncomeGross)}
+                            </CardTitle>
+                            <p className='text-xs text-muted-foreground'>
+                                Før skatt og fradrag
+                            </p>
+                        </CardHeader>
+                    </Card>
                     <Card className='border-primary/20 shadow-sm'>
                         <CardHeader className='pb-2'>
                             <CardDescription className='flex items-center gap-2 text-xs uppercase tracking-wide'>
@@ -140,7 +154,8 @@ export default function SummaryPage() {
                                 {fmt(netMonthlyIncome)}
                             </CardTitle>
                             <p className='text-xs text-muted-foreground'>
-                                Etter skatt ({tax.effectiveTaxRate.toFixed(1)}% sats)
+                                Etter skatt ({tax.effectiveTaxRate.toFixed(1)}%
+                                sats)
                             </p>
                         </CardHeader>
                     </Card>
@@ -174,21 +189,6 @@ export default function SummaryPage() {
                             </p>
                         </CardHeader>
                     </Card>
-
-                    <Card className='border-primary/20 shadow-sm'>
-                        <CardHeader className='pb-2'>
-                            <CardDescription className='flex items-center gap-2 text-xs uppercase tracking-wide'>
-                                <ArrowUpCircle className='h-4 w-4 text-brandBlue' />
-                                Brutto inntekt / mnd
-                            </CardDescription>
-                            <CardTitle className='text-2xl'>
-                                {fmt(monthlyIncomeGross)}
-                            </CardTitle>
-                            <p className='text-xs text-muted-foreground'>
-                                Før skatt og fradrag
-                            </p>
-                        </CardHeader>
-                    </Card>
                 </div>
             </section>
 
@@ -200,15 +200,25 @@ export default function SummaryPage() {
                             Inntekter
                         </CardTitle>
                         <CardDescription>
-                            Både skattepliktige og skattefrie kilder, vist per måned.
+                            Både skattepliktige og skattefrie kilder, vist per
+                            måned.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-4'>
                         <div className='flex flex-wrap gap-3 text-sm text-muted-foreground'>
-                            <span>Skattepliktig: {fmt((totalIncomeAnnual - taxFreeIncome) / 12)}</span>
-                            <Separator orientation='vertical' className='hidden sm:block h-4' />
+                            <span>
+                                Skattepliktig:{' '}
+                                {fmt((totalIncomeAnnual - taxFreeIncome) / 12)}
+                            </span>
+                            <Separator
+                                orientation='vertical'
+                                className='hidden sm:block h-4'
+                            />
                             <span>Skattefritt: {fmt(taxFreeIncome / 12)}</span>
-                            <Separator orientation='vertical' className='hidden sm:block h-4' />
+                            <Separator
+                                orientation='vertical'
+                                className='hidden sm:block h-4'
+                            />
                             <span>Skatt per mnd: {fmt(monthlyTax)}</span>
                         </div>
 
@@ -219,7 +229,11 @@ export default function SummaryPage() {
                                         Skattepliktige inntekter
                                     </CardDescription>
                                     <CardTitle className='text-lg'>
-                                        {fmt((totalIncomeAnnual - taxFreeIncome) / 12)}
+                                        {fmt(
+                                            (totalIncomeAnnual -
+                                                taxFreeIncome) /
+                                                12
+                                        )}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className='space-y-2'>
@@ -230,14 +244,19 @@ export default function SummaryPage() {
                                                 key={`${inc.source}-${idx}`}
                                                 className='flex items-center justify-between text-sm'
                                             >
-                                                <span className='text-muted-foreground'>{inc.source}</span>
+                                                <span className='text-muted-foreground'>
+                                                    {inc.source}
+                                                </span>
                                                 <span className='font-medium'>
                                                     {fmt(inc.amount / 12)}
                                                 </span>
                                             </div>
                                         ))}
-                                    {data.incomes.filter((i) => !i.taxFree).length === 0 && (
-                                        <p className='text-sm text-muted-foreground'>Ingen registrerte inntekter.</p>
+                                    {data.incomes.filter((i) => !i.taxFree)
+                                        .length === 0 && (
+                                        <p className='text-sm text-muted-foreground'>
+                                            Ingen registrerte inntekter.
+                                        </p>
                                     )}
                                 </CardContent>
                             </Card>
@@ -259,14 +278,19 @@ export default function SummaryPage() {
                                                 key={`${inc.source}-${idx}`}
                                                 className='flex items-center justify-between text-sm'
                                             >
-                                                <span className='text-muted-foreground'>{inc.source}</span>
+                                                <span className='text-muted-foreground'>
+                                                    {inc.source}
+                                                </span>
                                                 <span className='font-medium'>
                                                     {fmt(inc.amount / 12)}
                                                 </span>
                                             </div>
                                         ))}
-                                    {data.incomes.filter((i) => i.taxFree).length === 0 && (
-                                        <p className='text-sm text-muted-foreground'>Ingen registrerte skattefrie beløp.</p>
+                                    {data.incomes.filter((i) => i.taxFree)
+                                        .length === 0 && (
+                                        <p className='text-sm text-muted-foreground'>
+                                            Ingen registrerte skattefrie beløp.
+                                        </p>
                                     )}
                                 </CardContent>
                             </Card>
@@ -280,41 +304,59 @@ export default function SummaryPage() {
                             <BarChart4 className='h-5 w-5 text-brandBlue' />
                             Nøkkeltall
                         </CardTitle>
-                    <CardDescription>
+                        <CardDescription>
                             Rask oversikt over renter, avdrag og faste utgifter.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-3'>
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Renter per måned</span>
+                            <span className='text-muted-foreground'>
+                                Renter per måned
+                            </span>
                             <span className='font-semibold'>
                                 {fmt(loanMonthlyTotals.interest)}
                             </span>
                         </div>
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Avdrag per måned</span>
+                            <span className='text-muted-foreground'>
+                                Avdrag per måned
+                            </span>
                             <span className='font-semibold'>
                                 {fmt(loanMonthlyTotals.principal)}
                             </span>
                         </div>
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Gebyrer per måned</span>
+                            <span className='text-muted-foreground'>
+                                Gebyrer per måned
+                            </span>
                             <span className='font-semibold'>
                                 {fmt(loanMonthlyTotals.fees)}
                             </span>
                         </div>
                         <Separator />
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Faste kostnader (bolig)</span>
-                            <span className='font-semibold'>{fmt(housingFixed)}</span>
+                            <span className='text-muted-foreground'>
+                                Faste kostnader (bolig)
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(housingFixed)}
+                            </span>
                         </div>
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Faste kostnader (personlig)</span>
-                            <span className='font-semibold'>{fmt(personalFixed)}</span>
+                            <span className='text-muted-foreground'>
+                                Faste kostnader (personlig)
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(personalFixed)}
+                            </span>
                         </div>
                         <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>Levekostnader</span>
-                            <span className='font-semibold'>{fmt(livingMonthly)}</span>
+                            <span className='text-muted-foreground'>
+                                Levekostnader
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(livingMonthly)}
+                            </span>
                         </div>
                     </CardContent>
                 </Card>
@@ -328,46 +370,78 @@ export default function SummaryPage() {
                             Utgifter og lån
                         </CardTitle>
                         <CardDescription>
-                            Hver utgiftskategori med renter, avdrag og gebyrer inkludert.
+                            Hver utgiftskategori med renter, avdrag og gebyrer
+                            inkludert.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-4'>
                         <div className='grid gap-3 sm:grid-cols-3'>
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>Bolig</p>
-                                <p className='text-lg font-semibold'>{fmt(housingFixed)}</p>
+                                <p className='text-xs text-muted-foreground uppercase'>
+                                    Bolig
+                                </p>
+                                <p className='text-lg font-semibold'>
+                                    {fmt(housingFixed)}
+                                </p>
                             </div>
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>Personlig</p>
-                                <p className='text-lg font-semibold'>{fmt(personalFixed)}</p>
+                                <p className='text-xs text-muted-foreground uppercase'>
+                                    Personlig
+                                </p>
+                                <p className='text-lg font-semibold'>
+                                    {fmt(personalFixed)}
+                                </p>
                             </div>
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>Levekostnader</p>
-                                <p className='text-lg font-semibold'>{fmt(livingMonthly)}</p>
+                                <p className='text-xs text-muted-foreground uppercase'>
+                                    Levekostnader
+                                </p>
+                                <p className='text-lg font-semibold'>
+                                    {fmt(livingMonthly)}
+                                </p>
                             </div>
                         </div>
 
                         <div className='space-y-3'>
-                            <h3 className='text-sm font-semibold text-muted-foreground'>Lån per måned</h3>
+                            <h3 className='text-sm font-semibold text-muted-foreground'>
+                                Lån per måned
+                            </h3>
                             <div className='space-y-2'>
-                                {loanSummaries.map(({ loan, interest, principal, fee, total }) => (
-                                    <div
-                                        key={loan.description}
-                                        className='rounded-lg border p-3 flex flex-wrap items-center gap-3 justify-between'
-                                    >
-                                        <div className='space-y-1'>
-                                            <p className='text-sm font-medium'>{loan.description}</p>
-                                            <p className='text-xs text-muted-foreground'>
-                                                Rente {fmt(interest)} · Avdrag {fmt(principal)} · Gebyr {fmt(fee)}
-                                            </p>
+                                {loanSummaries.map(
+                                    ({
+                                        loan,
+                                        interest,
+                                        principal,
+                                        fee,
+                                        total,
+                                    }) => (
+                                        <div
+                                            key={loan.description}
+                                            className='rounded-lg border p-3 flex flex-wrap items-center gap-3 justify-between'
+                                        >
+                                            <div className='space-y-1'>
+                                                <p className='text-sm font-medium'>
+                                                    {loan.description}
+                                                </p>
+                                                <p className='text-xs text-muted-foreground'>
+                                                    Rente {fmt(interest)} ·
+                                                    Avdrag {fmt(principal)} ·
+                                                    Gebyr {fmt(fee)}
+                                                </p>
+                                            </div>
+                                            <Badge
+                                                variant='secondary'
+                                                className='text-xs'
+                                            >
+                                                Totalt {fmt(total)}
+                                            </Badge>
                                         </div>
-                                        <Badge variant='secondary' className='text-xs'>
-                                            Totalt {fmt(total)}
-                                        </Badge>
-                                    </div>
-                                ))}
+                                    )
+                                )}
                                 {loanSummaries.length === 0 && (
-                                    <p className='text-sm text-muted-foreground'>Ingen lån registrert.</p>
+                                    <p className='text-sm text-muted-foreground'>
+                                        Ingen lån registrert.
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -381,7 +455,8 @@ export default function SummaryPage() {
                             Boligkapital
                         </CardTitle>
                         <CardDescription>
-                            Kombiner avdrag og antatt prisvekst ({priceGrowth}% årlig) for å se månedlig egenkapitalvekst.
+                            Kombiner avdrag og antatt prisvekst ({priceGrowth}%
+                            årlig) for å se månedlig egenkapitalvekst.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-3'>
@@ -391,9 +466,12 @@ export default function SummaryPage() {
                                 className='rounded-lg border p-3 flex flex-wrap items-center gap-3 justify-between'
                             >
                                 <div className='space-y-1'>
-                                    <p className='text-sm font-medium'>{item.description}</p>
+                                    <p className='text-sm font-medium'>
+                                        {item.description}
+                                    </p>
                                     <p className='text-xs text-muted-foreground'>
-                                        Avdrag {fmt(item.principal)} · Prisvekst {fmt(item.priceGrowth)}
+                                        Avdrag {fmt(item.principal)} · Prisvekst{' '}
+                                        {fmt(item.priceGrowth)}
                                     </p>
                                 </div>
                                 <Badge className='bg-brandBlue text-white hover:bg-brandBlue/90'>
@@ -402,11 +480,25 @@ export default function SummaryPage() {
                             </div>
                         ))}
                         {housingHighlights.length === 0 && (
-                            <p className='text-sm text-muted-foreground'>Ingen boliglån registrert.</p>
+                            <p className='text-sm text-muted-foreground'>
+                                Ingen boliglån registrert.
+                            </p>
                         )}
                     </CardContent>
                 </Card>
             </section>
+
+            <Card className='border-primary/20'>
+                <CardHeader className='space-y-1'>
+                    <CardTitle className='flex items-center gap-2'>
+                        <ReceiptText className='h-5 w-5 text-brandBlue' />
+                        Total oversikt utgifter, lån, prisvekst, lønnsvekst og
+                        sparing.
+                    </CardTitle>
+                    <CardDescription>TODO</CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-4'>TODO</CardContent>
+            </Card>
 
             <Card className='border-primary/20 bg-linear-to-r from-background to-brandBlue/5'>
                 <CardHeader>
@@ -415,28 +507,34 @@ export default function SummaryPage() {
                         Slik leser du tallene
                     </CardTitle>
                     <CardDescription>
-                        Vi viser alle beløp per måned for at du enkelt skal kunne sammenligne inntekter, utgifter og egenkapitalvekst.
+                        Vi viser alle beløp per måned for at du enkelt skal
+                        kunne sammenligne inntekter, utgifter og
+                        egenkapitalvekst.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
                     <div className='rounded-lg border p-4 bg-background'>
                         <p className='text-sm text-muted-foreground'>
-                            Inntekt etter skatt gir deg summen du faktisk kan disponere hver måned.
+                            Inntekt etter skatt gir deg summen du faktisk kan
+                            disponere hver måned.
                         </p>
                     </div>
                     <div className='rounded-lg border p-4 bg-background'>
                         <p className='text-sm text-muted-foreground'>
-                            Totale utgifter inkluderer både faste kostnader og alle lånekomponenter.
+                            Totale utgifter inkluderer både faste kostnader og
+                            alle lånekomponenter.
                         </p>
                     </div>
                     <div className='rounded-lg border p-4 bg-background'>
                         <p className='text-sm text-muted-foreground'>
-                            Kontantstrøm er differansen mellom netto inntekt og totale utgifter.
+                            Kontantstrøm er differansen mellom netto inntekt og
+                            totale utgifter.
                         </p>
                     </div>
                     <div className='rounded-lg border p-4 bg-background'>
                         <p className='text-sm text-muted-foreground'>
-                            Boligkapital viser hvordan avdrag kombinert med prisvekst bygger formue over tid.
+                            Boligkapital viser hvordan avdrag kombinert med
+                            prisvekst bygger formue over tid.
                         </p>
                     </div>
                 </CardContent>
