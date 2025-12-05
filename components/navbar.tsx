@@ -32,6 +32,12 @@ export default function Navbar() {
                             >
                                 Spareplan
                             </Link>
+                            <Link
+                                href='/paymentPlan'
+                                className='text-sm font-medium text-foreground/70 hover:text-foreground'
+                            >
+                                Betalingsplan
+                            </Link>
                         </nav>
                     </div>
 
