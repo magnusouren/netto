@@ -66,6 +66,9 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
             <Link href='/paymentPlan' className={base} onClick={onClick}>
                 Månedlig økonomi
             </Link>
+            <Link href='/summary' className={base} onClick={onClick}>
+                Oppsummering
+            </Link>
         </>
     );
 }

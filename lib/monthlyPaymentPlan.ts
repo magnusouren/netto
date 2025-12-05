@@ -81,7 +81,7 @@ export const generatePaymentPlan = (
             totalPrincipal += row.principal;
             totalFees += row.fee;
 
-            if ('capital' in loan) {
+            if ('initialEquity' in loan) {
                 housingPrincipal += row.principal;
             }
         });

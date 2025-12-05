@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import {
     ArrowUpCircle,
     BadgeDollarSign,
@@ -22,12 +24,17 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { computeLoanAmortization } from '@/lib/amortization';
-import { calculateAnnualTaxes } from '@/lib/calcTaxes';
-import useStore, { StoreState } from '@/lib/store';
-import { formatNumberToNOK } from '@/lib/utils';
-import type { Loan } from '@/types';
 
+import useStore, { StoreState } from '@/lib/store';
+import { calculateAnnualTaxes } from '@/lib/calcTaxes';
+import { computeLoanAmortization } from '@/lib/amortization';
+import { formatNumberToNOK } from '@/lib/utils';
+
+import type { EconomyData, Loan, HousingLoan } from '@/types';
+
+/* ===========================================================
+   HELPER: Gjennomsnittlig rente/avdrag/gebyr neste 12 mnd
+   =========================================================== */
 function averageLoanBreakdown(loan: Loan) {
     const amort = computeLoanAmortization(loan);
 
@@ -35,95 +42,331 @@ function averageLoanBreakdown(loan: Loan) {
         return { interest: 0, principal: 0, fee: loan.monthlyFee || 0 };
     }
 
-    // Ta de første 12 månedene (eller færre hvis lånet er kortere)
-    const next12 = amort.monthly.slice(0, 12);
+    const monthsPerTerm = Math.max(1, Math.round(12 / loan.termsPerYear));
 
-    const totalInterest = next12.reduce((sum, m) => sum + m.interest, 0);
-    const totalPrincipal = next12.reduce((sum, m) => sum + m.principal, 0);
-    const totalFees = next12.reduce((sum, m) => sum + m.fee, 0);
+    const start = new Date(loan.startDate);
+    const today = new Date();
+    const hasValidStart = !Number.isNaN(start.getTime());
 
-    return {
-        interest: totalInterest / next12.length,
-        principal: totalPrincipal / next12.length,
-        fee: totalFees / next12.length,
-    };
+    const monthDiff = hasValidStart
+        ? (today.getFullYear() - start.getFullYear()) * 12 +
+          (today.getMonth() - start.getMonth())
+        : 0;
+
+    const termIndex = Math.min(
+        Math.max(Math.floor(monthDiff / monthsPerTerm), 0),
+        amort.monthly.length - 1
+    );
+
+    const next12 = amort.monthly.slice(termIndex, termIndex + 12);
+
+    if (next12.length === 0) {
+        return { interest: 0, principal: 0, fee: loan.monthlyFee || 0 };
+    }
+
+    const interest = next12.reduce((s, m) => s + m.interest, 0) / next12.length;
+    const principal =
+        next12.reduce((s, m) => s + m.principal, 0) / next12.length;
+    const fee = next12.reduce((s, m) => s + m.fee, 0) / next12.length;
+
+    return { interest, principal, fee };
+}
+
+/* ===========================================================
+   MAIN HOOK: all økonomilogikk samlet
+   =========================================================== */
+function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
+    return useMemo(() => {
+        /* ----------------------------
+           INNTEKT
+        ---------------------------- */
+        const totalIncomeAnnual = data.incomes.reduce(
+            (s, i) => s + i.amount,
+            0
+        );
+        const taxFreeAnnual = data.incomes
+            .filter((i) => i.taxFree)
+            .reduce((s, i) => s + i.amount, 0);
+
+        const taxableAnnual = totalIncomeAnnual - taxFreeAnnual;
+
+        const monthlyIncomeGross = totalIncomeAnnual / 12;
+        const taxFreeMonthly = taxFreeAnnual / 12;
+        const taxableMonthly = taxableAnnual / 12;
+
+        const tax = calculateAnnualTaxes(data);
+        const monthlyTax = tax.totalTaxes / 12;
+        const netMonthlyIncome = monthlyIncomeGross - monthlyTax;
+
+        /* ----------------------------
+           LÅN
+        ---------------------------- */
+        const allLoans: Loan[] = [...data.loans, ...data.housingLoans];
+
+        const loanSummaries = allLoans.map((loan) => {
+            const breakdown = averageLoanBreakdown(loan);
+
+            const total =
+                breakdown.interest + breakdown.principal + breakdown.fee;
+
+            return { loan, ...breakdown, total };
+        });
+
+        const loanTotals = loanSummaries.reduce(
+            (acc, item) => {
+                acc.interest += item.interest;
+                acc.principal += item.principal;
+                acc.fees += item.fee;
+                acc.total += item.total;
+                return acc;
+            },
+            { interest: 0, principal: 0, fees: 0, total: 0 }
+        );
+
+        /* ----------------------------
+           KOSTNADER
+        ---------------------------- */
+        const housingFixed = data.fixedExpenses
+            .filter((f) => f.category === 'housing')
+            .reduce((s, f) => s + f.amount, 0);
+
+        const personalFixed = data.fixedExpenses
+            .filter((f) => f.category === 'personal')
+            .reduce((s, f) => s + f.amount, 0);
+
+        const livingMonthly = data.livingCosts.reduce(
+            (s, l) => s + l.amount,
+            0
+        );
+
+        const totalMonthlyExpenses =
+            housingFixed + personalFixed + livingMonthly + loanTotals.total;
+
+        /* ----------------------------
+           KONTANTSTRØM
+        ---------------------------- */
+        const cashflow = netMonthlyIncome - totalMonthlyExpenses;
+
+        /* ----------------------------
+           BOLIGKAPITAL (Prisvekst + Avdrag)
+        ---------------------------- */
+        const monthlyGrowthRate = Math.pow(1 + priceGrowth / 100, 1 / 12) - 1;
+
+        const housingHighlights = data.housingLoans.map((hl: HousingLoan) => {
+            const breakdown = loanSummaries.find(
+                (s) => s.loan.description === hl.description
+            );
+
+            const principal = breakdown?.principal ?? 0;
+
+            // Nå korrekt: boligens verdi = initialEquity + loanAmount
+            const homeValue = hl.capital + hl.loanAmount;
+
+            const priceGrowthNOK = homeValue * monthlyGrowthRate;
+
+            return {
+                description: hl.description,
+                principal,
+                priceGrowth: priceGrowthNOK,
+                combined: principal + priceGrowthNOK,
+                homeValue,
+            };
+        });
+
+        const totalHousingAppreciation = housingHighlights.reduce(
+            (s, h) => s + h.priceGrowth,
+            0
+        );
+
+        /* ----------------------------
+           TOTAL NETTO VERDI / MND
+        ---------------------------- */
+        const monthlyNetWorthChange =
+            cashflow + loanTotals.principal + totalHousingAppreciation;
+
+        /* ----------------------------
+   EGENKAPITAL VED SALG I DAG
+---------------------------- */
+        const today = new Date();
+
+        const currentHousingEquity = data.housingLoans.map((hl) => {
+            const amort = computeLoanAmortization({
+                loanAmount: hl.loanAmount,
+                interestRate: hl.interestRate,
+                termYears: hl.termYears,
+                termsPerYear: hl.termsPerYear,
+                monthlyFee: hl.monthlyFee,
+                startDate: hl.startDate,
+            });
+
+            const start = new Date(hl.startDate);
+
+            // months passed since loan started
+            const monthsFromStart =
+                (today.getFullYear() - start.getFullYear()) * 12 +
+                (today.getMonth() - start.getMonth());
+
+            // Clamp index to amort length to avoid out-of-range
+            const index = Math.max(
+                0,
+                Math.min(monthsFromStart, amort.monthly.length - 1)
+            );
+
+            // Remaining debt today
+            const remainingDebt = amort.monthly[index].balance;
+
+            // Home value today = initialEquity + loanAmount
+            const homeValue = hl.capital + hl.loanAmount;
+
+            const equityNow = homeValue - remainingDebt;
+
+            return {
+                description: hl.description,
+                homeValue,
+                remainingDebt,
+                equityNow,
+            };
+        });
+
+        const equityProjections = data.housingLoans.map((hl) => {
+            const amort = computeLoanAmortization(hl);
+            const start = new Date(hl.startDate);
+            const today = new Date();
+
+            const monthsFromStart =
+                (today.getFullYear() - start.getFullYear()) * 12 +
+                (today.getMonth() - start.getMonth());
+
+            const homeValue = hl.capital + hl.loanAmount;
+
+            const projections = [1, 2, 5].map((yearsAhead) => {
+                const monthsAhead = yearsAhead * 12;
+
+                // Remaining debt at that time
+                const index = Math.min(
+                    amort.monthly.length - 1,
+                    monthsFromStart + monthsAhead
+                );
+
+                const futureDebt = amort.monthly[index].balance;
+
+                // Future home price
+                const futurePrice =
+                    homeValue * Math.pow(1 + priceGrowth / 100, yearsAhead);
+
+                // Equity = value - debt
+                const futureEquity = futurePrice - futureDebt;
+
+                return {
+                    yearsAhead,
+                    futurePrice,
+                    futureDebt,
+                    futureEquity,
+                };
+            });
+
+            return {
+                description: hl.description,
+                projections,
+            };
+        });
+
+        const totalCurrentEquity = currentHousingEquity.reduce(
+            (s, h) => s + h.equityNow,
+            0
+        );
+
+        return {
+            priceGrowth,
+
+            // Inntekt
+            totalIncomeAnnual,
+            monthlyIncomeGross,
+            taxableMonthly,
+            taxFreeMonthly,
+            monthlyTax,
+            netMonthlyIncome,
+            effectiveTaxRate: tax.effectiveTaxRate,
+
+            // Lån
+            loanSummaries,
+            loanTotals,
+
+            // Kostnader
+            housingFixed,
+            personalFixed,
+            livingMonthly,
+            totalMonthlyExpenses,
+
+            // Kontantstrøm
+            cashflow,
+
+            // Boligkapital
+            housingHighlights,
+            totalHousingAppreciation,
+
+            // Netto verdi
+            monthlyNetWorthChange,
+
+            // Skatt
+            tax,
+
+            // Egenkapital ved salg
+            currentHousingEquity,
+            totalCurrentEquity,
+            equityProjections,
+        };
+    }, [data, priceGrowth]);
 }
 
 export default function SummaryPage() {
     const data = useStore((s: StoreState) => s.data);
 
-    const priceGrowth = 3.5; // annual % used for housing appreciation snapshot
+    const summary = useNetWorthSummary(data, 3.5);
 
-    const totalIncomeAnnual = data.incomes.reduce((s, i) => s + i.amount, 0);
-    const taxFreeIncome = data.incomes
-        .filter((inc) => inc.taxFree)
-        .reduce((s, i) => s + i.amount, 0);
-    const monthlyIncomeGross = totalIncomeAnnual / 12;
+    const {
+        priceGrowth,
+        monthlyIncomeGross,
+        netMonthlyIncome,
+        taxableMonthly,
+        taxFreeMonthly,
+        monthlyTax,
+        effectiveTaxRate,
 
-    const tax = calculateAnnualTaxes(data);
-    const monthlyTax = tax.totalTaxes / 12;
-    const netMonthlyIncome = monthlyIncomeGross - monthlyTax;
+        loanSummaries,
+        loanTotals,
 
-    const loans: Loan[] = [...data.loans, ...data.housingLoans];
-    const loanSummaries = loans.map((loan) => {
-        const breakdown = averageLoanBreakdown(loan);
-        const total =
-            ((loan.interestRate || 0) >= 0 ? breakdown.principal : 0) +
-            breakdown.interest +
-            breakdown.fee;
+        housingFixed,
+        personalFixed,
+        livingMonthly,
+        totalMonthlyExpenses,
 
-        return { loan, ...breakdown, total };
-    });
+        cashflow,
 
-    const loanMonthlyTotals = loanSummaries.reduce(
-        (acc, item) => {
-            acc.interest += item.interest;
-            acc.principal += item.principal;
-            acc.fees += item.fee;
-            acc.total += item.total;
-            return acc;
-        },
-        { interest: 0, principal: 0, fees: 0, total: 0 }
-    );
+        housingHighlights,
+        totalHousingAppreciation,
 
-    const housingFixed = data.fixedExpenses
-        .filter((f) => f.category === 'housing')
-        .reduce((s, f) => s + f.amount, 0);
-    const personalFixed = data.fixedExpenses
-        .filter((f) => f.category === 'personal')
-        .reduce((s, f) => s + f.amount, 0);
-    const livingMonthly = data.livingCosts.reduce((s, l) => s + l.amount, 0);
+        monthlyNetWorthChange,
 
-    const totalMonthlyExpenses =
-        housingFixed + personalFixed + livingMonthly + loanMonthlyTotals.total;
+        tax,
 
-    const balance = netMonthlyIncome - totalMonthlyExpenses;
+        totalCurrentEquity,
+        equityProjections,
+    } = summary;
 
-    const housingHighlights = data.housingLoans.map((loan) => {
-        const { principal } = averageLoanBreakdown(loan);
-        const baseValue = loan.loanAmount + loan.capital;
-        const monthlyGrowthRate = Math.pow(1 + priceGrowth / 100, 1 / 12) - 1;
-        const priceGrowthNOK = baseValue * monthlyGrowthRate;
-
-        return {
-            description: loan.description,
-            principal,
-            priceGrowth: priceGrowthNOK,
-            combined: principal + priceGrowthNOK,
-        };
-    });
-
-    const fmt = (value: number) => formatNumberToNOK(Math.round(value));
+    const fmt = (v: number) => formatNumberToNOK(Math.round(v));
 
     return (
         <div className='py-10 space-y-10'>
+            {/* ---------------------------------------------------
+               TOPP-KORT
+            --------------------------------------------------- */}
             <section className='space-y-4'>
-                <div className='flex flex-wrap items-center gap-3'>
+                <div className='container my-8 min-h-24'>
                     <TypographyH1>Din økonomiske status nå</TypographyH1>
                     <TypographyP>
-                        Se alle inntekter, utgifter og lån på ett sted. Her
-                        vises både månedlige beløp og hvordan boliglån bygger
-                        egenkapital gjennom avdrag og prisvekst.
+                        Full oversikt over inntekter, utgifter, lån og
+                        boligkapital.
                     </TypographyP>
                 </div>
 
@@ -137,11 +380,9 @@ export default function SummaryPage() {
                             <CardTitle className='text-2xl'>
                                 {fmt(monthlyIncomeGross)}
                             </CardTitle>
-                            <p className='text-xs text-muted-foreground'>
-                                Før skatt og fradrag
-                            </p>
                         </CardHeader>
                     </Card>
+
                     <Card className='border-primary/20 shadow-sm'>
                         <CardHeader className='pb-2'>
                             <CardDescription className='flex items-center gap-2 text-xs uppercase tracking-wide'>
@@ -151,10 +392,6 @@ export default function SummaryPage() {
                             <CardTitle className='text-2xl'>
                                 {fmt(netMonthlyIncome)}
                             </CardTitle>
-                            <p className='text-xs text-muted-foreground'>
-                                Etter skatt ({tax.effectiveTaxRate.toFixed(1)}%
-                                sats)
-                            </p>
                         </CardHeader>
                     </Card>
 
@@ -167,9 +404,6 @@ export default function SummaryPage() {
                             <CardTitle className='text-2xl'>
                                 {fmt(totalMonthlyExpenses)}
                             </CardTitle>
-                            <p className='text-xs text-muted-foreground'>
-                                Inkluderer renter, avdrag og gebyrer
-                            </p>
                         </CardHeader>
                     </Card>
 
@@ -180,15 +414,16 @@ export default function SummaryPage() {
                                 Kontantstrøm
                             </CardDescription>
                             <CardTitle className='text-2xl'>
-                                {fmt(balance)}
+                                {fmt(cashflow)}
                             </CardTitle>
-                            <p className='text-xs text-muted-foreground'>
-                                Penger igjen til sparing og buffer
-                            </p>
                         </CardHeader>
                     </Card>
                 </div>
             </section>
+
+            {/* ---------------------------------------------------
+               INNTEKTER
+            --------------------------------------------------- */}
             <section className='grid gap-6 lg:grid-cols-[1.1fr_0.9fr]'>
                 <Card className='border-primary/20'>
                     <CardHeader className='space-y-1'>
@@ -201,36 +436,32 @@ export default function SummaryPage() {
                             måned.
                         </CardDescription>
                     </CardHeader>
+
                     <CardContent className='space-y-4'>
+                        {/* Top summary row */}
                         <div className='flex flex-wrap gap-3 text-sm text-muted-foreground'>
-                            <span>
-                                Skattepliktig:{' '}
-                                {fmt((totalIncomeAnnual - taxFreeIncome) / 12)}
-                            </span>
+                            <span>Skattepliktig: {fmt(taxableMonthly)}</span>
                             <Separator
                                 orientation='vertical'
                                 className='hidden sm:block h-4'
                             />
-                            <span>Skattefritt: {fmt(taxFreeIncome / 12)}</span>
+                            <span>Skattefritt: {fmt(taxFreeMonthly)}</span>
                             <Separator
                                 orientation='vertical'
                                 className='hidden sm:block h-4'
                             />
-                            <span>Skatt per mnd: {fmt(monthlyTax)}</span>
                         </div>
 
+                        {/* Detailed breakdown */}
                         <div className='grid gap-3 sm:grid-cols-2'>
+                            {/* Taxable incomes */}
                             <Card className='border-dashed'>
                                 <CardHeader className='pb-2'>
                                     <CardDescription className='text-xs uppercase tracking-wide'>
                                         Skattepliktige inntekter
                                     </CardDescription>
                                     <CardTitle className='text-lg'>
-                                        {fmt(
-                                            (totalIncomeAnnual -
-                                                taxFreeIncome) /
-                                                12
-                                        )}
+                                        {fmt(taxableMonthly)}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className='space-y-2'>
@@ -249,22 +480,25 @@ export default function SummaryPage() {
                                                 </span>
                                             </div>
                                         ))}
+
                                     {data.incomes.filter((i) => !i.taxFree)
                                         .length === 0 && (
                                         <p className='text-sm text-muted-foreground'>
-                                            Ingen registrerte inntekter.
+                                            Ingen registrerte skattepliktige
+                                            inntekter.
                                         </p>
                                     )}
                                 </CardContent>
                             </Card>
 
+                            {/* Tax-free incomes */}
                             <Card className='border-dashed'>
                                 <CardHeader className='pb-2'>
                                     <CardDescription className='text-xs uppercase tracking-wide'>
                                         Skattefrie inntekter
                                     </CardDescription>
                                     <CardTitle className='text-lg'>
-                                        {fmt(taxFreeIncome / 12)}
+                                        {fmt(taxFreeMonthly)}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className='space-y-2'>
@@ -283,10 +517,12 @@ export default function SummaryPage() {
                                                 </span>
                                             </div>
                                         ))}
+
                                     {data.incomes.filter((i) => i.taxFree)
                                         .length === 0 && (
                                         <p className='text-sm text-muted-foreground'>
-                                            Ingen registrerte skattefrie beløp.
+                                            Ingen registrerte skattefrie
+                                            inntekter.
                                         </p>
                                     )}
                                 </CardContent>
@@ -294,7 +530,9 @@ export default function SummaryPage() {
                         </div>
                     </CardContent>
                 </Card>
-
+                {/* ---------------------------------------------------
+                   NØKKELTALL
+                --------------------------------------------------- */}
                 <Card className='border-primary/20'>
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
@@ -302,51 +540,57 @@ export default function SummaryPage() {
                             Nøkkeltall
                         </CardTitle>
                         <CardDescription>
-                            Rask oversikt over renter, avdrag og faste utgifter.
+                            Oversikt over renter, avdrag og faste kostnader.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className='space-y-3'>
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
-                                Renter per måned*
+                                Renter / mnd*
                             </span>
                             <span className='font-semibold'>
-                                {fmt(loanMonthlyTotals.interest)}
+                                {fmt(loanTotals.interest)}
                             </span>
                         </div>
+
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
-                                Avdrag per måned*
+                                Avdrag / mnd*
                             </span>
                             <span className='font-semibold'>
-                                {fmt(loanMonthlyTotals.principal)}
+                                {fmt(loanTotals.principal)}
                             </span>
                         </div>
+
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
-                                Gebyrer per måned
+                                Gebyrer / mnd
                             </span>
                             <span className='font-semibold'>
-                                {fmt(loanMonthlyTotals.fees)}
+                                {fmt(loanTotals.fees)}
                             </span>
                         </div>
+
                         <Separator />
+
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
-                                Faste kostnader (bolig)
+                                Boligkostnader
                             </span>
                             <span className='font-semibold'>
                                 {fmt(housingFixed)}
                             </span>
                         </div>
+
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
-                                Faste kostnader (personlig)
+                                Personlige utgifter
                             </span>
                             <span className='font-semibold'>
                                 {fmt(personalFixed)}
                             </span>
                         </div>
+
                         <div className='flex items-center justify-between text-sm'>
                             <span className='text-muted-foreground'>
                                 Levekostnader
@@ -357,7 +601,108 @@ export default function SummaryPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Skatter */}
+                {/* Skatter */}
+                <Card className='border-primary/20'>
+                    <CardHeader className='space-y-1'>
+                        <CardTitle className='flex items-center gap-2'>
+                            <ShieldCheck className='h-5 w-5 text-brandBlue' />
+                            Skatter
+                        </CardTitle>
+                        <CardDescription>
+                            Oversikt over månedlige skatter basert på inntekter.
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className='space-y-3'>
+                        {/* Effective tax rate */}
+                        <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                                Effektiv skattesats
+                            </span>
+                            <span className='font-semibold'>
+                                {effectiveTaxRate.toFixed(1)}%
+                            </span>
+                        </div>
+
+                        <Separator />
+
+                        {/* Monthly tax */}
+                        <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                                Total skatt / mnd
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(monthlyTax)}
+                            </span>
+                        </div>
+
+                        {/* Interest deduction */}
+                        <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                                Rentefradrag
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(tax.totalInterestDeduction)}
+                            </span>
+                        </div>
+
+                        {/* Total tax paid annually */}
+                        <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>
+                                Betalt skatt (årlig)
+                            </span>
+                            <span className='font-semibold'>
+                                {fmt(tax.totalTaxes)}
+                            </span>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className='border-primary/20 shadow-sm'>
+                    <CardHeader className='space-y-1'>
+                        <CardTitle className='flex items-center gap-2'>
+                            <ReceiptText className='h-5 w-5 text-brandBlue' />
+                            Egenkapital ved salg i dag
+                        </CardTitle>
+                        <CardDescription>
+                            Basert på dagens boligverdi og gjenstående gjeld.
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className='space-y-4'>
+                        {/* Today */}
+                        <p className='text-2xl font-semibold'>
+                            {fmt(totalCurrentEquity)}
+                        </p>
+
+                        {/* Future projections */}
+                        <div className='space-y-1 text-sm'>
+                            {equityProjections.map((home) =>
+                                home.projections.map((p) => (
+                                    <div
+                                        key={`${home.description}-${p.yearsAhead}`}
+                                        className='flex justify-between text-muted-foreground'
+                                    >
+                                        <span>
+                                            {home.description} · om{' '}
+                                            {p.yearsAhead} år
+                                        </span>
+                                        <span className='font-medium text-foreground'>
+                                            {fmt(p.futureEquity)}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </section>
+
+            {/* ---------------------------------------------------
+               UTGIFTER + LÅN
+            --------------------------------------------------- */}
             <section className='grid gap-6 lg:grid-cols-[1fr_1fr]'>
                 <Card className='border-primary/20'>
                     <CardHeader className='space-y-1'>
@@ -365,31 +710,30 @@ export default function SummaryPage() {
                             <ReceiptText className='h-5 w-5 text-brandBlue' />
                             Utgifter og lån
                         </CardTitle>
-                        <CardDescription>
-                            Hver utgiftskategori med renter, avdrag og gebyrer
-                            inkludert.
-                        </CardDescription>
                     </CardHeader>
+
                     <CardContent className='space-y-4'>
                         <div className='grid gap-3 sm:grid-cols-3'>
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>
+                                <p className='text-xs uppercase text-muted-foreground'>
                                     Bolig
                                 </p>
                                 <p className='text-lg font-semibold'>
                                     {fmt(housingFixed)}
                                 </p>
                             </div>
+
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>
+                                <p className='text-xs uppercase text-muted-foreground'>
                                     Personlig
                                 </p>
                                 <p className='text-lg font-semibold'>
                                     {fmt(personalFixed)}
                                 </p>
                             </div>
+
                             <div className='rounded-lg border p-3 bg-muted/30'>
-                                <p className='text-xs text-muted-foreground uppercase'>
+                                <p className='text-xs uppercase text-muted-foreground'>
                                     Levekostnader
                                 </p>
                                 <p className='text-lg font-semibold'>
@@ -402,48 +746,39 @@ export default function SummaryPage() {
                             <h3 className='text-sm font-semibold text-muted-foreground'>
                                 Lån per måned
                             </h3>
-                            <div className='space-y-2'>
-                                {loanSummaries.map(
-                                    ({
-                                        loan,
-                                        interest,
-                                        principal,
-                                        fee,
-                                        total,
-                                    }) => (
-                                        <div
-                                            key={loan.description}
-                                            className='rounded-lg border p-3 flex flex-wrap items-center gap-3 justify-between'
-                                        >
-                                            <div className='space-y-1'>
-                                                <p className='text-sm font-medium'>
-                                                    {loan.description}
-                                                </p>
-                                                <p className='text-xs text-muted-foreground'>
-                                                    Rente* {fmt(interest)} ·
-                                                    Avdrag* {fmt(principal)} ·
-                                                    Gebyr {fmt(fee)}
-                                                </p>
-                                            </div>
-                                            <Badge
-                                                variant='secondary'
-                                                className='text-xs'
-                                            >
-                                                Totalt {fmt(total)}
-                                            </Badge>
+
+                            {loanSummaries.map(
+                                ({ loan, interest, principal, fee, total }) => (
+                                    <div
+                                        key={loan.description}
+                                        className='rounded-lg border p-3 flex flex-wrap items-center justify-between'
+                                    >
+                                        <div>
+                                            <p className='text-sm font-medium'>
+                                                {loan.description}
+                                            </p>
+                                            <p className='text-xs text-muted-foreground'>
+                                                Rente {fmt(interest)} · Avdrag*{' '}
+                                                {fmt(principal)} · Gebyr{' '}
+                                                {fmt(fee)}
+                                            </p>
                                         </div>
-                                    )
-                                )}
-                                {loanSummaries.length === 0 && (
-                                    <p className='text-sm text-muted-foreground'>
-                                        Ingen lån registrert.
-                                    </p>
-                                )}
-                            </div>
+                                        <Badge
+                                            variant='secondary'
+                                            className='text-xs'
+                                        >
+                                            Totalt {fmt(total)}
+                                        </Badge>
+                                    </div>
+                                )
+                            )}
                         </div>
                     </CardContent>
                 </Card>
 
+                {/* ---------------------------------------------------
+                   BOLIGKAPITAL
+                --------------------------------------------------- */}
                 <Card className='border-primary/20'>
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
@@ -451,92 +786,112 @@ export default function SummaryPage() {
                             Boligkapital
                         </CardTitle>
                         <CardDescription>
-                            Kombiner avdrag og antatt prisvekst ({priceGrowth}%
-                            årlig) for å se månedlig egenkapitalvekst.
+                            Avdrag + antatt prisvekst ({priceGrowth}% årlig)
                         </CardDescription>
                     </CardHeader>
+                    <CardContent>
+                        <p className='text-xl font-semibold'>
+                            Totalt:{' '}
+                            {fmt(
+                                loanTotals.principal + totalHousingAppreciation
+                            )}
+                        </p>
+                    </CardContent>
                     <CardContent className='space-y-3'>
-                        {housingHighlights.map((item) => (
+                        {housingHighlights.map((h) => (
                             <div
-                                key={item.description}
-                                className='rounded-lg border p-3 flex flex-wrap items-center gap-3 justify-between'
+                                key={h.description}
+                                className='rounded-lg border p-3 flex items-center justify-between'
                             >
-                                <div className='space-y-1'>
+                                <div>
                                     <p className='text-sm font-medium'>
-                                        {item.description}
+                                        {h.description}
                                     </p>
                                     <p className='text-xs text-muted-foreground'>
-                                        Avdrag* {fmt(item.principal)} ·
-                                        Prisvekst {fmt(item.priceGrowth)}
+                                        Avdrag* {fmt(h.principal)} · Prisvekst{' '}
+                                        {fmt(h.priceGrowth)}
                                     </p>
                                 </div>
-                                <Badge className='bg-brandBlue text-white hover:bg-brandBlue/90'>
-                                    +{fmt(item.combined)} / mnd
+                                <Badge className='bg-brandBlue text-white'>
+                                    +{fmt(h.combined)} / mnd
                                 </Badge>
                             </div>
                         ))}
-                        {housingHighlights.length === 0 && (
-                            <p className='text-sm text-muted-foreground'>
-                                Ingen boliglån registrert.
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
             </section>
+
+            {/* ---------------------------------------------------
+               NETTOVERDI
+            --------------------------------------------------- */}
             <Card className='border-primary/20'>
-                <CardHeader className='space-y-1'>
-                    <CardTitle className='flex items-center gap-2'>
-                        <ReceiptText className='h-5 w-5 text-brandBlue' />
-                        Total oversikt utgifter, lån, prisvekst, lønnsvekst og
-                        sparing.
-                    </CardTitle>
-                    <CardDescription>TODO</CardDescription>
-                </CardHeader>
-                <CardContent className='space-y-4'>TODO</CardContent>
-            </Card>
-            <Card className='border-primary/20 bg-linear-to-r from-background to-brandBlue/5'>
                 <CardHeader>
                     <CardTitle className='flex items-center gap-2'>
-                        <ShieldCheck className='h-5 w-5 text-brandBlue' />
-                        Slik leser du tallene
+                        <ReceiptText className='h-5 w-5 text-brandBlue' />
+                        Din totale netto verdi per mnd
                     </CardTitle>
                     <CardDescription>
-                        Vi viser alle beløp per måned for at du enkelt skal
-                        kunne sammenligne inntekter, utgifter og
-                        egenkapitalvekst.
+                        Kontantstrøm + avdrag + boligprisvekst.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-                    <div className='rounded-lg border p-4 bg-background'>
-                        <p className='text-sm text-muted-foreground'>
-                            Inntekt etter skatt gir deg summen du faktisk kan
-                            disponere hver måned.
-                        </p>
+
+                <CardContent className='space-y-4'>
+                    <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
+                        <div>
+                            <p className='text-xs text-muted-foreground uppercase tracking-wide'>
+                                Total nettoverdi / mnd (inkl. prisvekst på)
+                            </p>
+                            <p className='text-3xl font-semibold'>
+                                {fmt(monthlyNetWorthChange)}
+                            </p>
+                        </div>
                     </div>
-                    <div className='rounded-lg border p-4 bg-background'>
-                        <p className='text-sm text-muted-foreground'>
-                            Totale utgifter inkluderer både faste kostnader og
-                            alle lånekomponenter.
-                        </p>
+
+                    <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
+                        <div>
+                            <p className='text-xs text-muted-foreground uppercase tracking-wide'>
+                                Total nettoverdi / mnd (ekskl. prisvekst på
+                                bolig)
+                            </p>
+                            <p className='text-3xl font-semibold'>
+                                {fmt(
+                                    monthlyNetWorthChange -
+                                        totalHousingAppreciation
+                                )}
+                            </p>
+                        </div>
                     </div>
-                    <div className='rounded-lg border p-4 bg-background'>
-                        <p className='text-sm text-muted-foreground'>
-                            Kontantstrøm er differansen mellom netto inntekt og
-                            totale utgifter.
-                        </p>
-                    </div>
-                    <div className='rounded-lg border p-4 bg-background'>
-                        <p className='text-sm text-muted-foreground'>
-                            Boligkapital viser hvordan avdrag kombinert med
-                            prisvekst bygger formue over tid.
-                        </p>
+
+                    <div className='grid gap-3 sm:grid-cols-3'>
+                        <div className='rounded-lg border p-3 bg-background'>
+                            <p className='text-xs text-muted-foreground'>
+                                Kontantstrøm
+                            </p>
+                            <p className='text-lg font-semibold'>
+                                {fmt(cashflow)}
+                            </p>
+                        </div>
+
+                        <div className='rounded-lg border p-3 bg-background'>
+                            <p className='text-xs text-muted-foreground'>
+                                Avdrag som bygger EK
+                            </p>
+                            <p className='text-lg font-semibold'>
+                                {fmt(loanTotals.principal)}
+                            </p>
+                        </div>
+
+                        <div className='rounded-lg border p-3 bg-background'>
+                            <p className='text-xs text-muted-foreground'>
+                                Antatt boligprisvekst
+                            </p>
+                            <p className='text-lg font-semibold'>
+                                {fmt(totalHousingAppreciation)}
+                            </p>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
-            <p className='text-sm text-muted-foreground'>
-                * Beregningene for renter og avdrag er basert på gjennomsnitt de
-                neste 12 månedene.
-            </p>
         </div>
     );
 }
