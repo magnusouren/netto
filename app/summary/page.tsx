@@ -78,6 +78,24 @@ function averageLoanBreakdown(loan: Loan) {
    MAIN HOOK: all økonomilogikk samlet
    =========================================================== */
 function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
+    const createBalanceLookup = (
+        amortization: ReturnType<typeof computeLoanAmortization>,
+        fallbackBalance: number
+    ) => {
+        const schedule = amortization.monthly ?? [];
+
+        return (monthIndex: number) => {
+            if (schedule.length === 0) return fallbackBalance;
+
+            const clampedIndex = Math.max(
+                0,
+                Math.min(monthIndex, schedule.length - 1)
+            );
+
+            return schedule[clampedIndex]?.balance ?? fallbackBalance;
+        };
+    };
+
     return useMemo(() => {
         /* ----------------------------
            INNTEKT
@@ -203,19 +221,18 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
 
             const start = new Date(hl.startDate);
 
+            const getBalanceAtMonth = createBalanceLookup(
+                amort,
+                hl.loanAmount
+            );
+
             // months passed since loan started
             const monthsFromStart =
                 (today.getFullYear() - start.getFullYear()) * 12 +
                 (today.getMonth() - start.getMonth());
 
-            // Clamp index to amort length to avoid out-of-range
-            const index = Math.max(
-                0,
-                Math.min(monthsFromStart, amort.monthly.length - 1)
-            );
-
             // Remaining debt today
-            const remainingDebt = amort.monthly[index].balance;
+            const remainingDebt = getBalanceAtMonth(monthsFromStart);
 
             // Home value today = initialEquity + loanAmount
             // Calculate years since start
@@ -244,9 +261,13 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
 ---------------------------- */
         const equityProjections = data.housingLoans.map((hl) => {
             const amort = computeLoanAmortization(hl);
-            const start = new Date(hl.startDate);
 
             const baseHomeValue = hl.capital + hl.loanAmount;
+
+            const getBalanceAtMonth = createBalanceLookup(
+                amort,
+                hl.loanAmount
+            );
 
             const horizons = [1, 2, 5]; // years from loan start
 
@@ -254,9 +275,7 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
                 const monthsAhead = yearsAhead * 12;
 
                 // this is KEY: index = monthsAhead (from loan start)
-                const index = Math.min(amort.monthly.length - 1, monthsAhead);
-
-                const futureDebt = amort.monthly[index].balance;
+                const futureDebt = getBalanceAtMonth(monthsAhead);
 
                 const futurePrice =
                     baseHomeValue * Math.pow(1 + priceGrowth / 100, yearsAhead);
@@ -285,20 +304,23 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
 
             const baseHomeValue = hl.capital + hl.loanAmount;
 
+            const getBalanceAtMonth = createBalanceLookup(
+                amort,
+                hl.loanAmount
+            );
+
             // Months between start and today
             const monthsFromStart =
                 (today.getFullYear() - start.getFullYear()) * 12 +
                 (today.getMonth() - start.getMonth());
 
-            const totalMonths = amort.monthly.length;
-
             // Indices we want on the amortization timeline:
             const timelineIndices = [
                 0, // loan start
-                Math.min(monthsFromStart, totalMonths - 1), // today
-                Math.min(monthsFromStart + 12, totalMonths - 1), // +1 year
-                Math.min(monthsFromStart + 24, totalMonths - 1), // +2 years
-                Math.min(monthsFromStart + 60, totalMonths - 1), // +5 years
+                monthsFromStart, // today
+                monthsFromStart + 12, // +1 year
+                monthsFromStart + 24, // +2 years
+                monthsFromStart + 60, // +5 years
             ];
 
             const labels = [
@@ -310,10 +332,9 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
             ];
 
             const entries = timelineIndices.map((index, i) => {
-                const remainingDebt =
-                    index === 0 ? hl.loanAmount : amort.monthly[index].balance;
+                const remainingDebt = getBalanceAtMonth(index);
 
-                const yearsSinceStart = index / 12;
+                const yearsSinceStart = Math.max(index, 0) / 12;
 
                 const futurePrice =
                     baseHomeValue *
@@ -389,7 +410,7 @@ export default function SummaryPage() {
     const [priceGrowth, setPriceGrowth] = useState(3.5);
     const data = useStore((s: StoreState) => s.data);
 
-    const summary = useNetWorthSummary(data);
+    const summary = useNetWorthSummary(data, priceGrowth);
 
     const {
         monthlyIncomeGross,
@@ -974,9 +995,12 @@ export default function SummaryPage() {
                     <Input
                         type='number'
                         value={priceGrowth}
-                        onChange={(e) =>
-                            setPriceGrowth(parseFloat(e.target.value))
-                        }
+                        onChange={(e) => {
+                            const nextGrowth = parseFloat(e.target.value);
+                            setPriceGrowth(
+                                Number.isFinite(nextGrowth) ? nextGrowth : 0
+                            );
+                        }}
                         step={0.1}
                         min={0}
                         max={100}
