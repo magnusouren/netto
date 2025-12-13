@@ -31,6 +31,26 @@ export interface AmortizationResult {
     totals: AmortizationTotals;
 }
 
+const MONTH_LABELS = [
+    'jan',
+    'feb',
+    'mar',
+    'apr',
+    'mai',
+    'jun',
+    'jul',
+    'aug',
+    'sep',
+    'okt',
+    'nov',
+    'des',
+];
+
+function formatMonthYear(date: Date) {
+    const month = MONTH_LABELS[date.getMonth()] ?? '';
+    return `${month} ${date.getFullYear()}`;
+}
+
 export function computeLoanAmortization(loan: {
     loanAmount: number;
     interestRate: number;
@@ -79,10 +99,7 @@ export function computeLoanAmortization(loan: {
 
         const payment = principal + interest + monthlyFee;
 
-        const formattedDate = currentDate.toLocaleString('no-NO', {
-            year: 'numeric',
-            month: 'short',
-        });
+        const formattedDate = formatMonthYear(currentDate);
 
         const row: AmortizationMonthly = {
             term,

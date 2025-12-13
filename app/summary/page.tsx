@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
     ArrowUpCircle,
@@ -28,6 +28,11 @@ import { Separator } from '@/components/ui/separator';
 import useStore, { StoreState } from '@/lib/store';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
 import { computeLoanAmortization } from '@/lib/amortization';
+import {
+    AmortizationLookup,
+    buildLoanCacheKey,
+    createAmortizationCache,
+} from '@/lib/amortizationCache';
 import { formatNumberToNOK } from '@/lib/utils';
 
 import type { EconomyData, Loan, HousingLoan } from '@/types';
@@ -37,9 +42,10 @@ import { Label } from '@radix-ui/react-label';
 /* ===========================================================
    HELPER: Gjennomsnittlig rente/avdrag/gebyr neste 12 mnd
    =========================================================== */
-function averageLoanBreakdown(loan: Loan) {
-    const amort = computeLoanAmortization(loan);
-
+function averageLoanBreakdown(
+    loan: Loan,
+    amort: ReturnType<typeof computeLoanAmortization>
+) {
     if (!amort.monthly || amort.monthly.length === 0) {
         return { interest: 0, principal: 0, fee: loan.monthlyFee || 0 };
     }
@@ -74,10 +80,40 @@ function averageLoanBreakdown(loan: Loan) {
     return { interest, principal, fee };
 }
 
+function GhostRow({ lines = 2 }: { lines?: number }) {
+    return (
+        <div className='animate-pulse space-y-2 rounded-lg border p-3 bg-muted/40'>
+            {Array.from({ length: lines }).map((_, idx) => (
+                <div key={idx} className='h-3 rounded bg-muted' />
+            ))}
+        </div>
+    );
+}
+
 /* ===========================================================
    MAIN HOOK: all økonomilogikk samlet
    =========================================================== */
 function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
+    const amortizationCache = useMemo(() => createAmortizationCache(), []);
+
+    const allLoans: Loan[] = useMemo(
+        () => [...data.loans, ...data.housingLoans],
+        [data.housingLoans, data.loans]
+    );
+
+    const amortizationLookup: AmortizationLookup = useMemo(() => {
+        const map = new Map<string, ReturnType<typeof computeLoanAmortization>>();
+
+        allLoans.forEach((loan) => {
+            map.set(buildLoanCacheKey(loan), amortizationCache.get(loan));
+        });
+
+        return {
+            get: (loan: Loan) =>
+                map.get(buildLoanCacheKey(loan)) ?? amortizationCache.get(loan),
+        };
+    }, [allLoans, amortizationCache]);
+
     const createBalanceLookup = (
         amortization: ReturnType<typeof computeLoanAmortization>,
         fallbackBalance: number
@@ -96,7 +132,7 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         };
     };
 
-    return useMemo(() => {
+    const baseSummary = useMemo(() => {
         /* ----------------------------
            INNTEKT
         ---------------------------- */
@@ -121,10 +157,10 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         /* ----------------------------
            LÅN
         ---------------------------- */
-        const allLoans: Loan[] = [...data.loans, ...data.housingLoans];
 
         const loanSummaries = allLoans.map((loan) => {
-            const breakdown = averageLoanBreakdown(loan);
+            const amort = amortizationLookup.get(loan);
+            const breakdown = averageLoanBreakdown(loan, amort);
 
             const total =
                 breakdown.interest + breakdown.principal + breakdown.fee;
@@ -167,209 +203,20 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         ---------------------------- */
         const cashflow = netMonthlyIncome - totalMonthlyExpenses;
 
-        /* ----------------------------
-           BOLIGKAPITAL (Prisvekst + Avdrag)
-        ---------------------------- */
-        const monthlyGrowthRate = Math.pow(1 + priceGrowth / 100, 1 / 12) - 1;
-
-        const housingHighlights = data.housingLoans.map((hl: HousingLoan) => {
-            const breakdown = loanSummaries.find(
-                (s) => s.loan.description === hl.description
-            );
-
-            const principal = breakdown?.principal ?? 0;
-
-            // Nå korrekt: boligens verdi = initialEquity + loanAmount
-            const homeValue = hl.capital + hl.loanAmount;
-
-            const priceGrowthNOK = homeValue * monthlyGrowthRate;
-
-            return {
-                description: hl.description,
-                principal,
-                priceGrowth: priceGrowthNOK,
-                combined: principal + priceGrowthNOK,
-                homeValue,
-            };
-        });
-
-        const totalHousingAppreciation = housingHighlights.reduce(
-            (s, h) => s + h.priceGrowth,
-            0
-        );
-
-        /* ----------------------------
-           TOTAL NETTO VERDI / MND
-        ---------------------------- */
-        const monthlyNetWorthChange =
-            cashflow + loanTotals.principal + totalHousingAppreciation;
-
-        /* ----------------------------
-   EGENKAPITAL VED SALG I DAG
----------------------------- */
-        const today = new Date();
-
-        const currentHousingEquity = data.housingLoans.map((hl) => {
-            const amort = computeLoanAmortization({
-                loanAmount: hl.loanAmount,
-                interestRate: hl.interestRate,
-                termYears: hl.termYears,
-                termsPerYear: hl.termsPerYear,
-                monthlyFee: hl.monthlyFee,
-                startDate: hl.startDate,
-            });
-
-            const start = new Date(hl.startDate);
-
-            const getBalanceAtMonth = createBalanceLookup(
-                amort,
-                hl.loanAmount
-            );
-
-            // months passed since loan started
-            const monthsFromStart =
-                (today.getFullYear() - start.getFullYear()) * 12 +
-                (today.getMonth() - start.getMonth());
-
-            // Remaining debt today
-            const remainingDebt = getBalanceAtMonth(monthsFromStart);
-
-            // Home value today = initialEquity + loanAmount
-            // Calculate years since start
-            const yearsSinceStart =
-                ((today.getFullYear() - start.getFullYear()) * 12 +
-                    (today.getMonth() - start.getMonth())) /
-                12;
-
-            // Market-adjusted home value today
-            const homeValue =
-                (hl.capital + hl.loanAmount) *
-                Math.pow(1 + priceGrowth / 100, yearsSinceStart);
-
-            const equityNow = homeValue - remainingDebt;
-
-            return {
-                description: hl.description,
-                homeValue,
-                remainingDebt,
-                equityNow,
-            };
-        });
-
-        /* ----------------------------
-   EGENKAPITAL I FREMTIDEN FRA LÅNESTART (1, 2, 5 år)
----------------------------- */
-        const equityProjections = data.housingLoans.map((hl) => {
-            const amort = computeLoanAmortization(hl);
-
-            const baseHomeValue = hl.capital + hl.loanAmount;
-
-            const getBalanceAtMonth = createBalanceLookup(
-                amort,
-                hl.loanAmount
-            );
-
-            const horizons = [1, 2, 5]; // years from loan start
-
-            const projections = horizons.map((yearsAhead) => {
-                const monthsAhead = yearsAhead * 12;
-
-                // this is KEY: index = monthsAhead (from loan start)
-                const futureDebt = getBalanceAtMonth(monthsAhead);
-
-                const futurePrice =
-                    baseHomeValue * Math.pow(1 + priceGrowth / 100, yearsAhead);
-
-                const futureEquity = futurePrice - futureDebt;
-
-                return {
-                    yearsAhead,
-                    futureEquity,
-                };
-            });
-
-            return {
-                description: hl.description,
-                projections,
-            };
-        });
-
-        /* ----------------------------------------------------------
-   EGENKAPITAL FRA START → I DAG → FREMTIDEN
----------------------------------------------------------- */
-
-        const equityTimeline = data.housingLoans.map((hl) => {
-            const amort = computeLoanAmortization(hl);
-            const start = new Date(hl.startDate);
-
-            const baseHomeValue = hl.capital + hl.loanAmount;
-
-            const getBalanceAtMonth = createBalanceLookup(
-                amort,
-                hl.loanAmount
-            );
-
-            // Months between start and today
-            const monthsFromStart =
-                (today.getFullYear() - start.getFullYear()) * 12 +
-                (today.getMonth() - start.getMonth());
-
-            // Indices we want on the amortization timeline:
-            const timelineIndices = [
-                0, // loan start
-                monthsFromStart, // today
-                monthsFromStart + 12, // +1 year
-                monthsFromStart + 24, // +2 years
-                monthsFromStart + 60, // +5 years
-            ];
-
-            const labels = [
-                'Ved start',
-                'I dag',
-                'Om 1 år',
-                'Om 2 år',
-                'Om 5 år',
-            ];
-
-            const entries = timelineIndices.map((index, i) => {
-                const remainingDebt = getBalanceAtMonth(index);
-
-                const yearsSinceStart = Math.max(index, 0) / 12;
-
-                const futurePrice =
-                    baseHomeValue *
-                    Math.pow(1 + priceGrowth / 100, yearsSinceStart);
-
-                const equity = futurePrice - remainingDebt;
-
-                return {
-                    label: labels[i],
-                    index,
-                    remainingDebt,
-                    futurePrice,
-                    equity,
-                };
-            });
-
-            return {
-                description: hl.description,
-                entries,
-            };
-        });
-
-        const totalCurrentEquity = currentHousingEquity.reduce(
-            (s, h) => s + h.equityNow,
-            0
-        );
+        const housingContexts = data.housingLoans.map((hl: HousingLoan) => ({
+            loan: hl,
+            amortization: amortizationLookup.get(hl),
+            baseHomeValue: hl.capital + hl.loanAmount,
+        }));
 
         return {
-            priceGrowth,
-
             // Inntekt
             totalIncomeAnnual,
+            taxableAnnual,
+            taxFreeAnnual,
             monthlyIncomeGross,
-            taxableMonthly,
             taxFreeMonthly,
+            taxableMonthly,
             monthlyTax,
             netMonthlyIncome,
             effectiveTaxRate: tax.effectiveTaxRate,
@@ -387,28 +234,204 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
             // Kontantstrøm
             cashflow,
 
-            // Boligkapital
-            housingHighlights,
-            totalHousingAppreciation,
-
-            // Netto verdi
-            monthlyNetWorthChange,
-
             // Skatt
             tax,
 
-            // Egenkapital ved salg
+            housingContexts,
+        };
+    }, [allLoans, amortizationLookup, data]);
+
+    const priceDependent = useMemo(() => {
+        const monthlyGrowthRate = Math.pow(1 + priceGrowth / 100, 1 / 12) - 1;
+
+        const today = new Date();
+
+        const summaryLookup = new Map(
+            baseSummary.loanSummaries.map((item) => [
+                item.loan.description,
+                item,
+            ])
+        );
+
+        const housingHighlights = baseSummary.housingContexts.map((hl) => {
+            const breakdown = summaryLookup.get(hl.loan.description);
+            const principal = breakdown?.principal ?? 0;
+
+            const priceGrowthNOK = hl.baseHomeValue * monthlyGrowthRate;
+
+            return {
+                description: hl.loan.description,
+                principal,
+                priceGrowth: priceGrowthNOK,
+                combined: principal + priceGrowthNOK,
+                homeValue: hl.baseHomeValue,
+            };
+        });
+
+        const totalHousingAppreciation = housingHighlights.reduce(
+            (s, h) => s + h.priceGrowth,
+            0
+        );
+
+        const monthlyNetWorthChange =
+            baseSummary.cashflow +
+            baseSummary.loanTotals.principal +
+            totalHousingAppreciation;
+
+        const currentHousingEquity = baseSummary.housingContexts.map((hl) => {
+            const start = new Date(hl.loan.startDate);
+
+            const getBalanceAtMonth = createBalanceLookup(
+                hl.amortization,
+                hl.loan.loanAmount
+            );
+
+            const monthsFromStart =
+                (today.getFullYear() - start.getFullYear()) * 12 +
+                (today.getMonth() - start.getMonth());
+
+            const remainingDebt = getBalanceAtMonth(monthsFromStart);
+
+            const yearsSinceStart = monthsFromStart / 12;
+
+            const homeValue =
+                hl.baseHomeValue *
+                Math.pow(1 + priceGrowth / 100, yearsSinceStart);
+
+            const equityNow = homeValue - remainingDebt;
+
+            return {
+                description: hl.loan.description,
+                homeValue,
+                remainingDebt,
+                equityNow,
+            };
+        });
+
+        const equityProjections = baseSummary.housingContexts.map((hl) => {
+            const getBalanceAtMonth = createBalanceLookup(
+                hl.amortization,
+                hl.loan.loanAmount
+            );
+
+            const horizons = [1, 2, 5];
+
+            const projections = horizons.map((yearsAhead) => {
+                const monthsAhead = yearsAhead * 12;
+
+                const futureDebt = getBalanceAtMonth(monthsAhead);
+
+                const futurePrice =
+                    hl.baseHomeValue *
+                    Math.pow(1 + priceGrowth / 100, yearsAhead);
+
+                const futureEquity = futurePrice - futureDebt;
+
+                return {
+                    yearsAhead,
+                    futureEquity,
+                };
+            });
+
+            return {
+                description: hl.loan.description,
+                projections,
+            };
+        });
+
+        const equityTimeline = baseSummary.housingContexts.map((hl) => {
+            const start = new Date(hl.loan.startDate);
+
+            const getBalanceAtMonth = createBalanceLookup(
+                hl.amortization,
+                hl.loan.loanAmount
+            );
+
+            const monthsFromStart =
+                (today.getFullYear() - start.getFullYear()) * 12 +
+                (today.getMonth() - start.getMonth());
+
+            const timelineIndices = [
+                0,
+                monthsFromStart,
+                monthsFromStart + 12,
+                monthsFromStart + 24,
+                monthsFromStart + 60,
+            ];
+
+            const labels = [
+                'Ved start',
+                'I dag',
+                'Om 1 år',
+                'Om 2 år',
+                'Om 5 år',
+            ];
+
+            const entries = timelineIndices.map((index, i) => {
+                const remainingDebt = getBalanceAtMonth(index);
+
+                const yearsSinceStart = Math.max(index, 0) / 12;
+
+                const futurePrice =
+                    hl.baseHomeValue *
+                    Math.pow(1 + priceGrowth / 100, yearsSinceStart);
+
+                const equity = futurePrice - remainingDebt;
+
+                return {
+                    label: labels[i],
+                    index,
+                    remainingDebt,
+                    futurePrice,
+                    equity,
+                };
+            });
+
+            return {
+                description: hl.loan.description,
+                entries,
+            };
+        });
+
+        const totalCurrentEquity = currentHousingEquity.reduce(
+            (s, h) => s + h.equityNow,
+            0
+        );
+
+        return {
+            housingHighlights,
+            totalHousingAppreciation,
+            monthlyNetWorthChange,
             currentHousingEquity,
-            totalCurrentEquity,
             equityProjections,
             equityTimeline,
+            totalCurrentEquity,
         };
-    }, [data, priceGrowth]);
+    }, [baseSummary, priceGrowth]);
+
+    return {
+        ...baseSummary,
+        ...priceDependent,
+    };
 }
 
 export default function SummaryPage() {
+    const [priceGrowthInput, setPriceGrowthInput] = useState('3.5');
     const [priceGrowth, setPriceGrowth] = useState(3.5);
+    const [isUpdatingPriceGrowth, setIsUpdatingPriceGrowth] = useState(false);
     const data = useStore((s: StoreState) => s.data);
+
+    useEffect(() => {
+        setIsUpdatingPriceGrowth(true);
+        const handle = setTimeout(() => {
+            const parsed = parseFloat(priceGrowthInput.replace(',', '.'));
+            const nextGrowth = Number.isFinite(parsed) ? parsed : 0;
+            setPriceGrowth((prev) => (prev === nextGrowth ? prev : nextGrowth));
+            setIsUpdatingPriceGrowth(false);
+        }, 250);
+
+        return () => clearTimeout(handle);
+    }, [priceGrowthInput]);
 
     const summary = useNetWorthSummary(data, priceGrowth);
 
@@ -443,6 +466,10 @@ export default function SummaryPage() {
     } = summary;
 
     const fmt = (v: number) => formatNumberToNOK(Math.round(v));
+    const housingSkeletonCount = Math.max(
+        housingHighlights.length || 0,
+        data.housingLoans.length || 1
+    );
 
     return (
         <div className='py-10 space-y-6 '>
@@ -840,27 +867,40 @@ export default function SummaryPage() {
                     </CardContent>
 
                     <CardContent className='space-y-2 text-sm'>
-                        {equityTimeline.map((home) => (
-                            <div key={home.description} className='space-y-1'>
-                                <p className='font-medium'>
-                                    {home.description}
-                                </p>
-
-                                {home.entries.map((e) => (
-                                    <div
-                                        key={e.label}
-                                        className='flex justify-between'
-                                    >
-                                        <span className='text-muted-foreground'>
-                                            {e.label}
-                                        </span>
-                                        <span className='font-semibold'>
-                                            {fmt(e.equity)}
-                                        </span>
-                                    </div>
-                                ))}
+                        {isUpdatingPriceGrowth ? (
+                            <div className='space-y-2' aria-busy='true'>
+                                {Array.from({ length: housingSkeletonCount }).map(
+                                    (_, idx) => (
+                                        <GhostRow
+                                            key={`equity-ghost-${idx}`}
+                                            lines={4}
+                                        />
+                                    )
+                                )}
                             </div>
-                        ))}
+                        ) : (
+                            equityTimeline.map((home) => (
+                                <div key={home.description} className='space-y-1'>
+                                    <p className='font-medium'>
+                                        {home.description}
+                                    </p>
+
+                                    {home.entries.map((e) => (
+                                        <div
+                                            key={e.label}
+                                            className='flex justify-between'
+                                        >
+                                            <span className='text-muted-foreground'>
+                                                {e.label}
+                                            </span>
+                                            <span className='font-semibold'>
+                                                {fmt(e.equity)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ))
+                        )}
                     </CardContent>
                 </Card>
             </section>
@@ -954,16 +994,25 @@ export default function SummaryPage() {
                             Avdrag + antatt prisvekst ({priceGrowth}% årlig)
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className='text-xl font-semibold'>
-                            Totalt:{' '}
-                            {fmt(
-                                loanTotals.principal + totalHousingAppreciation
+                <CardContent>
+                    <p className='text-xl font-semibold'>
+                        Totalt:{' '}
+                        {fmt(
+                            loanTotals.principal + totalHousingAppreciation
+                        )}
+                    </p>
+                </CardContent>
+                <CardContent className='space-y-3'>
+                    {isUpdatingPriceGrowth ? (
+                        <div className='space-y-3' aria-busy='true'>
+                            {Array.from({ length: housingSkeletonCount }).map(
+                                (_, idx) => (
+                                    <GhostRow key={`housing-ghost-${idx}`} />
+                                )
                             )}
-                        </p>
-                    </CardContent>
-                    <CardContent className='space-y-3'>
-                        {housingHighlights.map((h) => (
+                        </div>
+                    ) : (
+                        housingHighlights.map((h) => (
                             <div
                                 key={h.description}
                                 className='rounded-lg border p-3 flex items-center justify-between'
@@ -981,10 +1030,11 @@ export default function SummaryPage() {
                                     +{fmt(h.combined)} / mnd
                                 </Badge>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </section>
+                        ))
+                    )}
+                </CardContent>
+            </Card>
+        </section>
 
             <section className='container space-y-4'>
                 {/* Endre prisvekst */}
@@ -994,13 +1044,11 @@ export default function SummaryPage() {
                     </Label>
                     <Input
                         type='number'
-                        value={priceGrowth}
+                        value={priceGrowthInput}
                         onChange={(e) => {
-                            const nextGrowth = parseFloat(e.target.value);
-                            setPriceGrowth(
-                                Number.isFinite(nextGrowth) ? nextGrowth : 0
-                            );
+                            setPriceGrowthInput(e.target.value);
                         }}
+                        aria-busy={isUpdatingPriceGrowth}
                         step={0.1}
                         min={0}
                         max={100}
