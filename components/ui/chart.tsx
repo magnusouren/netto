@@ -24,11 +24,14 @@ type ChartContainerProps = ComponentPropsWithoutRef<"div"> & {
 export const ChartContainer = forwardRef<ElementRef<"div">, ChartContainerProps>(
     ({ className, children, config, ...props }, ref) => {
         const id = useId();
-        const style = Object.entries(config).reduce<CSSProperties>((acc, [key, value], index) => {
-            const fallback = `hsl(var(--chart-${index + 1}))`;
-            acc[`--chart-${key}` as keyof CSSProperties] = value.color ?? fallback;
-            return acc;
-        }, {});
+        const style = Object.entries(config).reduce<Record<string, string>>(
+            (acc, [key, value], index) => {
+                const fallback = `hsl(var(--chart-${index + 1}))`;
+                acc[`--chart-${key}`] = value.color ?? fallback;
+                return acc;
+            },
+            {}
+        );
 
         return (
             <div
@@ -37,7 +40,7 @@ export const ChartContainer = forwardRef<ElementRef<"div">, ChartContainerProps>
                     "flex w-full flex-col gap-3 overflow-hidden rounded-xl border bg-background p-4",
                     className
                 )}
-                style={style}
+                style={style as CSSProperties}
                 {...props}
             >
                 <ChartStyle id={id} config={config} />
