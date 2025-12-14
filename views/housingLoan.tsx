@@ -42,9 +42,9 @@ export default function HousingLoan() {
         // reset form to defaults when opening
         setForm({
             description: '',
-            capital: 0,
-            loanAmount: 0,
-            interestRate: 5.0,
+            capital: undefined,
+            loanAmount: undefined,
+            interestRate: undefined,
             termYears: 25,
             termsPerYear: 12,
             startDate: new Date().toISOString().slice(0, 10),
@@ -82,11 +82,9 @@ export default function HousingLoan() {
                         <thead>
                             <tr className='text-left bg-muted'>
                                 <th className='p-2 min-w-32'>Beskrivelse</th>
-                                <th className='p-2 min-w-32'>
-                                    Egenkapital (kr)
-                                </th>
-                                <th className='p-2 min-w-32'>Lånebeløp (kr)</th>
-                                <th className='p-2 min-w-24'>Rente (%)</th>
+                                <th className='p-2 min-w-32'>Egenkapital</th>
+                                <th className='p-2 min-w-32'>Lånebeløp</th>
+                                <th className='p-2 min-w-24'>Rente</th>
                                 <th className='p-2 min-w-22'>
                                     Nedbetalingstid
                                 </th>
@@ -266,7 +264,8 @@ export default function HousingLoan() {
                             <Input
                                 id='loan-capital'
                                 type='number'
-                                value={form.capital}
+                                value={form.capital || ''}
+                                placeholder='1 200 300'
                                 onChange={(e) =>
                                     setForm((p) => ({
                                         ...p,
@@ -284,7 +283,8 @@ export default function HousingLoan() {
                                 <Input
                                     id='loan-amount'
                                     type='number'
-                                    value={form.loanAmount}
+                                    placeholder='2 300 400'
+                                    value={form.loanAmount || ''}
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,
@@ -308,7 +308,8 @@ export default function HousingLoan() {
                                     id='loan-rate'
                                     type='number'
                                     step='0.01'
-                                    value={form.interestRate}
+                                    value={form.interestRate || ''}
+                                    placeholder='4,5'
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,
@@ -327,7 +328,8 @@ export default function HousingLoan() {
                                 <Input
                                     id='loan-years'
                                     type='number'
-                                    value={form.termYears}
+                                    value={form.termYears || ''}
+                                    placeholder='25'
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,
@@ -346,7 +348,8 @@ export default function HousingLoan() {
                                 <Input
                                     id='loan-terms'
                                     type='number'
-                                    value={form.termsPerYear}
+                                    value={form.termsPerYear || ''}
+                                    placeholder='12'
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,
@@ -392,7 +395,8 @@ export default function HousingLoan() {
                                 <Input
                                     id='loan-monthly'
                                     type='number'
-                                    value={form.monthlyFee}
+                                    value={form.monthlyFee || ''}
+                                    placeholder='50'
                                     onChange={(e) =>
                                         setForm((p) => ({
                                             ...p,

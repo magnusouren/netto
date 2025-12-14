@@ -1,13 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-    Calculator,
-    HandCoins,
-    PiggyBank,
-    Sparkles,
-    TrendingUp,
-} from 'lucide-react';
+import { Calculator, HandCoins, PiggyBank, TrendingUp } from 'lucide-react';
 
 import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
@@ -112,10 +106,7 @@ export default function Home() {
                             <Link href='/data'>Legg inn data</Link>
                         </Button>
                         <Button asChild variant='outline'>
-                            <Link href='/tax'>Se skattekalkulator</Link>
-                        </Button>
-                        <Button asChild variant='outline'>
-                            <Link href='/plan'>Egenkapital-plan</Link>
+                            <Link href='/summary'>Se oppsummering</Link>
                         </Button>
                     </div>
                 </div>

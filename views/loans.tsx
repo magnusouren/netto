@@ -147,9 +147,8 @@ export default function Loans() {
         <section className='w-full my-8'>
             <TypographyH2>Lån</TypographyH2>
             <TypographyP>
-                Legg inn informasjon om ditt andre lån her. Dette kan være
-                studielån, billån eller andre typer lån du har. Du kan legge til
-                flere lån dersom du har det.
+                Legg inn informasjon om dine lån her. Dette kan være studielån,
+                billån eller andre typer lån du har.
             </TypographyP>
 
             <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>

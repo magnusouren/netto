@@ -22,24 +22,23 @@ export default function Incomes() {
         <section className='w-full my-8'>
             <TypographyH2>Inntekter</TypographyH2>
             <TypographyP>
-                Legg til dine faste inntekter, per år. Skattefrie inntekter
-                (eks. studielån) kan legges inn og markeres som skattefrie.
+                Legg til dine årlige netto faste inntekter nedenfor.
             </TypographyP>
             {incomes.length !== 0 && (
                 <div className='overflow-auto rounded-md border'>
-                    <table className='w-full table-fixed text-sm'>
+                    <table className='table-fixed text-sm'>
                         <thead>
                             <tr className='bg-muted'>
-                                <th className='p-2 text-left w-2/3 md:w-3/4'>
+                                <th className='p-2 w-5/12 text-left md:w-3/4'>
                                     Kilde
                                 </th>
-                                <th className='p-2 w-1/3 md:w-1/4 text-left'>
-                                    Beløp (kr)
+                                <th className='p-2 w-5/12 md:w-1/4 text-left'>
+                                    Beløp
                                 </th>
-                                <th className='w-12 text-center'>
+                                <th className=' w-1/12 md:w-12 text-center'>
                                     Skattefritt
                                 </th>
-                                <th className='w-12'> </th>
+                                <th className='p-2 w-1/12 md:w-12'></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -52,7 +51,7 @@ export default function Incomes() {
                                         <Input
                                             id={`income-source-${index}`}
                                             type='text'
-                                            value={income.source}
+                                            value={income.source || ''}
                                             placeholder={`Fast jobb`}
                                             onChange={(e) =>
                                                 updateIncome(index, {
@@ -65,7 +64,7 @@ export default function Incomes() {
                                         <Input
                                             id={`income-amount-${index}`}
                                             type='number'
-                                            value={income.amount}
+                                            value={income.amount || ''}
                                             placeholder='500 000'
                                             onChange={(e) =>
                                                 updateIncome(index, {
@@ -88,7 +87,7 @@ export default function Incomes() {
                                             }
                                         />
                                     </td>
-                                    <td className='text-center'>
+                                    <td className='text-center p-2'>
                                         <Button
                                             variant='ghost'
                                             className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
@@ -106,7 +105,8 @@ export default function Incomes() {
                                 <td className='p-2 pl-4 '>
                                     {totalIncome.toLocaleString()}
                                 </td>
-                                <td> </td>
+                                <td></td>
+                                <td></td>
                             </tr>
                         </tbody>
                     </table>

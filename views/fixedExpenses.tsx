@@ -186,7 +186,7 @@ export default function FixedExpenses() {
                                         Beskrivelse
                                     </th>
                                     <th className='p-2 text-left w-1/4'>
-                                        Beløp (kr)
+                                        Beløp
                                     </th>
                                     <th className='p-2 w-12'> </th>
                                 </tr>

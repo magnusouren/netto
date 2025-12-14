@@ -557,17 +557,13 @@ export default function SummaryPage() {
 
                     <CardContent className='space-y-4'>
                         {/* Top summary row */}
-                        <div className='flex flex-wrap gap-3 text-sm text-muted-foreground'>
-                            <span>Skattepliktig: {fmt(taxableMonthly)}</span>
-                            <Separator
-                                orientation='vertical'
-                                className='hidden sm:block h-4'
-                            />
-                            <span>Skattefritt: {fmt(taxFreeMonthly)}</span>
-                            <Separator
-                                orientation='vertical'
-                                className='hidden sm:block h-4'
-                            />
+                        <div className='flex flex-wrap gap-3 text-sm text-muted-foreground justify-between flex-col md:flex-row'>
+                            <div className='flex-1'>
+                                Skattepliktig: {fmt(taxableMonthly)}
+                            </div>
+                            <div className='flex-1'>
+                                Skattefritt: {fmt(taxFreeMonthly)}
+                            </div>
                         </div>
 
                         {/* Detailed breakdown */}
@@ -648,7 +644,7 @@ export default function SummaryPage() {
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
                             <BarChart4 className='h-5 w-5 text-brandBlue' />
-                            Nøkkeltall
+                            Nøkkeltall – Utgifter
                         </CardTitle>
                         <CardDescription>
                             Oversikt over renter, avdrag og faste kostnader.
@@ -710,6 +706,20 @@ export default function SummaryPage() {
                                 {fmt(livingMonthly)}
                             </span>
                         </div>
+
+                        <Separator />
+
+                        <div className='flex items-center justify-between text-sm'>
+                            <span className='text-muted-foreground'>Sum</span>
+                            <span className='font-semibold'>
+                                {fmt(
+                                    housingFixed +
+                                        personalFixed +
+                                        livingMonthly +
+                                        loanTotals.total
+                                )}
+                            </span>
+                        </div>
                     </CardContent>
                 </Card>
             </section>
@@ -722,41 +732,16 @@ export default function SummaryPage() {
                     <CardHeader>
                         <CardTitle className='flex items-center gap-2'>
                             <ReceiptText className='h-5 w-5 text-brandBlue' />
-                            Din totale netto verdi per mnd
+                            Nettoverdi per måned
                         </CardTitle>
                         <CardDescription>
-                            Kontantstrøm + avdrag + boligprisvekst.
+                            Hvordan påvirker boliglån, prisvekst og avdrag din
+                            månedlige nettoverdi?
                         </CardDescription>
                     </CardHeader>
 
                     <CardContent className='space-y-4'>
-                        <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
-                            <div>
-                                <p className='text-xs text-muted-foreground uppercase tracking-wide'>
-                                    Total nettoverdi / mnd (inkl. prisvekst på)
-                                </p>
-                                <p className='text-3xl font-semibold'>
-                                    {fmt(monthlyNetWorthChange)}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
-                            <div>
-                                <p className='text-xs text-muted-foreground uppercase tracking-wide'>
-                                    Total nettoverdi / mnd (ekskl. prisvekst på
-                                    bolig)
-                                </p>
-                                <p className='text-3xl font-semibold'>
-                                    {fmt(
-                                        monthlyNetWorthChange -
-                                            totalHousingAppreciation
-                                    )}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className='grid gap-3 sm:grid-cols-3'>
+                        <div className='grid gap-4 sm:grid-cols-3'>
                             <div className='rounded-lg border p-3 bg-background'>
                                 <p className='text-xs text-muted-foreground'>
                                     Kontantstrøm
@@ -781,6 +766,31 @@ export default function SummaryPage() {
                                 </p>
                                 <p className='text-lg font-semibold'>
                                     {fmt(totalHousingAppreciation)}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
+                            <div>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wide'>
+                                    Nettoverdi / mnd (inkl. prisvekst på bolig)
+                                </p>
+                                <p className='text-3xl font-semibold'>
+                                    {fmt(monthlyNetWorthChange)}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className='rounded-lg border p-4 bg-muted/40 flex justify-between'>
+                            <div>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wide'>
+                                    Nettoverdi / mnd (ekskl. prisvekst på bolig)
+                                </p>
+                                <p className='text-3xl font-semibold'>
+                                    {fmt(
+                                        monthlyNetWorthChange -
+                                            totalHousingAppreciation
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -919,9 +929,17 @@ export default function SummaryPage() {
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
                             <ReceiptText className='h-5 w-5 text-brandBlue' />
-                            Utgifter og lån
+                            Utgifter og lånekostnader
                         </CardTitle>
                     </CardHeader>
+
+                    <CardContent className='pb-0'>
+                        <p className='text-sm text-muted-foreground'>
+                            {housingFixed + personalFixed + livingMonthly} kr
+                            faste månedlige utgifter + {loanTotals.total} kr i
+                            lånekostnader per måned.
+                        </p>
+                    </CardContent>
 
                     <CardContent className='space-y-4'>
                         <div className='grid gap-3 sm:grid-cols-3'>

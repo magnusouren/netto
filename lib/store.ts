@@ -103,7 +103,7 @@ export const useStore = create<StoreState>()(
                     description: '',
                     loanAmount: 0,
                     interestRate: 0,
-                    termYears: 0,
+                    termYears: 25,
                     termsPerYear: 12,
                     startDate: new Date().toISOString().slice(0, 10),
                 }

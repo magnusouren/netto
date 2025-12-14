@@ -330,8 +330,8 @@ export default function Loans() {
 
                 {loans.length === 0 && (
                     <TypographyP>
-                        Du har ikke lagt til noen boliglån enda. Legg til et
-                        boliglån på forsiden for å se nedbetalingsplanen her.
+                        Du har ikke lagt til noen andre lån enda. Legg til et
+                        lån på data-siden for å se nedbetalingsplanen her.
                     </TypographyP>
                 )}
 

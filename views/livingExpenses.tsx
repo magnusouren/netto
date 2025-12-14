@@ -392,7 +392,7 @@ export default function LivingExpenses() {
                     <thead>
                         <tr className='bg-muted text-sm'>
                             <th className='p-2 text-left w-3/4'>Beskrivelse</th>
-                            <th className='p-2 text-left w-1/4'>Beløp (kr)</th>
+                            <th className='p-2 text-left w-1/4'>Beløp</th>
                             <th className='w-12'> </th>
                         </tr>
                     </thead>
