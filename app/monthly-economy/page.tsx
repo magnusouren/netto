@@ -68,8 +68,9 @@ export default function PaymentPlan() {
                     <TypographyH2>Betalingsplan</TypographyH2>
                     <TypographyP>
                         Nedenfor er en oversikt over dine månedlige inntekter og
-                        utgifter, inkludert nedbetaling av lån og
-                        rentekostnader.
+                        utgifter, og hvordan avdrag påvirker balansen din.
+                        Tabellen viser hvordan balansen din utvikler seg over
+                        tid, både med og uten avdrag.
                     </TypographyP>
                     <table className='w-full table-auto text-sm'>
                         <thead>
@@ -79,9 +80,7 @@ export default function PaymentPlan() {
                                 <th className='p-2 text-right'>Utgifter</th>
                                 <th className='p-2 text-right'>Avdrag</th>
                                 <th className='p-2 text-right'>Balanse</th>
-                                <th className='p-2 text-right'>
-                                    Ekskl. Avdrag
-                                </th>
+                                <th className='p-2 text-right'>+ Avdrag</th>
                             </tr>
                         </thead>
                         <tbody>

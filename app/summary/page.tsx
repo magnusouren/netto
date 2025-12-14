@@ -102,7 +102,10 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
     );
 
     const amortizationLookup: AmortizationLookup = useMemo(() => {
-        const map = new Map<string, ReturnType<typeof computeLoanAmortization>>();
+        const map = new Map<
+            string,
+            ReturnType<typeof computeLoanAmortization>
+        >();
 
         allLoans.forEach((loan) => {
             map.set(buildLoanCacheKey(loan), amortizationCache.get(loan));
@@ -422,8 +425,8 @@ export default function SummaryPage() {
     const data = useStore((s: StoreState) => s.data);
 
     useEffect(() => {
-        setIsUpdatingPriceGrowth(true);
         const handle = setTimeout(() => {
+            setIsUpdatingPriceGrowth(true);
             const parsed = parseFloat(priceGrowthInput.replace(',', '.'));
             const nextGrowth = Number.isFinite(parsed) ? parsed : 0;
             setPriceGrowth((prev) => (prev === nextGrowth ? prev : nextGrowth));
@@ -869,18 +872,21 @@ export default function SummaryPage() {
                     <CardContent className='space-y-2 text-sm'>
                         {isUpdatingPriceGrowth ? (
                             <div className='space-y-2' aria-busy='true'>
-                                {Array.from({ length: housingSkeletonCount }).map(
-                                    (_, idx) => (
-                                        <GhostRow
-                                            key={`equity-ghost-${idx}`}
-                                            lines={4}
-                                        />
-                                    )
-                                )}
+                                {Array.from({
+                                    length: housingSkeletonCount,
+                                }).map((_, idx) => (
+                                    <GhostRow
+                                        key={`equity-ghost-${idx}`}
+                                        lines={4}
+                                    />
+                                ))}
                             </div>
                         ) : (
                             equityTimeline.map((home) => (
-                                <div key={home.description} className='space-y-1'>
+                                <div
+                                    key={home.description}
+                                    className='space-y-1'
+                                >
                                     <p className='font-medium'>
                                         {home.description}
                                     </p>
@@ -994,47 +1000,47 @@ export default function SummaryPage() {
                             Avdrag + antatt prisvekst ({priceGrowth}% årlig)
                         </CardDescription>
                     </CardHeader>
-                <CardContent>
-                    <p className='text-xl font-semibold'>
-                        Totalt:{' '}
-                        {fmt(
-                            loanTotals.principal + totalHousingAppreciation
-                        )}
-                    </p>
-                </CardContent>
-                <CardContent className='space-y-3'>
-                    {isUpdatingPriceGrowth ? (
-                        <div className='space-y-3' aria-busy='true'>
-                            {Array.from({ length: housingSkeletonCount }).map(
-                                (_, idx) => (
-                                    <GhostRow key={`housing-ghost-${idx}`} />
-                                )
+                    <CardContent>
+                        <p className='text-xl font-semibold'>
+                            Totalt:{' '}
+                            {fmt(
+                                loanTotals.principal + totalHousingAppreciation
                             )}
-                        </div>
-                    ) : (
-                        housingHighlights.map((h) => (
-                            <div
-                                key={h.description}
-                                className='rounded-lg border p-3 flex items-center justify-between'
-                            >
-                                <div>
-                                    <p className='text-sm font-medium'>
-                                        {h.description}
-                                    </p>
-                                    <p className='text-xs text-muted-foreground'>
-                                        Avdrag* {fmt(h.principal)} · Prisvekst{' '}
-                                        {fmt(h.priceGrowth)}
-                                    </p>
-                                </div>
-                                <Badge className='bg-brandBlue text-white'>
-                                    +{fmt(h.combined)} / mnd
-                                </Badge>
+                        </p>
+                    </CardContent>
+                    <CardContent className='space-y-3'>
+                        {isUpdatingPriceGrowth ? (
+                            <div className='space-y-3' aria-busy='true'>
+                                {Array.from({
+                                    length: housingSkeletonCount,
+                                }).map((_, idx) => (
+                                    <GhostRow key={`housing-ghost-${idx}`} />
+                                ))}
                             </div>
-                        ))
-                    )}
-                </CardContent>
-            </Card>
-        </section>
+                        ) : (
+                            housingHighlights.map((h) => (
+                                <div
+                                    key={h.description}
+                                    className='rounded-lg border p-3 flex items-center justify-between'
+                                >
+                                    <div>
+                                        <p className='text-sm font-medium'>
+                                            {h.description}
+                                        </p>
+                                        <p className='text-xs text-muted-foreground'>
+                                            Avdrag* {fmt(h.principal)} ·
+                                            Prisvekst {fmt(h.priceGrowth)}
+                                        </p>
+                                    </div>
+                                    <Badge className='bg-brandBlue text-white'>
+                                        +{fmt(h.combined)} / mnd
+                                    </Badge>
+                                </div>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+            </section>
 
             <section className='container space-y-4'>
                 {/* Endre prisvekst */}
