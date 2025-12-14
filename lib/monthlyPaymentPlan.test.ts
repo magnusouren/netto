@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { EconomyData } from '@/types';
+import type { EconomyData, HouseOption } from '@/types';
 import { computeLoanAmortization } from './amortization';
 import { generatePaymentPlan } from './monthlyPaymentPlan';
 
@@ -12,7 +12,27 @@ const housingLoan = {
     termsPerYear: 12,
     monthlyFee: 15,
     startDate: '2024-01-01',
-    capital: 80_000,
+};
+
+const testHouse: HouseOption = {
+    id: 'test-house-1',
+    name: 'Test Condo',
+    purchase: {
+        price: 480_000,
+        equityUsed: 80_000,
+        expectedGrowthPct: 2,
+        closingCosts: 0,
+    },
+    housingLoan,
+    houseMonthlyCosts: {
+        hoa: 2_000,
+        electricity: 800,
+        internet: 400,
+        insurance: 0,
+        propertyTax: 0,
+        maintenance: 0,
+        other: 0,
+    },
 };
 
 const studentLoan = {
@@ -30,22 +50,27 @@ const economy: EconomyData = {
         { source: 'Salary', amount: 540_000 },
         { source: 'Freelance', amount: 60_000 },
     ],
-    housingLoans: [housingLoan],
     loans: [studentLoan],
-    fixedExpenses: [
-        { description: 'Utilities', amount: 3_200, category: 'housing' },
+    personalFixedExpenses: [
         { description: 'Insurance', amount: 1_100, category: 'personal' },
     ],
     livingCosts: [
         { description: 'Groceries', amount: 4_500 },
         { description: 'Transport', amount: 1_000 },
     ],
+    personalEquity: 100_000,
+    houses: [testHouse],
+    activeHouseId: 'test-house-1',
 };
 
 describe('generatePaymentPlan', () => {
     const plan = generatePaymentPlan(economy, 3, '2024-01-01', 1);
-    const baseFixedCosts = economy.fixedExpenses.reduce((s, e) => s + e.amount, 0) +
-        economy.livingCosts.reduce((s, c) => s + c.amount, 0);
+    
+    // Housing costs + personal fixed + living costs
+    const housingCosts = 2_000 + 800 + 400; // from houseMonthlyCosts
+    const personalFixed = 1_100;
+    const livingCosts = 4_500 + 1_000;
+    const baseFixedCosts = housingCosts + personalFixed + livingCosts;
 
     it('creates a one-year projection with monthly balances', () => {
         assert.equal(plan.length, 12);

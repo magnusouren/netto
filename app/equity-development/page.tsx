@@ -13,6 +13,11 @@ import { useState } from 'react';
 export default function Plan() {
     const data = useStore((s: StoreState) => s.data);
 
+    // Get active house
+    const activeHouse = (data.houses || []).find(
+        (h) => h.id === data.activeHouseId
+    );
+
     const [priceIncrease, setPriceIncrease] = useState(2);
     const [yearsToShow, setYearsToShow] = useState(10);
     const [savings, setSavings] = useState(0);
@@ -84,15 +89,15 @@ export default function Plan() {
                         </div>
                     </label>
                 </div>
-                {data.housingLoans.length === 0 && (
+                {!activeHouse && (
                     <TypographyP>
-                        Du har ingen boliglån lagt til. Gå til Inntekter og lån
-                        for å legge til boliglån.
+                        Du har ingen bolig valgt. Gå til Boliger for å legge til
+                        og velge en bolig.
                     </TypographyP>
                 )}
-                {data.housingLoans.map((loan, index) => (
-                    <div key={index} className='mt-8 overflow-auto '>
-                        <TypographyH2>{loan.description}</TypographyH2>
+                {activeHouse && activeHouse.housingLoan.loanAmount > 0 && (
+                    <div className='mt-8 overflow-auto '>
+                        <TypographyH2>{activeHouse.name}</TypographyH2>
 
                         <table className='w-full mt-4 table-auto text-sm border-collapse rounded-md'>
                             <thead>
@@ -117,7 +122,11 @@ export default function Plan() {
                             </thead>
                             <tbody>
                                 {loanPaymentPlan(
-                                    loan,
+                                    {
+                                        ...activeHouse.housingLoan,
+                                        capital:
+                                            activeHouse.purchase.equityUsed,
+                                    },
                                     priceIncrease,
                                     yearsToShow
                                 ).map((entry, idx) => (
@@ -149,11 +158,14 @@ export default function Plan() {
 
                                         <td className='p-2 text-right'>
                                             {formatNumberToNOK(
-                                                loan.loanAmount -
+                                                activeHouse.housingLoan
+                                                    .loanAmount -
                                                     entry.remainingDebt +
                                                     entry.housingValue -
-                                                    (loan.loanAmount +
-                                                        loan.capital)
+                                                    (activeHouse.housingLoan
+                                                        .loanAmount +
+                                                        activeHouse.purchase
+                                                            .equityUsed)
                                             )}
                                         </td>
                                         <td className='p-2 text-right'>
@@ -166,7 +178,7 @@ export default function Plan() {
                             </tbody>
                         </table>
                     </div>
-                ))}
+                )}
             </section>
         </>
     );

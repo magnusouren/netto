@@ -35,9 +35,29 @@ import {
 } from '@/lib/amortizationCache';
 import { formatNumberToNOK } from '@/lib/utils';
 
-import type { EconomyData, Loan, HousingLoan } from '@/types';
+import type {
+    EconomyData,
+    Loan,
+    HouseOption,
+    HouseMonthlyCosts,
+} from '@/types';
 import { Input } from '@/components/ui/input';
 import { Label } from '@radix-ui/react-label';
+
+/* ===========================================================
+   HELPER: Sum house monthly costs
+   =========================================================== */
+function totalHouseMonthlyCosts(costs: HouseMonthlyCosts): number {
+    return (
+        (costs.hoa || 0) +
+        (costs.electricity || 0) +
+        (costs.internet || 0) +
+        (costs.insurance || 0) +
+        (costs.propertyTax || 0) +
+        (costs.maintenance || 0) +
+        (costs.other || 0)
+    );
+}
 
 /* ===========================================================
    HELPER: Gjennomsnittlig rente/avdrag/gebyr neste 12 mnd
@@ -96,9 +116,18 @@ function GhostRow({ lines = 2 }: { lines?: number }) {
 function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
     const amortizationCache = useMemo(() => createAmortizationCache(), []);
 
+    // Get active house
+    const activeHouse = useMemo(
+        () => (data.houses || []).find((h) => h.id === data.activeHouseId),
+        [data.houses, data.activeHouseId]
+    );
+
     const allLoans: Loan[] = useMemo(
-        () => [...data.loans, ...data.housingLoans],
-        [data.housingLoans, data.loans]
+        () => [
+            ...data.loans,
+            ...(activeHouse ? [activeHouse.housingLoan] : []),
+        ],
+        [activeHouse, data.loans]
     );
 
     const amortizationLookup: AmortizationLookup = useMemo(() => {
@@ -139,11 +168,11 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         /* ----------------------------
            INNTEKT
         ---------------------------- */
-        const totalIncomeAnnual = data.incomes.reduce(
+        const totalIncomeAnnual = (data.incomes || []).reduce(
             (s, i) => s + i.amount,
             0
         );
-        const taxFreeAnnual = data.incomes
+        const taxFreeAnnual = (data.incomes || [])
             .filter((i) => i.taxFree)
             .reduce((s, i) => s + i.amount, 0);
 
@@ -185,15 +214,17 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         /* ----------------------------
            KOSTNADER
         ---------------------------- */
-        const housingFixed = data.fixedExpenses
-            .filter((f) => f.category === 'housing')
-            .reduce((s, f) => s + f.amount, 0);
+        // Housing costs from active house
+        const housingFixed = activeHouse
+            ? totalHouseMonthlyCosts(activeHouse.houseMonthlyCosts)
+            : 0;
 
-        const personalFixed = data.fixedExpenses
-            .filter((f) => f.category === 'personal')
-            .reduce((s, f) => s + f.amount, 0);
+        const personalFixed = (data.personalFixedExpenses || []).reduce(
+            (s, f) => s + f.amount,
+            0
+        );
 
-        const livingMonthly = data.livingCosts.reduce(
+        const livingMonthly = (data.livingCosts || []).reduce(
             (s, l) => s + l.amount,
             0
         );
@@ -206,11 +237,20 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         ---------------------------- */
         const cashflow = netMonthlyIncome - totalMonthlyExpenses;
 
-        const housingContexts = data.housingLoans.map((hl: HousingLoan) => ({
-            loan: hl,
-            amortization: amortizationLookup.get(hl),
-            baseHomeValue: hl.capital + hl.loanAmount,
-        }));
+        // Housing context for active house only
+        const housingContexts = activeHouse
+            ? [
+                  {
+                      loan: activeHouse.housingLoan,
+                      amortization: amortizationLookup.get(
+                          activeHouse.housingLoan
+                      ),
+                      baseHomeValue:
+                          activeHouse.purchase.equityUsed +
+                          activeHouse.housingLoan.loanAmount,
+                  },
+              ]
+            : [];
 
         return {
             // Inntekt
@@ -241,8 +281,11 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
             tax,
 
             housingContexts,
+
+            // Active house for reference
+            activeHouse,
         };
-    }, [allLoans, amortizationLookup, data]);
+    }, [activeHouse, allLoans, amortizationLookup, data]);
 
     const priceDependent = useMemo(() => {
         const monthlyGrowthRate = Math.pow(1 + priceGrowth / 100, 1 / 12) - 1;
@@ -471,7 +514,7 @@ export default function SummaryPage() {
     const fmt = (v: number) => formatNumberToNOK(Math.round(v));
     const housingSkeletonCount = Math.max(
         housingHighlights.length || 0,
-        data.housingLoans.length || 1
+        (data.houses || []).length || 1
     );
 
     return (
@@ -595,7 +638,7 @@ export default function SummaryPage() {
                                             </div>
                                         ))}
 
-                                    {data.incomes.filter((i) => !i.taxFree)
+                                    {(data.incomes || []).filter((i) => !i.taxFree)
                                         .length === 0 && (
                                         <p className='text-sm text-muted-foreground'>
                                             Ingen registrerte skattepliktige
@@ -605,7 +648,7 @@ export default function SummaryPage() {
                                 </CardContent>
                             </Card>
 
-                            {data.incomes.some((i) => i.taxFree) && (
+                            {(data.incomes || []).some((i) => i.taxFree) && (
                                 <Card className='border-dashed'>
                                     <CardHeader className='pb-2'>
                                         <CardDescription className='text-xs uppercase tracking-wide'>
@@ -616,7 +659,7 @@ export default function SummaryPage() {
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className='space-y-2'>
-                                        {data.incomes
+                                        {(data.incomes || [])
                                             .filter((i) => i.taxFree)
                                             .map((inc, idx) => (
                                                 <div

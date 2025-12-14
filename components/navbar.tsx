@@ -54,6 +54,9 @@ function NavLinks({ onClick }: { onClick?: () => void }) {
             <Link href='/data' className={base} onClick={onClick}>
                 Grunnlagsdata
             </Link>
+            <Link href='/houses' className={base} onClick={onClick}>
+                Boliger
+            </Link>
             <Link href='/tax-details' className={base} onClick={onClick}>
                 Skattedetaljer
             </Link>

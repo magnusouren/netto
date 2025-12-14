@@ -30,7 +30,7 @@ export default function Taxes() {
                             </td>
                         </tr>
 
-                        {data.incomes.map((inc, i) => (
+                        {(data.incomes || []).map((inc, i) => (
                             <tr key={i}>
                                 <td className='p-2'>
                                     {inc.source}{' '}

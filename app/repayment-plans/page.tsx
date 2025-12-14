@@ -161,7 +161,13 @@ interface HousingLoanDataRowYearly {
 
 export default function Loans() {
     const data = useStore((s: StoreState) => s.data);
-    const { housingLoans, loans } = data;
+
+    // Get active house and its housing loan
+    const activeHouse = (data.houses || []).find(
+        (h) => h.id === data.activeHouseId
+    );
+    const housingLoan = activeHouse?.housingLoan;
+    const loans = data.loans || [];
 
     return (
         <>
@@ -176,22 +182,28 @@ export default function Loans() {
             </div>
 
             <section className='container'>
-                <TypographyH2>Dine boliglån</TypographyH2>
+                <TypographyH2>
+                    Boliglån {activeHouse ? `(${activeHouse.name})` : ''}
+                </TypographyH2>
 
-                {housingLoans.length === 0 && (
+                {!housingLoan && (
                     <TypographyP>
-                        Du har ikke lagt til noen boliglån enda. Legg til et
-                        boliglån på forsiden for å se nedbetalingsplanen her.
+                        Du har ikke valgt noen bolig enda. Gå til boligsiden for
+                        å legge til en bolig og se nedbetalingsplanen her.
                     </TypographyP>
                 )}
 
-                {housingLoans.length > 0 &&
-                    housingLoans.map((loan, index) => {
-                        const schedule = generateAmortizationSchedule(loan);
+                {housingLoan &&
+                    housingLoan.loanAmount > 0 &&
+                    (() => {
+                        const schedule =
+                            generateAmortizationSchedule(housingLoan);
 
                         return (
-                            <div key={index} className='overflow-auto my-4'>
-                                <TypographyH3>{loan.description}</TypographyH3>
+                            <div className='overflow-auto my-4'>
+                                <TypographyH3>
+                                    {housingLoan.description}
+                                </TypographyH3>
 
                                 <table className='w-full table-auto text-sm border-collapse'>
                                     <thead className='bg-gray-100'>
@@ -322,7 +334,7 @@ export default function Loans() {
                                 </table>
                             </div>
                         );
-                    })}
+                    })()}
             </section>
 
             <section className='mt-4'>

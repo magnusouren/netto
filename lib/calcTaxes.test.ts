@@ -1,18 +1,38 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import type { EconomyData } from '@/types';
+import type { EconomyData, HouseOption } from '@/types';
 import { computeLoanAmortization } from './amortization';
 import { calculateAnnualTaxes } from './calcTaxes';
 
 const housingLoan = {
-    description: 'Starter home',
+    description: 'Boliglån',
     loanAmount: 320_000,
     interestRate: 3.6,
     termYears: 10,
     termsPerYear: 12,
     monthlyFee: 25,
     startDate: '2024-01-01',
-    capital: 50_000,
+};
+
+const testHouse: HouseOption = {
+    id: 'test-house-1',
+    name: 'Starter home',
+    purchase: {
+        price: 370_000,
+        equityUsed: 50_000,
+        expectedGrowthPct: 2,
+        closingCosts: 0,
+    },
+    housingLoan,
+    houseMonthlyCosts: {
+        hoa: 0,
+        electricity: 0,
+        internet: 0,
+        insurance: 0,
+        propertyTax: 0,
+        maintenance: 0,
+        other: 0,
+    },
 };
 
 const carLoan = {
@@ -31,10 +51,12 @@ const economy: EconomyData = {
         { source: 'Bonus', amount: 35_000 },
         { source: 'Child support', amount: 24_000, taxFree: true },
     ],
-    housingLoans: [housingLoan],
     loans: [carLoan],
-    fixedExpenses: [],
+    personalFixedExpenses: [],
     livingCosts: [],
+    personalEquity: 100_000,
+    houses: [testHouse],
+    activeHouseId: 'test-house-1',
 };
 
 describe('calculateAnnualTaxes', () => {

@@ -39,7 +39,12 @@ function monthlyLoanPayment(loan: Loan): number {
 export default function Home() {
     const data = useStore((s: StoreState) => s.data);
 
-    const totalIncomeAnnual = data.incomes.reduce(
+    // Get active house (with fallback for old data structure)
+    const activeHouse = (data.houses || []).find(
+        (h) => h.id === data.activeHouseId
+    );
+
+    const totalIncomeAnnual = (data.incomes || []).reduce(
         (sum, income) => sum + income.amount,
         0
     );
@@ -49,19 +54,31 @@ export default function Home() {
     const monthlyTax = tax.totalTaxes / 12;
     const effectiveTaxRate = tax.effectiveTaxRate;
 
-    const loans: Loan[] = [...data.loans, ...data.housingLoans];
+    // Combine regular loans with active house's housing loan
+    const loans: Loan[] = [
+        ...data.loans,
+        ...(activeHouse ? [activeHouse.housingLoan] : []),
+    ];
     const loanMonthlyPayments = loans.reduce(
         (sum, loan) => sum + monthlyLoanPayment(loan),
         0
     );
 
-    const housingFixed = data.fixedExpenses
-        .filter((exp) => exp.category === 'housing')
-        .reduce((sum, exp) => sum + exp.amount, 0);
-    const personalFixed = data.fixedExpenses
-        .filter((exp) => exp.category === 'personal')
-        .reduce((sum, exp) => sum + exp.amount, 0);
-    const livingMonthly = data.livingCosts.reduce(
+    // Housing costs from active house
+    const housingFixed = activeHouse
+        ? (activeHouse.houseMonthlyCosts.hoa || 0) +
+          (activeHouse.houseMonthlyCosts.electricity || 0) +
+          (activeHouse.houseMonthlyCosts.internet || 0) +
+          (activeHouse.houseMonthlyCosts.insurance || 0) +
+          (activeHouse.houseMonthlyCosts.propertyTax || 0) +
+          (activeHouse.houseMonthlyCosts.maintenance || 0) +
+          (activeHouse.houseMonthlyCosts.other || 0)
+        : 0;
+    const personalFixed = (data.personalFixedExpenses || []).reduce(
+        (sum, exp) => sum + exp.amount,
+        0
+    );
+    const livingMonthly = (data.livingCosts || []).reduce(
         (sum, cost) => sum + cost.amount,
         0
     );
@@ -79,11 +96,11 @@ export default function Home() {
     );
 
     const hasData =
-        data.incomes.length > 0 ||
-        data.housingLoans.length > 0 ||
-        data.loans.length > 0 ||
-        data.fixedExpenses.length > 0 ||
-        data.livingCosts.length > 0;
+        (data.incomes || []).length > 0 ||
+        (data.houses || []).length > 0 ||
+        (data.loans || []).length > 0 ||
+        (data.personalFixedExpenses || []).length > 0 ||
+        (data.livingCosts || []).length > 0;
 
     return (
         <div className='w-full py-10 space-y-12'>

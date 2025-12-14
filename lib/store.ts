@@ -6,17 +6,50 @@ import type {
     EconomyData,
     Income,
     Loan,
-    HousingLoan,
     FixedExpense,
     LivingCost,
+    HouseOption,
+    HouseMonthlyCosts,
 } from '@/types';
+
+const defaultHouseMonthlyCosts: HouseMonthlyCosts = {
+    hoa: 0,
+    electricity: 0,
+    internet: 0,
+    insurance: 0,
+    propertyTax: 0,
+    maintenance: 0,
+    other: 0,
+};
+
+const createDefaultHouse = (name = 'New House'): HouseOption => ({
+    id: crypto.randomUUID(),
+    name,
+    purchase: {
+        price: 0,
+        equityUsed: 0,
+        expectedGrowthPct: 0,
+        closingCosts: 0,
+    },
+    housingLoan: {
+        description: 'Boliglån',
+        loanAmount: 0,
+        interestRate: 0,
+        termYears: 25,
+        termsPerYear: 12,
+        startDate: new Date().toISOString().slice(0, 10),
+    },
+    houseMonthlyCosts: { ...defaultHouseMonthlyCosts },
+});
 
 const defaultData: EconomyData = {
     incomes: [],
-    housingLoans: [],
     loans: [],
-    fixedExpenses: [],
+    personalFixedExpenses: [],
     livingCosts: [],
+    personalEquity: 0,
+    houses: [],
+    activeHouseId: '',
 };
 
 type Updater = (draft: EconomyData) => EconomyData;
@@ -28,22 +61,34 @@ export interface StoreState {
     _hasHydrated: boolean;
     setHasHydrated: (value: boolean) => void;
 
+    // Personal Equity
+    setPersonalEquity: (amount: number) => void;
+
+    // Active House
+    setActiveHouseId: (id: string) => void;
+    getActiveHouse: () => HouseOption | undefined;
+
     // Incomes
     addIncome: (inc?: Partial<Income>) => void;
     updateIncome: (index: number, patch: Partial<Income>) => void;
     deleteIncome: (index: number) => void;
 
-    // Loans
+    // Loans (non-housing)
     addLoan: (loan?: Partial<Loan>) => void;
     updateLoan: (index: number, patch: Partial<Loan>) => void;
     deleteLoan: (index: number) => void;
 
-    // Housing loans
-    addHousingLoan: (loan?: Partial<HousingLoan>) => void;
-    updateHousingLoan: (index: number, patch: Partial<HousingLoan>) => void;
-    deleteHousingLoan: (index: number) => void;
+    // Houses
+    addHouse: (house?: Partial<HouseOption>) => void;
+    updateHouse: (id: string, patch: Partial<HouseOption>) => void;
+    updateHouseLoan: (houseId: string, patch: Partial<Loan>) => void;
+    updateHouseMonthlyCosts: (
+        houseId: string,
+        patch: Partial<HouseMonthlyCosts>
+    ) => void;
+    deleteHouse: (id: string) => void;
 
-    // Fixed expenses
+    // Fixed expenses (personal)
     addFixedExpense: (exp?: Partial<FixedExpense>) => void;
     updateFixedExpense: (index: number, patch: Partial<FixedExpense>) => void;
     deleteFixedExpense: (index: number) => void;
@@ -73,6 +118,25 @@ export const useStore = create<StoreState>()(
                 });
             },
 
+            // Personal Equity
+            setPersonalEquity: (amount) =>
+                set((s) => ({
+                    data: { ...s.data, personalEquity: amount },
+                })),
+
+            // Active House
+            setActiveHouseId: (id) =>
+                set((s) => ({
+                    data: { ...s.data, activeHouseId: id },
+                })),
+
+            getActiveHouse: () => {
+                const state = get();
+                return (state.data.houses || []).find(
+                    (h) => h.id === state.data.activeHouseId
+                );
+            },
+
             // Incomes
             addIncome: (inc = { source: '', amount: 0 }) =>
                 set((s) => ({
@@ -97,7 +161,7 @@ export const useStore = create<StoreState>()(
                     },
                 })),
 
-            // Loans
+            // Loans (non-housing)
             addLoan: (
                 loan = {
                     description: '',
@@ -127,54 +191,99 @@ export const useStore = create<StoreState>()(
                     },
                 })),
 
-            // Housing loans
-            addHousingLoan: (
-                loan = {
-                    description: 'Boliglån',
-                    loanAmount: 0,
-                    interestRate: 0,
-                    termYears: 0,
-                    termsPerYear: 12,
-                    capital: 0,
-                    startDate: new Date().toISOString().slice(0, 10),
-                }
-            ) =>
-                set((s) => ({
-                    data: {
-                        ...s.data,
-                        housingLoans: [
-                            ...s.data.housingLoans,
-                            loan as HousingLoan,
-                        ],
-                    },
-                })),
-
-            updateHousingLoan: (index, patch) =>
+            // Houses
+            addHouse: (house) =>
                 set((s) => {
-                    const list = [...s.data.housingLoans];
-                    list[index] = { ...list[index], ...patch };
-                    return { data: { ...s.data, housingLoans: list } };
+                    const newHouse = house?.id
+                        ? (house as HouseOption)
+                        : {
+                              ...createDefaultHouse(house?.name),
+                              ...house,
+                          };
+                    const newHouses = [...s.data.houses, newHouse];
+                    // If this is the first house, set it as active
+                    const activeId = s.data.activeHouseId || newHouse.id;
+                    return {
+                        data: {
+                            ...s.data,
+                            houses: newHouses,
+                            activeHouseId: activeId,
+                        },
+                    };
                 }),
 
-            deleteHousingLoan: (index) =>
+            updateHouse: (id, patch) =>
                 set((s) => ({
                     data: {
                         ...s.data,
-                        housingLoans: s.data.housingLoans.filter(
-                            (_, i) => i !== index
+                        houses: s.data.houses.map((h) =>
+                            h.id === id ? { ...h, ...patch } : h
                         ),
                     },
                 })),
 
-            // Fixed expenses
+            updateHouseLoan: (houseId, patch) =>
+                set((s) => ({
+                    data: {
+                        ...s.data,
+                        houses: s.data.houses.map((h) =>
+                            h.id === houseId
+                                ? {
+                                      ...h,
+                                      housingLoan: {
+                                          ...h.housingLoan,
+                                          ...patch,
+                                      },
+                                  }
+                                : h
+                        ),
+                    },
+                })),
+
+            updateHouseMonthlyCosts: (houseId, patch) =>
+                set((s) => ({
+                    data: {
+                        ...s.data,
+                        houses: s.data.houses.map((h) =>
+                            h.id === houseId
+                                ? {
+                                      ...h,
+                                      houseMonthlyCosts: {
+                                          ...h.houseMonthlyCosts,
+                                          ...patch,
+                                      },
+                                  }
+                                : h
+                        ),
+                    },
+                })),
+
+            deleteHouse: (id) =>
+                set((s) => {
+                    const newHouses = s.data.houses.filter((h) => h.id !== id);
+                    // If we deleted the active house, pick another
+                    let newActiveId = s.data.activeHouseId;
+                    if (newActiveId === id) {
+                        newActiveId = newHouses[0]?.id || '';
+                    }
+                    return {
+                        data: {
+                            ...s.data,
+                            houses: newHouses,
+                            activeHouseId: newActiveId,
+                        },
+                    };
+                }),
+
+            // Fixed expenses (personal)
             addFixedExpense: (
                 exp = { description: '', amount: 0, category: 'personal' }
             ) =>
                 set((s) => ({
                     data: {
                         ...s.data,
-                        fixedExpenses: [
-                            ...s.data.fixedExpenses,
+                        personalFixedExpenses: [
+                            ...s.data.personalFixedExpenses,
                             exp as FixedExpense,
                         ],
                     },
@@ -182,18 +291,19 @@ export const useStore = create<StoreState>()(
 
             updateFixedExpense: (index, patch) =>
                 set((s) => {
-                    const list = [...s.data.fixedExpenses];
+                    const list = [...s.data.personalFixedExpenses];
                     list[index] = { ...list[index], ...patch };
-                    return { data: { ...s.data, fixedExpenses: list } };
+                    return { data: { ...s.data, personalFixedExpenses: list } };
                 }),
 
             deleteFixedExpense: (index) =>
                 set((s) => ({
                     data: {
                         ...s.data,
-                        fixedExpenses: s.data.fixedExpenses.filter(
-                            (_, i) => i !== index
-                        ),
+                        personalFixedExpenses:
+                            s.data.personalFixedExpenses.filter(
+                                (_, i) => i !== index
+                            ),
                     },
                 })),
 

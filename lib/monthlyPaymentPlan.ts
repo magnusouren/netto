@@ -1,6 +1,18 @@
-import { EconomyData } from '@/types';
+import { EconomyData, Loan, HouseMonthlyCosts } from '@/types';
 import { calculateAnnualTaxes } from './calcTaxes';
 import { computeLoanAmortization } from './amortization';
+
+function totalHouseMonthlyCosts(costs: HouseMonthlyCosts): number {
+    return (
+        (costs.hoa || 0) +
+        (costs.electricity || 0) +
+        (costs.internet || 0) +
+        (costs.insurance || 0) +
+        (costs.propertyTax || 0) +
+        (costs.maintenance || 0) +
+        (costs.other || 0)
+    );
+}
 
 export const generatePaymentPlan = (
     data: EconomyData,
@@ -8,14 +20,28 @@ export const generatePaymentPlan = (
     startDate: string,
     years = 30
 ) => {
-    const incomes = data.incomes;
-    const loans = [...data.housingLoans, ...data.loans];
-    const fixed = data.fixedExpenses;
-    const living = data.livingCosts;
+    const incomes = data.incomes || [];
 
-    const baseFixedCosts =
-        fixed.reduce((s, f) => s + f.amount, 0) +
-        living.reduce((s, l) => s + l.amount, 0);
+    // Get active house
+    const activeHouse = (data.houses || []).find(
+        (h) => h.id === data.activeHouseId
+    );
+    const housingLoan = activeHouse?.housingLoan;
+    const loans: Loan[] = [
+        ...(housingLoan ? [housingLoan] : []),
+        ...(data.loans || []),
+    ];
+
+    // Fixed costs: housing from active house + personal fixed expenses + living costs
+    const housingFixed = activeHouse
+        ? totalHouseMonthlyCosts(activeHouse.houseMonthlyCosts)
+        : 0;
+    const personalFixed = (data.personalFixedExpenses || []).reduce(
+        (s, f) => s + f.amount,
+        0
+    );
+    const livingCosts = (data.livingCosts || []).reduce((s, l) => s + l.amount, 0);
+    const baseFixedCosts = housingFixed + personalFixed + livingCosts;
 
     const start = new Date(startDate);
     start.setDate(1);
@@ -81,7 +107,8 @@ export const generatePaymentPlan = (
             totalPrincipal += row.principal;
             totalFees += row.fee;
 
-            if ('capital' in loan) {
+            // Check if this is the housing loan (first in the array if exists)
+            if (housingLoan && loan === housingLoan) {
                 housingPrincipal += row.principal;
             }
         });
