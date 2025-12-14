@@ -74,7 +74,10 @@ export default function Summary() {
     );
 
     // Living costs
-    const livingMonthly = (data.livingCosts || []).reduce((s, l) => s + l.amount, 0);
+    const livingMonthly = (data.livingCosts || []).reduce(
+        (s, l) => s + l.amount,
+        0
+    );
 
     const totalMonthlyExpenses =
         housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;

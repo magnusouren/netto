@@ -638,8 +638,9 @@ export default function SummaryPage() {
                                             </div>
                                         ))}
 
-                                    {(data.incomes || []).filter((i) => !i.taxFree)
-                                        .length === 0 && (
+                                    {(data.incomes || []).filter(
+                                        (i) => !i.taxFree
+                                    ).length === 0 && (
                                         <p className='text-sm text-muted-foreground'>
                                             Ingen registrerte skattepliktige
                                             inntekter.

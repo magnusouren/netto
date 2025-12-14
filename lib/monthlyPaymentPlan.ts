@@ -40,7 +40,10 @@ export const generatePaymentPlan = (
         (s, f) => s + f.amount,
         0
     );
-    const livingCosts = (data.livingCosts || []).reduce((s, l) => s + l.amount, 0);
+    const livingCosts = (data.livingCosts || []).reduce(
+        (s, l) => s + l.amount,
+        0
+    );
     const baseFixedCosts = housingFixed + personalFixed + livingCosts;
 
     const start = new Date(startDate);
