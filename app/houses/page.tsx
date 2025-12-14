@@ -24,7 +24,7 @@ import {
     CardFooter,
 } from '@/components/ui/card';
 import { Datepicker } from '@/components/Datepicker';
-import { Trash, Plus, Check, Home } from 'lucide-react';
+import { Trash, Plus, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function HousesPage() {
@@ -155,10 +155,10 @@ export default function HousesPage() {
                         type='number'
                         className='w-48'
                         value={personalEquity || ''}
+                        placeholder='1 000 000'
                         onChange={(e) =>
                             setPersonalEquity(Number(e.target.value) || 0)
                         }
-                        placeholder='0'
                     />
                     <span className='text-muted-foreground text-sm'>kr</span>
                 </div>
@@ -181,7 +181,7 @@ export default function HousesPage() {
                         <CardHeader className='pb-2'>
                             <div className='flex items-center justify-between'>
                                 <Input
-                                    className='text-lg font-semibold border-none p-0 h-auto focus-visible:ring-0'
+                                    className='text-lg font-semibold border-none px-0 h-auto focus-visible:ring-0 rounded-none'
                                     value={house.name}
                                     onChange={(e) =>
                                         updateHouse(house.id, {
@@ -190,7 +190,7 @@ export default function HousesPage() {
                                     }
                                 />
                                 {house.id === activeHouseId && (
-                                    <span className='text-xs bg-primary text-primary-foreground px-2 py-1 rounded'>
+                                    <span className='text-xs bg-primary text-primary-foreground ml-4 px-2 py-1 rounded'>
                                         Aktiv
                                     </span>
                                 )}
@@ -209,6 +209,7 @@ export default function HousesPage() {
                                         <Input
                                             type='number'
                                             value={house.purchase.price || ''}
+                                            placeholder='4 100 000'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -228,6 +229,7 @@ export default function HousesPage() {
                                             value={
                                                 house.purchase.equityUsed || ''
                                             }
+                                            placeholder='1 000 000'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -248,6 +250,7 @@ export default function HousesPage() {
                                                 house.purchase.closingCosts ||
                                                 ''
                                             }
+                                            placeholder='50 000'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -260,7 +263,7 @@ export default function HousesPage() {
                                     </div>
                                     <div>
                                         <Label className='text-xs'>
-                                            Forventet vekst %
+                                            Forventet priskvekst %
                                         </Label>
                                         <Input
                                             type='number'
@@ -269,6 +272,7 @@ export default function HousesPage() {
                                                 house.purchase
                                                     .expectedGrowthPct ?? ''
                                             }
+                                            placeholder='1,0'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -298,6 +302,7 @@ export default function HousesPage() {
                                                 house.housingLoan.loanAmount ||
                                                 ''
                                             }
+                                            placeholder='4 000 000'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -309,7 +314,7 @@ export default function HousesPage() {
                                     </div>
                                     <div>
                                         <Label className='text-xs'>
-                                            Rente %
+                                            Nominell rente %
                                         </Label>
                                         <Input
                                             type='number'
@@ -318,6 +323,7 @@ export default function HousesPage() {
                                                 house.housingLoan
                                                     .interestRate || ''
                                             }
+                                            placeholder='4,0'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -337,6 +343,7 @@ export default function HousesPage() {
                                                 house.housingLoan.termYears ||
                                                 ''
                                             }
+                                            placeholder='25'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -370,6 +377,46 @@ export default function HousesPage() {
                                             }
                                         />
                                     </div>
+                                    <div>
+                                        <Label className='text-xs'>
+                                            Terminer per år
+                                        </Label>
+                                        <Input
+                                            type='number'
+                                            value={
+                                                house.housingLoan
+                                                    .termsPerYear || ''
+                                            }
+                                            placeholder='12'
+                                            onChange={(e) =>
+                                                handleLoanChange(
+                                                    house.id,
+                                                    'termsPerYear',
+                                                    Number(e.target.value) || 0
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className='text-xs'>
+                                            Månedlig gebyr
+                                        </Label>
+                                        <Input
+                                            type='number'
+                                            value={
+                                                house.housingLoan.monthlyFee ||
+                                                ''
+                                            }
+                                            placeholder='0'
+                                            onChange={(e) =>
+                                                handleLoanChange(
+                                                    house.id,
+                                                    'monthlyFee',
+                                                    Number(e.target.value) || 0
+                                                )
+                                            }
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -393,6 +440,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts.hoa ||
                                                 ''
                                             }
+                                            placeholder='2 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -410,6 +458,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .electricity || ''
                                             }
+                                            placeholder='500'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -429,6 +478,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .internet || ''
                                             }
+                                            placeholder='250'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -448,6 +498,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .insurance || ''
                                             }
+                                            placeholder='300'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -467,6 +518,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .propertyTax || ''
                                             }
+                                            placeholder='1 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -486,6 +538,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .maintenance || ''
                                             }
+                                            placeholder='1 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -503,6 +556,7 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts.other ||
                                                 ''
                                             }
+                                            placeholder='500'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -582,6 +636,7 @@ export default function HousesPage() {
                                     id='housePrice'
                                     type='number'
                                     value={form.price || ''}
+                                    placeholder='4 100 000'
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -598,6 +653,7 @@ export default function HousesPage() {
                                     id='houseEquity'
                                     type='number'
                                     value={form.equityUsed || ''}
+                                    placeholder='1 000 000'
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -614,7 +670,8 @@ export default function HousesPage() {
                                 <Input
                                     id='houseClosingCosts'
                                     type='number'
-                                    value={form.closingCosts || ''}
+                                    value={form.closingCosts ?? ''}
+                                    placeholder='50 000'
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
