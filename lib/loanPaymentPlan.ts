@@ -16,13 +16,8 @@ export function loanPaymentPlan(
         totalPayments
     );
 
-    // Base housing value = loan + equity contribution
-    let housingValue = loanAmount + capital;
-
     const start = new Date(startDate);
     start.setDate(1);
-
-    const monthlyGrowthRate = Math.pow(1 + priceIncrease / 100, 1 / 12);
 
     const entries: {
         monthYear: string;
@@ -31,11 +26,15 @@ export function loanPaymentPlan(
         equity: number;
     }[] = [];
 
+    const baseHousingValue = loanAmount + capital;
+
+    // monthly *factor* (not "rate" in the subtract-1 sense)
+    const monthlyGrowthFactor = Math.pow(1 + priceIncrease / 100, 1 / 12);
+
     for (let i = 0; i < maxPaymentsToShow; i++) {
         const row = amort.monthly[i];
-        if (!row) break; // loan finished early
+        if (!row) break;
 
-        // Format month
         const currentDate = new Date(start);
         currentDate.setMonth(start.getMonth() + i);
 
@@ -44,8 +43,8 @@ export function loanPaymentPlan(
             year: 'numeric',
         });
 
-        // Update housing value
-        housingValue *= monthlyGrowthRate;
+        const housingValue =
+            baseHousingValue * Math.pow(monthlyGrowthFactor, i);
 
         const remainingDebt = row.balance;
         const equity = housingValue - remainingDebt;

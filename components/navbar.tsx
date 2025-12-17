@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
@@ -46,30 +47,60 @@ export default function Navbar() {
 
 /* Shared nav links */
 function NavLinks({ onClick }: { onClick?: () => void }) {
-    const base =
-        'text-sm font-medium text-foreground/70 hover:text-foreground transition-colors';
+    const pathname = usePathname();
+
+    const linkClass = (href: string) =>
+        `text-sm font-medium transition-colors ${
+            pathname === href
+                ? 'text-foreground underline underline-offset-4'
+                : 'text-foreground/70 hover:text-foreground'
+        }`;
 
     return (
         <>
-            <Link href='/data' className={base} onClick={onClick}>
+            <Link href='/data' className={linkClass('/data')} onClick={onClick}>
                 Grunnlagsdata
             </Link>
-            <Link href='/houses' className={base} onClick={onClick}>
-                Boliger
-            </Link>
-            <Link href='/tax-details' className={base} onClick={onClick}>
+            <Link
+                href='/tax-details'
+                className={linkClass('/tax-details')}
+                onClick={onClick}
+            >
                 Skattedetaljer
             </Link>
-            <Link href='/repayment-plans' className={base} onClick={onClick}>
+            <Link
+                href='/houses'
+                className={linkClass('/houses')}
+                onClick={onClick}
+            >
+                Boliger
+            </Link>
+            <Link
+                href='/repayment-plans'
+                className={linkClass('/repayment-plans')}
+                onClick={onClick}
+            >
                 Nedbetalingsplaner
             </Link>
-            <Link href='/equity-development' className={base} onClick={onClick}>
+            <Link
+                href='/equity-development'
+                className={linkClass('/equity-development')}
+                onClick={onClick}
+            >
                 Egenkapitalutvikling
             </Link>
-            <Link href='/monthly-economy' className={base} onClick={onClick}>
+            <Link
+                href='/monthly-economy'
+                className={linkClass('/monthly-economy')}
+                onClick={onClick}
+            >
                 Månedlig økonomi
             </Link>
-            <Link href='/summary' className={base} onClick={onClick}>
+            <Link
+                href='/summary'
+                className={linkClass('/summary')}
+                onClick={onClick}
+            >
                 Oppsummering
             </Link>
         </>
