@@ -54,7 +54,7 @@ export default function HousesPage() {
         setForm({
             name: '',
             price: 0,
-            equityUsed: 0,
+            equityUsed: personalEquity || 0,
             expectedGrowthPct: 2,
             closingCosts: 0,
         });
@@ -63,6 +63,15 @@ export default function HousesPage() {
 
     function submitAdd() {
         const loanAmount = form.price - form.equityUsed + form.closingCosts;
+
+        if (form.equityUsed > form.price + form.closingCosts) {
+            setForm((prev) => ({
+                ...prev,
+                equityUsed: form.price + form.closingCosts,
+            }));
+            return;
+        }
+
         addHouse({
             name: form.name || 'Ny bolig',
             purchase: {
@@ -155,7 +164,6 @@ export default function HousesPage() {
                         type='number'
                         className='w-48'
                         value={personalEquity || ''}
-                        placeholder='1 000 000'
                         onChange={(e) =>
                             setPersonalEquity(Number(e.target.value) || 0)
                         }
@@ -189,10 +197,21 @@ export default function HousesPage() {
                                         })
                                     }
                                 />
-                                {house.id === activeHouseId && (
+                                {house.id === activeHouseId ? (
                                     <span className='text-xs bg-primary text-primary-foreground ml-4 px-2 py-1 rounded'>
                                         Aktiv
                                     </span>
+                                ) : (
+                                    <Button
+                                        variant='outline'
+                                        size='sm'
+                                        className='ml-4 text-xs px-2 py-0 rounded'
+                                        onClick={() =>
+                                            setActiveHouseId(house.id)
+                                        }
+                                    >
+                                        Velg
+                                    </Button>
                                 )}
                             </div>
                         </CardHeader>
@@ -205,16 +224,38 @@ export default function HousesPage() {
                                 </h4>
                                 <div className='grid grid-cols-2 gap-2'>
                                     <div>
-                                        <Label className='text-xs'>Pris</Label>
+                                        <Label className='text-xs'>
+                                            Prisantydning
+                                        </Label>
                                         <Input
                                             type='number'
                                             value={house.purchase.price || ''}
-                                            placeholder='4 100 000'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
                                                     house,
                                                     'price',
+                                                    Number(e.target.value) || 0
+                                                )
+                                            }
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label className='text-xs'>
+                                            Omkostninger + gjeld
+                                        </Label>
+                                        <Input
+                                            type='number'
+                                            value={
+                                                house.purchase.closingCosts ||
+                                                ''
+                                            }
+                                            onChange={(e) =>
+                                                handlePurchaseChange(
+                                                    house.id,
+                                                    house,
+                                                    'closingCosts',
                                                     Number(e.target.value) || 0
                                                 )
                                             }
@@ -229,33 +270,11 @@ export default function HousesPage() {
                                             value={
                                                 house.purchase.equityUsed || ''
                                             }
-                                            placeholder='1 000 000'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
                                                     house,
                                                     'equityUsed',
-                                                    Number(e.target.value) || 0
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label className='text-xs'>
-                                            Omkostninger
-                                        </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.purchase.closingCosts ||
-                                                ''
-                                            }
-                                            placeholder='50 000'
-                                            onChange={(e) =>
-                                                handlePurchaseChange(
-                                                    house.id,
-                                                    house,
-                                                    'closingCosts',
                                                     Number(e.target.value) || 0
                                                 )
                                             }
@@ -272,7 +291,6 @@ export default function HousesPage() {
                                                 house.purchase
                                                     .expectedGrowthPct ?? ''
                                             }
-                                            placeholder='1,0'
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -283,6 +301,14 @@ export default function HousesPage() {
                                             }
                                         />
                                     </div>
+                                </div>
+                                <div className='mt-2 text-sm text-muted-foreground'>
+                                    Totalpris:{' '}
+                                    {(
+                                        (house.purchase.price || 0) +
+                                        (house.purchase.closingCosts || 0)
+                                    ).toLocaleString('nb-NO')}{' '}
+                                    kr
                                 </div>
                             </div>
 
@@ -302,7 +328,6 @@ export default function HousesPage() {
                                                 house.housingLoan.loanAmount ||
                                                 ''
                                             }
-                                            placeholder='4 000 000'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -323,7 +348,6 @@ export default function HousesPage() {
                                                 house.housingLoan
                                                     .interestRate || ''
                                             }
-                                            placeholder='4,0'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -343,7 +367,6 @@ export default function HousesPage() {
                                                 house.housingLoan.termYears ||
                                                 ''
                                             }
-                                            placeholder='25'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -387,7 +410,6 @@ export default function HousesPage() {
                                                 house.housingLoan
                                                     .termsPerYear || ''
                                             }
-                                            placeholder='12'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -407,7 +429,6 @@ export default function HousesPage() {
                                                 house.housingLoan.monthlyFee ||
                                                 ''
                                             }
-                                            placeholder='0'
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -440,7 +461,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts.hoa ||
                                                 ''
                                             }
-                                            placeholder='2 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -458,7 +478,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .electricity || ''
                                             }
-                                            placeholder='500'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -478,7 +497,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .internet || ''
                                             }
-                                            placeholder='250'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -498,7 +516,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .insurance || ''
                                             }
-                                            placeholder='300'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -518,7 +535,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .propertyTax || ''
                                             }
-                                            placeholder='1 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -538,7 +554,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts
                                                     .maintenance || ''
                                             }
-                                            placeholder='1 000'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -556,7 +571,6 @@ export default function HousesPage() {
                                                 house.houseMonthlyCosts.other ||
                                                 ''
                                             }
-                                            placeholder='500'
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -617,7 +631,9 @@ export default function HousesPage() {
                         </DialogHeader>
                         <div className='space-y-4 py-4'>
                             <div>
-                                <Label htmlFor='houseName'>Navn</Label>
+                                <Label htmlFor='houseName' className='my-2'>
+                                    Tittel
+                                </Label>
                                 <Input
                                     id='houseName'
                                     value={form.name}
@@ -627,16 +643,16 @@ export default function HousesPage() {
                                             name: e.target.value,
                                         })
                                     }
-                                    placeholder='F.eks. Leilighet Grünerløkka'
                                 />
                             </div>
                             <div>
-                                <Label htmlFor='housePrice'>Pris</Label>
+                                <Label htmlFor='housePrice' className='my-2'>
+                                    Prisantydning
+                                </Label>
                                 <Input
                                     id='housePrice'
                                     type='number'
                                     value={form.price || ''}
-                                    placeholder='4 100 000'
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -646,32 +662,16 @@ export default function HousesPage() {
                                 />
                             </div>
                             <div>
-                                <Label htmlFor='houseEquity'>
-                                    Egenkapital å bruke
-                                </Label>
-                                <Input
-                                    id='houseEquity'
-                                    type='number'
-                                    value={form.equityUsed || ''}
-                                    placeholder='1 000 000'
-                                    onChange={(e) =>
-                                        setForm({
-                                            ...form,
-                                            equityUsed:
-                                                Number(e.target.value) || 0,
-                                        })
-                                    }
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor='houseClosingCosts'>
-                                    Omkostninger
+                                <Label
+                                    htmlFor='houseClosingCosts'
+                                    className='my-2'
+                                >
+                                    Omkostninger + gjeld
                                 </Label>
                                 <Input
                                     id='houseClosingCosts'
                                     type='number'
                                     value={form.closingCosts ?? ''}
-                                    placeholder='50 000'
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -681,12 +681,34 @@ export default function HousesPage() {
                                     }
                                 />
                             </div>
+                            <div>
+                                <Label htmlFor='houseEquity' className='my-2'>
+                                    Egenkapital å bruke
+                                </Label>
+                                <Input
+                                    id='houseEquity'
+                                    type='number'
+                                    value={form.equityUsed || ''}
+                                    onChange={(e) =>
+                                        setForm({
+                                            ...form,
+                                            equityUsed:
+                                                Number(e.target.value) || 0,
+                                        })
+                                    }
+                                />
+                            </div>
+
                             <p className='text-sm text-muted-foreground'>
                                 Beregnet lån:{' '}
-                                {(
-                                    form.price -
+                                {(form.price -
                                     form.equityUsed +
-                                    form.closingCosts
+                                    form.closingCosts >
+                                0
+                                    ? form.price -
+                                      form.equityUsed +
+                                      form.closingCosts
+                                    : 0
                                 ).toLocaleString('nb-NO')}{' '}
                                 kr
                             </p>
