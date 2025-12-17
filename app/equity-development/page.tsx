@@ -18,9 +18,10 @@ export default function Plan() {
         (h) => h.id === data.activeHouseId
     );
 
-    const [priceIncrease, setPriceIncrease] = useState(2);
+    const [priceIncrease, setPriceIncrease] = useState(
+        activeHouse?.purchase.expectedGrowthPct || 0
+    );
     const [yearsToShow, setYearsToShow] = useState(10);
-    const [savings, setSavings] = useState(0);
 
     return (
         <>
@@ -49,6 +50,7 @@ export default function Plan() {
                                 <Input
                                     id='price-increase'
                                     type='number'
+                                    step={0.5}
                                     value={priceIncrease}
                                     onChange={(e) =>
                                         setPriceIncrease(Number(e.target.value))
@@ -67,21 +69,6 @@ export default function Plan() {
                                     value={yearsToShow}
                                     onChange={(e) =>
                                         setYearsToShow(Number(e.target.value))
-                                    }
-                                    className='mt-2'
-                                />
-                            </div>
-                            <div>
-                                <Label htmlFor='savings'>
-                                    Oppsparte midler (kr)
-                                </Label>
-
-                                <Input
-                                    id='savings'
-                                    type='number'
-                                    value={savings}
-                                    onChange={(e) =>
-                                        setSavings(Number(e.target.value))
                                     }
                                     className='mt-2'
                                 />
@@ -114,9 +101,6 @@ export default function Plan() {
                                     </th>
                                     <th className='p-2 text-right'>
                                         Diff. siden kjøp
-                                    </th>
-                                    <th className='p-2 text-right'>
-                                        EK + Oppsparte midler
                                     </th>
                                 </tr>
                             </thead>
@@ -166,11 +150,6 @@ export default function Plan() {
                                                         .loanAmount +
                                                         activeHouse.purchase
                                                             .equityUsed)
-                                            )}
-                                        </td>
-                                        <td className='p-2 text-right'>
-                                            {formatNumberToNOK(
-                                                entry.equity + savings
                                             )}
                                         </td>
                                     </tr>
