@@ -252,7 +252,8 @@ export default function HousesPage() {
                                 </div>
                                 <p className='text-sm text-muted-foreground'>
                                     Lim inn en FINN-lenke, så forsøkes det å
-                                    hente pris, felleskostnader og mer.
+                                    hente pris, felleskostnader og andre
+                                    relevante felter.
                                 </p>
                             </div>
 
