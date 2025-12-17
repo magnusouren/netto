@@ -4,160 +4,9 @@ import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyH3 } from '@/components/typography/typographyH3';
 import { TypographyP } from '@/components/typography/typographyP';
+import { computeLoanAmortization } from '@/lib/amortization';
 import useStore, { StoreState } from '@/lib/store';
 import { formatNumberToNOK } from '@/lib/utils';
-
-// --------------------------------------
-// --- Amortization (Annuitetslån) ------
-// --------------------------------------
-
-function generateAmortizationSchedule(loan: {
-    loanAmount: number;
-    interestRate: number;
-    termYears: number;
-    termsPerYear: number;
-    monthlyFee?: number;
-    startDate: string;
-}) {
-    const {
-        loanAmount,
-        interestRate,
-        termYears,
-        termsPerYear,
-        monthlyFee = 0,
-        startDate,
-    } = loan;
-
-    const numberOfTerms = termYears * termsPerYear;
-    const ratePerTerm = interestRate / 100 / termsPerYear;
-
-    // Annuitetsbeløp per termin
-    const termPayment =
-        (loanAmount * ratePerTerm) /
-        (1 - Math.pow(1 + ratePerTerm, -numberOfTerms));
-
-    let balance = loanAmount;
-
-    const first12Months: HousingLoanDataRowMonthly[] = [];
-    const yearGroups: HousingLoanDataRowYearly[] = [];
-
-    // Parse start date
-    let currentDate = new Date(startDate);
-    const addMonths = (d: Date, n: number) =>
-        new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
-
-    const termsLeftThisYear =
-        termsPerYear - (currentDate.getMonth() % termsPerYear);
-    const initialTerms = Math.min(termsLeftThisYear, numberOfTerms);
-
-    let yearInterest = 0;
-    let yearPrincipal = 0;
-    let yearFees = 0;
-    let yearPaid = 0;
-
-    for (let term = 1; term <= numberOfTerms; term++) {
-        const interest = balance * ratePerTerm;
-        const principal = Math.min(termPayment - interest, balance); // prevent overpayment
-        balance -= principal;
-
-        const payment = principal + interest + monthlyFee;
-
-        // Format date
-        const formattedDate = currentDate.toLocaleString('no-NO', {
-            year: 'numeric',
-            month: 'short',
-        });
-
-        // Save first 12 months
-        if (term <= initialTerms) {
-            first12Months.push({
-                term,
-                date: formattedDate,
-                payment,
-                interest,
-                principal,
-                fee: monthlyFee,
-                balance,
-            });
-        }
-
-        // Year accumulation
-        const entryYear = currentDate.getFullYear();
-        yearInterest += interest;
-        yearPrincipal += principal;
-        yearFees += monthlyFee;
-        yearPaid += payment;
-
-        // Check next year
-        const nextDate = addMonths(currentDate, 1);
-        const nextYear = nextDate.getFullYear();
-
-        if (nextYear !== entryYear || term === numberOfTerms) {
-            yearGroups.push({
-                year: entryYear,
-                totalInterest: yearInterest,
-                totalPrincipal: yearPrincipal,
-                totalFees: yearFees,
-                totalPaid: yearPaid,
-                endBalance: balance,
-            });
-
-            yearInterest = 0;
-            yearPrincipal = 0;
-            yearFees = 0;
-            yearPaid = 0;
-        }
-
-        // Advance date
-        currentDate = nextDate;
-    }
-
-    // Compute totals across entire loan
-    const totals = yearGroups.reduce(
-        (acc, y) => {
-            acc.totalInterest += y.totalInterest;
-            acc.totalPrincipal += y.totalPrincipal;
-            acc.totalFees += y.totalFees;
-            acc.totalPaid += y.totalPaid;
-            return acc;
-        },
-        {
-            totalInterest: 0,
-            totalPrincipal: 0,
-            totalFees: 0,
-            totalPaid: 0,
-        }
-    );
-
-    return {
-        first12Months,
-        yearGroups,
-        totals,
-    };
-}
-
-interface HousingLoanDataRowMonthly {
-    term: number;
-    date: string;
-    payment: number;
-    interest: number;
-    principal: number;
-    fee: number;
-    balance: number;
-}
-
-interface HousingLoanDataRowYearly {
-    year: number;
-    totalInterest: number;
-    totalPrincipal: number;
-    totalFees: number;
-    totalPaid: number;
-    endBalance: number;
-}
-
-// --------------------------------------
-// --- Component ------------------------
-// --------------------------------------
 
 export default function Loans() {
     const data = useStore((s: StoreState) => s.data);
@@ -196,8 +45,7 @@ export default function Loans() {
                 {housingLoan &&
                     housingLoan.loanAmount > 0 &&
                     (() => {
-                        const schedule =
-                            generateAmortizationSchedule(housingLoan);
+                        const schedule = computeLoanAmortization(housingLoan);
 
                         return (
                             <div className='overflow-auto my-4'>
@@ -264,6 +112,15 @@ export default function Loans() {
                                                 </td>
                                             </tr>
                                         ))}
+
+                                        <tr>
+                                            <td
+                                                className='p-2 font-semibold'
+                                                colSpan={6}
+                                            >
+                                                ...
+                                            </td>
+                                        </tr>
 
                                         {/* Yearly summaries */}
                                         {schedule.yearGroups.map((year) => (
@@ -349,7 +206,7 @@ export default function Loans() {
 
                 {loans.length > 0 &&
                     loans.map((loan, index) => {
-                        const schedule = generateAmortizationSchedule(loan);
+                        const schedule = computeLoanAmortization(loan);
 
                         return (
                             <div key={index} className='my-8 overflow-auto'>
@@ -416,6 +273,14 @@ export default function Loans() {
                                                 </td>
                                             </tr>
                                         ))}
+                                        <tr>
+                                            <td
+                                                className='p-2 font-semibold'
+                                                colSpan={6}
+                                            >
+                                                ...
+                                            </td>
+                                        </tr>
 
                                         {/* Yearly summaries */}
                                         {schedule.yearGroups.map((year) => (

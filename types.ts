@@ -11,10 +11,6 @@ export interface EconomyData {
     // house options
     houses: HouseOption[];
     activeHouseId: string;
-
-    // DEPRECATED: kept for migration, will be removed
-    housingLoans?: HousingLoan[];
-    fixedExpenses?: FixedExpense[];
 }
 
 export type HouseOption = {
