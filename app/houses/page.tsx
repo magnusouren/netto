@@ -208,7 +208,7 @@ export default function HousesPage() {
             <Card className='overflow-hidden border-muted/60 gap-2'>
                 <CardHeader>
                     <div className='flex items-center gap-2'>
-                        <div className='inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary'>
+                        <div className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
                             <Coins className='h-4 w-4' />
                         </div>
                         <h3 className='font-semibold leading-none'>
@@ -243,7 +243,7 @@ export default function HousesPage() {
                         <div className='flex items-start justify-between gap-4'>
                             <div className='space-y-1'>
                                 <div className='flex items-center gap-2'>
-                                    <div className='inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary'>
+                                    <div className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
                                         <Sparkles className='h-4 w-4' />
                                     </div>
                                     <h3 className='font-semibold leading-none'>
