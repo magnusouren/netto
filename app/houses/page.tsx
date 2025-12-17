@@ -175,6 +175,22 @@ export default function HousesPage() {
                 </p>
             </div>
 
+            <div className=' my-6 p-4 border rounded-md bg-muted/30'>
+                <h3 className=' font-semibold'>Legg til bolig automatisk</h3>
+                <p>Lim inn en Finn-lenke for å hente boligdata automatisk.</p>
+                <Label htmlFor='finnLink' className='mt-4 block'>
+                    Finn-lenke
+                </Label>
+                <div className='flex gap-2 mt-2'>
+                    <Input id='finnLink' type='text' />
+                    <Button disabled>Hent data</Button>
+                </div>
+                <p className='text-sm text-muted-foreground mt-2'>
+                    (Funksjonen er ikke implementert ennå. Du kan legge til
+                    boliger manuelt nedenfor.)
+                </p>
+            </div>
+
             {/* House Cards */}
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 my-6'>
                 {houses.map((house) => (
@@ -620,7 +636,7 @@ export default function HousesPage() {
                             <div className='text-center'>
                                 <Plus className='w-12 h-12 mx-auto text-muted-foreground' />
                                 <p className='mt-2 text-muted-foreground'>
-                                    Legg til bolig
+                                    Legg til bolig manuelt
                                 </p>
                             </div>
                         </Card>
