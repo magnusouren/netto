@@ -9,6 +9,7 @@ type ExtractedHouseFields = {
     name?: string;
     price?: number | string;
     closingCosts?: number | string;
+    commonDebt?: number | string;
     hoa?: number | string;
     propertyTax?: number | string;
     insurance?: number | string;
@@ -66,6 +67,7 @@ const buildHouseFromExtraction = (
 ): HouseOption => {
     const price = toAmount(extraction.price);
     const closingCosts = toAmount(extraction.closingCosts);
+    const commonDebt = toAmount(extraction.commonDebt);
     const expectedGrowthPct = Number(extraction.expectedGrowthPct ?? 2);
 
     const monthlyCosts = {
@@ -78,13 +80,14 @@ const buildHouseFromExtraction = (
         other: toAmount(extraction.other),
     } satisfies HouseOption['houseMonthlyCosts'];
 
+    // TODO - common debt as own field?
     const purchase = {
         price,
         equityUsed: 0,
         expectedGrowthPct: Number.isFinite(expectedGrowthPct)
             ? expectedGrowthPct
             : 2,
-        closingCosts,
+        closingCosts: closingCosts + commonDebt,
     } satisfies HouseOption['purchase'];
 
     const loanAmount = price - purchase.equityUsed + closingCosts;
@@ -110,9 +113,10 @@ Du er en eiendomsanalytiker som leser rå HTML-tekst fra en FINN-annonse for bol
 Du skal hente ut økonomiske tall i norske kroner (NOK) og returnere kun JSON.
 
 Følgende felter skal fylles ut (bruk 0 dersom feltet mangler):
-- name: annonsetittel eller adresse.
+- name: annonsetittel eller adresse, uten postnummer og sted.
 - price: prisantydning eller totalpris eksklusive fellesgjeld.
-- closingCosts: summer omkostninger og fellesgjeld som må betales ved kjøp.
+- closingCosts: summer omkostninger.
+- commonDebt: fellesgjeld hvis oppgitt separat (ellers 0).
 - hoa: felleskostnader per måned.
 - propertyTax: eiendomsskatt/kommunale avgifter per måned (del opp årlig beløp på 12 hvis kun årlig tall finnes).
 - insurance: månedlige forsikringskostnader hvis oppgitt.
@@ -233,8 +237,7 @@ export async function POST(request: Request) {
         console.error('[finn] Failed to fetch or parse listing', error);
         return NextResponse.json(
             {
-                error:
-                    'Kunne ikke hente boligdata automatisk akkurat nå. Prøv igjen senere.',
+                error: 'Kunne ikke hente boligdata automatisk akkurat nå. Prøv igjen senere.',
             },
             { status: 500 }
         );
