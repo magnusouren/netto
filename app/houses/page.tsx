@@ -197,7 +197,7 @@ export default function HousesPage() {
     }
 
     return (
-        <main className='container mx-auto px-4 py-8'>
+        <main className='container my-8 min-h-24'>
             <TypographyH2>Sammenlign boliger</TypographyH2>
             <TypographyP>
                 Her kan du legge til ulike boligalternativer for å sammenligne
@@ -220,7 +220,7 @@ export default function HousesPage() {
                     <Input
                         id='personalEquity'
                         type='number'
-                        className='w-48'
+                        className=' w-10/12 md:w-1/3'
                         value={personalEquity || ''}
                         onChange={(e) =>
                             setPersonalEquity(Number(e.target.value) || 0)

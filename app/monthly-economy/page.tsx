@@ -64,7 +64,7 @@ export default function PaymentPlan() {
                         </div>
                     </div>
                 </div>
-                <div className='my-8'>
+                <div className='my-4 overflow-auto'>
                     <TypographyH2>Betalingsplan</TypographyH2>
                     <TypographyP>
                         Nedenfor er en oversikt over dine månedlige inntekter og
@@ -72,7 +72,9 @@ export default function PaymentPlan() {
                         Tabellen viser hvordan balansen din utvikler seg over
                         tid, både med og uten avdrag.
                     </TypographyP>
-                    <table className='w-full table-auto text-sm'>
+                </div>
+                <div className='my-2 overflow-auto'>
+                    <table className='w-full table-auto text-sm border-collapse'>
                         <thead>
                             <tr className='bg-muted'>
                                 <th className='p-2 text-left'>Måned</th>
