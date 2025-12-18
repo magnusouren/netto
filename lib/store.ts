@@ -336,7 +336,7 @@ export const useStore = create<StoreState>()(
 
         // Persist config
         {
-            name: 'economics-store',
+            name: 'economics-store-1.0', // name of item in storage - versioned to reset on breaking changes
 
             onRehydrateStorage: () => (state) => {
                 // mark hydration complete
