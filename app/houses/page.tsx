@@ -24,13 +24,64 @@ import {
     CardFooter,
 } from '@/components/ui/card';
 import { Datepicker } from '@/components/Datepicker';
-import { Trash, Plus, Check } from 'lucide-react';
+import {
+    Trash,
+    Plus,
+    Check,
+    Loader2,
+    Sparkles,
+    Link2,
+    Info,
+    Coins,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { autoFetchHouseData } from './fetchHousedata';
 
 export default function HousesPage() {
     const houses = useStore((s: StoreState) => s.data.houses);
     const activeHouseId = useStore((s: StoreState) => s.data.activeHouseId);
     const personalEquity = useStore((s: StoreState) => s.data.personalEquity);
+    const [finnURL, setFinnURL] = useState('');
+    const [finnError, setFinnError] = useState<string | null>(null);
+    const [isFetchingFinn, setIsFetchingFinn] = useState(false);
+    const canFetchFinn = finnURL.includes('finn.no');
+
+    const fetchFinnHouseData = async (url: string) => {
+        setFinnError(null);
+        if (!url.includes('finn.no')) {
+            setFinnError('Vennligst lim inn en gyldig FINN-lenke.');
+            return;
+        }
+
+        setIsFetchingFinn(true);
+        try {
+            const house = await autoFetchHouseData(url);
+            // setHouseOption(house) or add to store
+            addHouse({
+                ...house,
+                purchase: {
+                    ...house.purchase,
+                    equityUsed: personalEquity || 0,
+                },
+                housingLoan: {
+                    ...house.housingLoan,
+                    loanAmount:
+                        (house.purchase.price || 0) -
+                        (personalEquity || 0) +
+                        (house.purchase.closingCosts || 0),
+                },
+            });
+            setFinnURL('');
+        } catch (e) {
+            setFinnError(
+                'Kunne ikke hente boligdata. Vennligst prøv igjen senere.'
+            );
+            console.error('Feil ved henting av boligdata:', e);
+        } finally {
+            setIsFetchingFinn(false);
+        }
+    };
+
     const addHouse = useStore((s: StoreState) => s.addHouse);
     const updateHouse = useStore((s: StoreState) => s.updateHouse);
     const updateHouseLoan = useStore((s: StoreState) => s.updateHouseLoan);
@@ -154,11 +205,18 @@ export default function HousesPage() {
             </TypographyP>
 
             {/* Personal Equity */}
-            <div className='my-6 p-4 border rounded-md bg-muted/30'>
-                <div className='flex items-center gap-4'>
-                    <Label htmlFor='personalEquity' className='font-semibold'>
-                        Total egenkapital
-                    </Label>
+            <Card className='overflow-hidden border-muted/60 gap-2'>
+                <CardHeader>
+                    <div className='flex items-center gap-2'>
+                        <div className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
+                            <Coins className='h-4 w-4' />
+                        </div>
+                        <h3 className='font-semibold leading-none'>
+                            Din personlige egenkapital
+                        </h3>
+                    </div>
+                </CardHeader>
+                <CardContent className='pt-0'>
                     <Input
                         id='personalEquity'
                         type='number'
@@ -168,27 +226,125 @@ export default function HousesPage() {
                             setPersonalEquity(Number(e.target.value) || 0)
                         }
                     />
-                    <span className='text-muted-foreground text-sm'>kr</span>
-                </div>
-                <p className='text-sm text-muted-foreground mt-2'>
-                    Din totale egenkapital som kan brukes til boligkjøp.
-                </p>
-            </div>
+                    <span className='text-muted-foreground text-sm ml-2'>
+                        kr
+                    </span>
 
-            <div className=' my-6 p-4 border rounded-md bg-muted/30'>
-                <h3 className=' font-semibold'>Legg til bolig automatisk</h3>
-                <p>Lim inn en Finn-lenke for å hente boligdata automatisk.</p>
-                <Label htmlFor='finnLink' className='mt-4 block'>
-                    Finn-lenke
-                </Label>
-                <div className='flex gap-2 mt-2'>
-                    <Input id='finnLink' type='text' />
-                    <Button disabled>Hent data</Button>
-                </div>
-                <p className='text-sm text-muted-foreground mt-2'>
-                    (Funksjonen er ikke implementert ennå. Du kan legge til
-                    boliger manuelt nedenfor.)
-                </p>
+                    <p className='text-sm text-muted-foreground mt-2'>
+                        Din totale egenkapital som kan kan benyttes til
+                        boligkjøp.
+                    </p>
+                </CardContent>
+            </Card>
+
+            <div className='my-6'>
+                <Card className='overflow-hidden border-muted/60 gap-4'>
+                    <CardHeader>
+                        <div className='flex items-start justify-between gap-4'>
+                            <div className='space-y-1'>
+                                <div className='flex items-center gap-2'>
+                                    <div className='inline-flex h-8 w-8 items-center justify-center rounded-full bg-brandBlue/90 p-2 text-brandOrange'>
+                                        <Sparkles className='h-4 w-4' />
+                                    </div>
+                                    <h3 className='font-semibold leading-none'>
+                                        Legg til bolig automatisk
+                                    </h3>
+                                </div>
+                                <p className='text-sm text-muted-foreground'>
+                                    Lim inn en FINN-lenke, så forsøkes det å
+                                    hente pris, felleskostnader og andre
+                                    relevante felter.
+                                </p>
+                            </div>
+
+                            <span className='hidden sm:inline-flex rounded-full border bg-background px-2.5 py-1 text-xs text-muted-foreground'>
+                                Beta
+                            </span>
+                        </div>
+                    </CardHeader>
+
+                    <CardContent className='pt-0'>
+                        <div className='space-y-2'>
+                            <Label
+                                htmlFor='finnLink'
+                                className='text-xs text-muted-foreground'
+                            >
+                                FINN-lenke
+                            </Label>
+
+                            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+                                <div
+                                    className={cn(
+                                        'relative flex-1',
+                                        finnError && 'animate-in'
+                                    )}
+                                >
+                                    <Link2 className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                                    <Input
+                                        id='finnLink'
+                                        type='url'
+                                        inputMode='url'
+                                        value={finnURL}
+                                        onChange={(e) => {
+                                            setFinnURL(e.target.value);
+                                            setFinnError(null);
+                                        }}
+                                        className={cn(
+                                            'h-11 pl-9 pr-3',
+                                            'bg-background/60',
+                                            'focus-visible:ring-2 focus-visible:ring-primary/30',
+                                            finnURL &&
+                                                !canFetchFinn &&
+                                                'border-destructive/60 focus-visible:ring-destructive/30'
+                                        )}
+                                    />
+                                </div>
+
+                                <Button
+                                    className='h-11 gap-2'
+                                    onClick={() => fetchFinnHouseData(finnURL)}
+                                    disabled={!canFetchFinn || isFetchingFinn}
+                                >
+                                    {isFetchingFinn ? (
+                                        <>
+                                            <Loader2 className='h-4 w-4 animate-spin' />
+                                            Henter…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className='h-4 w-4' />
+                                            Hent data
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+
+                            {/* Helper / error text */}
+                            {finnURL && !canFetchFinn && !finnError && (
+                                <p className='text-xs text-destructive/90'>
+                                    Lim inn en gyldig FINN-lenke (må inneholde
+                                    finn.no).
+                                </p>
+                            )}
+
+                            {finnError ? (
+                                <div className='rounded-md border border-destructive/30 bg-destructive/5 p-3'>
+                                    <p className='text-sm text-destructive'>
+                                        {finnError}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className='flex items-start gap-2 text-xs text-muted-foreground'>
+                                    <Info className='mt-0.5 h-4 w-4' />
+                                    <p className='mt-0.5'>
+                                        Tips: Etter import kan du alltid justere
+                                        tallene manuelt før du sammenligner.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             {/* House Cards */}
