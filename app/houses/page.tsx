@@ -1,6 +1,6 @@
 'use client';
 
-import {useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { autoFetchHouseData } from './fetchHousedata';
+import Summary from '@/views/summary';
 
 export default function HousesPage() {
     const houses = useStore((s: StoreState) => s.data.houses);
@@ -294,8 +295,8 @@ export default function HousesPage() {
                                             'bg-background/60',
                                             'focus-visible:ring-2 focus-visible:ring-primary/30',
                                             finnURL &&
-                                                !canFetchFinn &&
-                                                'border-destructive/60 focus-visible:ring-destructive/30'
+                                            !canFetchFinn &&
+                                            'border-destructive/60 focus-visible:ring-destructive/30'
                                         )}
                                     />
                                 </div>
@@ -355,7 +356,7 @@ export default function HousesPage() {
                         className={cn(
                             'relative transition-all',
                             house.id === activeHouseId &&
-                                'ring-2 ring-primary border-primary'
+                            'ring-2 ring-primary border-primary'
                         )}
                     >
                         <CardHeader className='pb-2'>
@@ -557,8 +558,8 @@ export default function HousesPage() {
                                             dateValue={
                                                 house.housingLoan.startDate
                                                     ? new Date(
-                                                          house.housingLoan.startDate
-                                                      )
+                                                        house.housingLoan.startDate
+                                                    )
                                                     : undefined
                                             }
                                             setDateValue={(date) =>
@@ -876,10 +877,10 @@ export default function HousesPage() {
                                 {(form.price -
                                     form.equityUsed +
                                     form.closingCosts >
-                                0
+                                    0
                                     ? form.price -
-                                      form.equityUsed +
-                                      form.closingCosts
+                                    form.equityUsed +
+                                    form.closingCosts
                                     : 0
                                 ).toLocaleString('nb-NO')}{' '}
                                 kr
@@ -894,6 +895,7 @@ export default function HousesPage() {
                     </DialogContent>
                 </Dialog>
             </div>
+            <Summary />
         </main>
     );
 }
