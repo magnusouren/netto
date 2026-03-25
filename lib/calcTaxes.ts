@@ -6,72 +6,147 @@ import { computeLoanAmortization } from './amortization';
  */
 function getActiveHousingLoan(data: EconomyData): Loan | null {
     const activeHouse = (data.houses || []).find(
-        (h) => h.id === data.activeHouseId
+        (h) => h.id === data.activeHouseId,
     );
     return activeHouse?.housingLoan ?? null;
 }
 
-/**
- * Calculates annual taxes using real amortization interest.
- */
+const TAX_YEAR_2026 = {
+    minstefradragRate: 0.46,
+    minstefradragMax: 95700,
+    personfradrag: 114540,
+    alminneligSkattRate: 0.22,
+
+    trygdeavgift: {
+        lonnRate: 0.076,
+        nedreGrense: 99650,
+        opptrappingRate: 0.25,
+    },
+
+    trinnskatt: [
+        { lower: 226100, upper: 318300, rate: 0.017 },
+        { lower: 318300, upper: 725050, rate: 0.04 },
+        { lower: 725050, upper: 980100, rate: 0.137 },
+        { lower: 980100, upper: 1467200, rate: 0.168 },
+        { lower: 1467200, upper: Infinity, rate: 0.178 },
+    ],
+} as const;
+
+const roundNOK = (value: number) => Math.round(value);
+
+const calculateBracketTax = (
+    income: number,
+    lower: number,
+    upper: number,
+    rate: number,
+) => {
+    const taxableAmount = Math.max(Math.min(income, upper) - lower, 0);
+    return roundNOK(taxableAmount * rate);
+};
+
+const calculateTrygdeavgift = (personalIncome: number) => {
+    const { lonnRate, nedreGrense, opptrappingRate } =
+        TAX_YEAR_2026.trygdeavgift;
+
+    if (personalIncome <= nedreGrense) {
+        return 0;
+    }
+
+    const ordinærAvgift = personalIncome * lonnRate;
+    const opptrappingstak = (personalIncome - nedreGrense) * opptrappingRate;
+
+    return roundNOK(Math.min(ordinærAvgift, opptrappingstak));
+};
+
 export const calculateAnnualTaxes = (data: EconomyData) => {
     const incomes = data.incomes;
 
     // ------ TAXABLE INCOME ------
-    const totalIncome = incomes
-        .filter((inc) => !inc.taxFree)
-        .reduce((sum, inc) => sum + inc.amount, 0);
+    const totalIncome = roundNOK(
+        incomes
+            .filter((inc) => !inc.taxFree)
+            .reduce((sum, inc) => sum + inc.amount, 0),
+    );
 
-    const taxFreeIncome = incomes
-        .filter((inc) => inc.taxFree)
-        .reduce((sum, inc) => sum + inc.amount, 0);
+    const taxFreeIncome = roundNOK(
+        incomes
+            .filter((inc) => inc.taxFree)
+            .reduce((sum, inc) => sum + inc.amount, 0),
+    );
 
     // ------ REAL INTEREST DEDUCTION ------
-    // Combine regular loans with the active house's housing loan
     const housingLoan = getActiveHousingLoan(data);
     const allLoans: Loan[] = [
         ...data.loans,
         ...(housingLoan ? [housingLoan] : []),
     ];
 
-    let totalPaidInterest = 0;
+    const totalPaidInterest = roundNOK(
+        allLoans.reduce((loanSum, loan) => {
+            const amort = computeLoanAmortization(loan);
 
-    allLoans.forEach((loan) => {
-        const amort = computeLoanAmortization(loan);
+            const loanAnnualInterest = amort.monthly
+                .slice(0, 12)
+                .reduce((s, r) => s + r.interest, 0);
 
-        // Only take 12 months of interest for tax purpose
-        const loanAnnualInterest = amort.monthly
-            .slice(0, 12)
-            .reduce((s, r) => s + r.interest, 0);
+            return loanSum + loanAnnualInterest;
+        }, 0),
+    );
 
-        totalPaidInterest += loanAnnualInterest;
-    });
-
-    const totalInterestDeduction = totalPaidInterest * 0.22; // Skattefradrag
+    // Viktig:
+    // I selve skatteberegningen skal renter trekkes fra inntekten med fullt beløp.
+    // Skatteverdien av dette blir automatisk 22 % gjennom beregningen av skatt på alminnelig inntekt.
+    const totalInterestDeduction = totalPaidInterest;
 
     // ------ MINSTEFRADRAG ------
-    const minstefradrag = Math.min(totalIncome * 0.46, 92000);
+    const minstefradrag = roundNOK(
+        Math.min(
+            totalIncome * TAX_YEAR_2026.minstefradragRate,
+            TAX_YEAR_2026.minstefradragMax,
+        ),
+    );
 
-    const totalDeductions = minstefradrag + totalInterestDeduction;
+    const totalDeductions = roundNOK(minstefradrag + totalInterestDeduction);
 
     // ------ ALMINNELIG INNTEKT ------
-    const alminnelig = Math.max(totalIncome - totalDeductions, 0);
+    const alminnelig = roundNOK(Math.max(totalIncome - totalDeductions, 0));
 
-    const skatt_alminnelig = alminnelig * 0.1772;
-    const trygdeavgift = totalIncome * 0.077;
+    // ------ PERSONFRADRAG ------
+    const skattegrunnlagAlminnelig = roundNOK(
+        Math.max(alminnelig - TAX_YEAR_2026.personfradrag, 0),
+    );
+
+    const skatt_alminnelig = roundNOK(
+        skattegrunnlagAlminnelig * TAX_YEAR_2026.alminneligSkattRate,
+    );
+
+    // ------ EFFEKT AV FRADRAG ------
+    const minstefradragTaxValue = roundNOK(minstefradrag * 0.22);
+    const interestTaxValue = roundNOK(totalPaidInterest * 0.22);
+
+    // ------ TRYGDEAVGIFT ------
+    const trygdeavgift = calculateTrygdeavgift(totalIncome);
 
     // ------ TRINNSKATT ------
-    const trinn1 = Math.max(Math.min(totalIncome, 306050) - 217400, 0) * 0.017;
-    const trinn2 = Math.max(Math.min(totalIncome, 697150) - 306050, 0) * 0.04;
-    const trinn3 = Math.max(Math.min(totalIncome, 942400) - 697150, 0) * 0.137;
-    const trinn4 = Math.max(Math.min(totalIncome, 1410750) - 942400, 0) * 0.167;
-    const trinn5 = Math.max(totalIncome - 1410750, 0) * 0.177;
+    const trinnskattDetails = TAX_YEAR_2026.trinnskatt.map((bracket) =>
+        calculateBracketTax(
+            totalIncome,
+            bracket.lower,
+            bracket.upper,
+            bracket.rate,
+        ),
+    );
 
-    const trinnskatt = trinn1 + trinn2 + trinn3 + trinn4 + trinn5;
+    const trinnskatt = roundNOK(
+        trinnskattDetails.reduce((sum, value) => sum + value, 0),
+    );
 
-    const totalTaxes = skatt_alminnelig + trygdeavgift + trinnskatt;
-    const netAnnualIncome = totalIncome - totalTaxes;
-    const netMonthlyIncome = netAnnualIncome / 12;
+    // ------ TOTALS ------
+    const totalTaxes = roundNOK(skatt_alminnelig + trygdeavgift + trinnskatt);
+
+    const netAnnualIncome = roundNOK(totalIncome + taxFreeIncome - totalTaxes);
+
+    const netMonthlyIncome = roundNOK(netAnnualIncome / 12);
 
     const effectiveTaxRate =
         totalIncome > 0 ? (totalTaxes / totalIncome) * 100 : 0;
@@ -88,6 +163,13 @@ export const calculateAnnualTaxes = (data: EconomyData) => {
         totalInterestDeduction,
         totalDeductions,
         alminnelig,
+
+        // Effekten av fradrag
+        minstefradragTaxValue,
+        interestTaxValue,
+        totalFradragTaxValue: roundNOK(
+            minstefradragTaxValue + interestTaxValue,
+        ),
 
         // Components
         skatt_alminnelig,
