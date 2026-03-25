@@ -18,7 +18,6 @@ import useStore, { StoreState } from '@/lib/store';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
 import { formatNumberToNOK } from '@/lib/utils';
 import type { Loan } from '@/types';
-import { generatePaymentPlan } from '@/lib/monthlyPaymentPlan';
 
 function monthlyLoanPayment(loan: Loan): number {
     const principal = loan.loanAmount || 0;
@@ -52,7 +51,6 @@ export default function Home() {
 
     const tax = calculateAnnualTaxes(data);
     const monthlyTax = tax.totalTaxes / 12;
-    const effectiveTaxRate = tax.effectiveTaxRate;
 
     // Combine regular loans with active house's housing loan
     const loans: Loan[] = [
@@ -67,12 +65,12 @@ export default function Home() {
     // Housing costs from active house
     const housingFixed = activeHouse
         ? (activeHouse.houseMonthlyCosts.hoa || 0) +
-          (activeHouse.houseMonthlyCosts.electricity || 0) +
-          (activeHouse.houseMonthlyCosts.internet || 0) +
-          (activeHouse.houseMonthlyCosts.insurance || 0) +
-          (activeHouse.houseMonthlyCosts.propertyTax || 0) +
-          (activeHouse.houseMonthlyCosts.maintenance || 0) +
-          (activeHouse.houseMonthlyCosts.other || 0)
+        (activeHouse.houseMonthlyCosts.electricity || 0) +
+        (activeHouse.houseMonthlyCosts.internet || 0) +
+        (activeHouse.houseMonthlyCosts.insurance || 0) +
+        (activeHouse.houseMonthlyCosts.propertyTax || 0) +
+        (activeHouse.houseMonthlyCosts.maintenance || 0) +
+        (activeHouse.houseMonthlyCosts.other || 0)
         : 0;
     const personalFixed = (data.personalFixedExpenses || []).reduce(
         (sum, exp) => sum + exp.amount,
@@ -87,20 +85,6 @@ export default function Home() {
         housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
     const netMonthlyIncome = monthlyIncomeGross - monthlyTax;
     const cashflow = netMonthlyIncome - totalMonthlyExpenses;
-
-    const paymentPlan = generatePaymentPlan(
-        data,
-        0,
-        new Date().toISOString().slice(0, 10),
-        3
-    );
-
-    const hasData =
-        (data.incomes || []).length > 0 ||
-        (data.houses || []).length > 0 ||
-        (data.loans || []).length > 0 ||
-        (data.personalFixedExpenses || []).length > 0 ||
-        (data.livingCosts || []).length > 0;
 
     return (
         <div className='w-full py-10 space-y-12'>
@@ -227,140 +211,6 @@ export default function Home() {
                         </CardHeader>
                     </Card>
                 </div>
-            </section>
-
-            <section className='space-y-4'>
-                <TypographyH2>Nøkkeltall fra dine data</TypographyH2>
-                <TypographyP>
-                    Har du lagt inn inntekter, lån eller utgifter, viser vi et
-                    raskt overblikk under.
-                </TypographyP>
-
-                {hasData ? (
-                    <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle className='text-brandBlue'>
-                                    Brutto inntekt / mnd
-                                </CardTitle>
-                                <CardDescription>
-                                    Summen av alle inntektskilder.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(monthlyIncomeGross)}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Skatt / mnd</CardTitle>
-                                <CardDescription>
-                                    Beregnede skatter og avgifter.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(monthlyTax)}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Totale utgifter / mnd</CardTitle>
-                                <CardDescription>
-                                    Lån, faste kostnader og levekostnader.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(totalMonthlyExpenses)}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Kontantstrøm / mnd</CardTitle>
-                                <CardDescription>
-                                    Det du har igjen etter skatt og utgifter.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(cashflow)}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Aktive lån</CardTitle>
-                                <CardDescription>
-                                    Antall lån og boliglån registrert.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {loans.length}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Effektiv skattesats</CardTitle>
-                                <CardDescription>
-                                    Din beregnede gjennomsnittsskatt.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {effectiveTaxRate.toFixed(1)} %
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>Nedbetaling denne måneden</CardTitle>
-                                <CardDescription>
-                                    Sparing på boliglån i inneværende måned.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(
-                                    paymentPlan[0].totalPrincipal
-                                )}
-                            </CardContent>
-                        </Card>
-
-                        <Card className='bg-linear-to-br from-background to-brandOrange/10'>
-                            <CardHeader>
-                                <CardTitle>
-                                    Netto regnskap denne måneden
-                                </CardTitle>
-                                <CardDescription>
-                                    Cashflow + nedbetaling på lån.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className='text-2xl font-semibold text-brandBlue'>
-                                {formatNumberToNOK(
-                                    paymentPlan[0].balancePlusPrincipal
-                                )}
-                            </CardContent>
-                        </Card>
-                    </div>
-                ) : (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Ingen nøkkeltall ennå</CardTitle>
-                            <CardDescription>
-                                Legg inn inntekter, lån og utgifter under
-                                «Grunnlagsdata» så fylles nøkkeltallene
-                                automatisk ut.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Button asChild>
-                                <Link href='/data'>
-                                    Start med å legge inn data
-                                </Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
-                )}
             </section>
         </div>
     );
