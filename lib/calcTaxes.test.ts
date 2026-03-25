@@ -65,19 +65,30 @@ describe('calculateAnnualTaxes', () => {
     it('computes gross income and deductions from loans', () => {
         assert.equal(result.totalIncome, 655_000);
 
-        const housingInterest = computeLoanAmortization(housingLoan).monthly
-            .slice(0, 12)
-            .reduce((sum, row) => sum + row.interest, 0);
-        const carInterest = computeLoanAmortization(carLoan).monthly
-            .slice(0, 12)
+        const housingInterest = computeLoanAmortization(housingLoan)
+            .monthly.slice(0, 12)
             .reduce((sum, row) => sum + row.interest, 0);
 
-        const expectedInterest = housingInterest + carInterest;
-        const expectedMinstefradrag = Math.min(result.totalIncome * 0.46, 92_000);
-        const expectedTotalDeductions = expectedMinstefradrag + expectedInterest * 0.22;
+        const carInterest = computeLoanAmortization(carLoan)
+            .monthly.slice(0, 12)
+            .reduce((sum, row) => sum + row.interest, 0);
 
-        assert.ok(Math.abs(result.totalPaidInterest - expectedInterest) < 0.01);
-        assert.ok(Math.abs(result.totalDeductions - expectedTotalDeductions) < 0.01);
+        const expectedInterest = Math.round(housingInterest + carInterest);
+        const expectedMinstefradrag = Math.round(
+            Math.min(result.totalIncome * 0.46, 95_700),
+        );
+        const expectedTotalDeductions = Math.round(
+            expectedMinstefradrag + expectedInterest,
+        );
+        const expectedAlminnelig = Math.round(
+            Math.max(result.totalIncome - expectedTotalDeductions, 0),
+        );
+
+        assert.equal(result.totalPaidInterest, expectedInterest);
+        assert.equal(result.minstefradrag, expectedMinstefradrag);
+        assert.equal(result.totalInterestDeduction, expectedInterest);
+        assert.equal(result.totalDeductions, expectedTotalDeductions);
+        assert.equal(result.alminnelig, expectedAlminnelig);
     });
 
     it('returns reasonable effective rates and net values', () => {
