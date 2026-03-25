@@ -78,7 +78,7 @@ function averageLoanBreakdown(
 
     const monthDiff = hasValidStart
         ? (today.getFullYear() - start.getFullYear()) * 12 +
-          (today.getMonth() - start.getMonth())
+        (today.getMonth() - start.getMonth())
         : 0;
 
     const termIndex = Math.min(
@@ -240,16 +240,16 @@ function useNetWorthSummary(data: EconomyData, priceGrowth = 3.5) {
         // Housing context for active house only
         const housingContexts = activeHouse
             ? [
-                  {
-                      loan: activeHouse.housingLoan,
-                      amortization: amortizationLookup.get(
-                          activeHouse.housingLoan
-                      ),
-                      baseHomeValue:
-                          activeHouse.purchase.equityUsed +
-                          activeHouse.housingLoan.loanAmount,
-                  },
-              ]
+                {
+                    loan: activeHouse.housingLoan,
+                    amortization: amortizationLookup.get(
+                        activeHouse.housingLoan
+                    ),
+                    baseHomeValue:
+                        activeHouse.purchase.equityUsed +
+                        activeHouse.housingLoan.loanAmount,
+                },
+            ]
             : [];
 
         return {
@@ -531,8 +531,8 @@ export default function SummaryPage() {
                     </TypographyP>
                 </div>
 
-                <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-4'>
-                    <Card className='border-primary/20 shadow-sm'>
+                <div className='grid gap-6 sm:grid-cols-2 xl:grid-cols-3'>
+                    {/* <Card className='border-primary/20 shadow-sm'>
                         <CardHeader className='pb-2'>
                             <CardDescription className='flex items-center gap-2 text-xs uppercase tracking-wide'>
                                 <ArrowUpCircle className='h-4 w-4 text-brandBlue' />
@@ -542,7 +542,7 @@ export default function SummaryPage() {
                                 {fmt(monthlyIncomeGross)}
                             </CardTitle>
                         </CardHeader>
-                    </Card>
+                    </Card> */}
 
                     <Card className='border-primary/20 shadow-sm'>
                         <CardHeader className='pb-2'>
@@ -590,7 +590,7 @@ export default function SummaryPage() {
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
                             <BadgeDollarSign className='h-5 w-5 text-brandBlue' />
-                            Inntekter
+                            Dine inntekter
                         </CardTitle>
                         <CardDescription>
                             Både skattepliktige og skattefrie kilder, vist per
@@ -641,11 +641,11 @@ export default function SummaryPage() {
                                     {(data.incomes || []).filter(
                                         (i) => !i.taxFree
                                     ).length === 0 && (
-                                        <p className='text-sm text-muted-foreground'>
-                                            Ingen registrerte skattepliktige
-                                            inntekter.
-                                        </p>
-                                    )}
+                                            <p className='text-sm text-muted-foreground'>
+                                                Ingen registrerte skattepliktige
+                                                inntekter.
+                                            </p>
+                                        )}
                                 </CardContent>
                             </Card>
 
@@ -688,7 +688,7 @@ export default function SummaryPage() {
                     <CardHeader className='space-y-1'>
                         <CardTitle className='flex items-center gap-2'>
                             <BarChart4 className='h-5 w-5 text-brandBlue' />
-                            Nøkkeltall – Utgifter
+                            Dine utgifter
                         </CardTitle>
                         <CardDescription>
                             Oversikt over renter, avdrag og faste kostnader.
@@ -758,9 +758,9 @@ export default function SummaryPage() {
                             <span className='font-semibold'>
                                 {fmt(
                                     housingFixed +
-                                        personalFixed +
-                                        livingMonthly +
-                                        loanTotals.total
+                                    personalFixed +
+                                    livingMonthly +
+                                    loanTotals.total
                                 )}
                             </span>
                         </div>
@@ -833,7 +833,7 @@ export default function SummaryPage() {
                                 <p className='text-3xl font-semibold'>
                                     {fmt(
                                         monthlyNetWorthChange -
-                                            totalHousingAppreciation
+                                        totalHousingAppreciation
                                     )}
                                 </p>
                             </div>
@@ -875,16 +875,6 @@ export default function SummaryPage() {
                             </span>
                             <span className='font-semibold'>
                                 {fmt(monthlyTax)}
-                            </span>
-                        </div>
-
-                        {/* Interest deduction */}
-                        <div className='flex items-center justify-between text-sm'>
-                            <span className='text-muted-foreground'>
-                                Rentefradrag
-                            </span>
-                            <span className='font-semibold'>
-                                {fmt(tax.totalInterestDeduction)}
                             </span>
                         </div>
 
