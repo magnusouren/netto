@@ -121,8 +121,8 @@ export default function Summary() {
                             </td>
                         </tr>
 
-                        <tr className='border-t font-semibold'>
-                            <td className='p-2'>Netto inntekt</td>
+                        <tr className='border-t italic'>
+                            <td className='p-2'>Netto månedslønn</td>
                             <td className='p-2 text-right'>
                                 {fmt(monthlyIncomeGross - monthlyTax)}
                             </td>
@@ -130,21 +130,66 @@ export default function Summary() {
 
                         <tr className='mt-4'>
                             <td className='p-2 font-semibold' colSpan={2}>
-                                Månedlige utgifter
+                            </td>
+                        </tr>
+
+
+                        <tr className='mt-4'>
+                            <td className='p-2 font-semibold' colSpan={2}>
+                                Utgifter
+                            </td>
+                        </tr>
+
+                        <tr className='odd:bg-background even:bg-muted/5'>
+                            <td className='p-2'>Faste personlige kostnader</td>
+                            <td className='p-2 text-right'>
+                                {fmt(personalFixed)}
+                            </td>
+                        </tr>
+
+                        <tr className='odd:bg-background even:bg-muted/5'>
+                            <td className='p-2'>Variable kostnader</td>
+                            <td className='p-2 text-right'>
+                                {fmt(livingMonthly)}
+                            </td>
+                        </tr>
+
+                        {data.loans.map((loan, i) => (
+                            <tr
+                                key={i}
+                            >
+                                <td className='p-2'>Terminbeløp - {loan.description}</td>
+                                <td className='p-2 text-right'>
+                                    {fmt(loan.loanAmount > 0 ? monthlyLoanPayment(loan) : 0)}
+                                </td>
+                            </tr>
+                        ))}
+
+                        <tr className='mt-4'>
+                            <td className='p-2 font-semibold' colSpan={2}>
+                                Boligkostnader
                                 {activeHouse && (
                                     <span className='font-normal text-muted-foreground ml-2'>
-                                        ({activeHouse.name})
+                                        (ved kjøp av {activeHouse.name})
                                     </span>
                                 )}
                             </td>
                         </tr>
 
-                        <tr>
-                            <td className='p-2'>Lån - månedlige betalinger</td>
-                            <td className='p-2 text-right'>
-                                {fmt(loanMonthlyPayments)}
-                            </td>
-                        </tr>
+                        {activeHouse?.housingLoan && (
+                            <tr>
+                                <td className='p-2'>
+                                    Terminbeløp - {activeHouse.housingLoan.description}
+                                </td>
+                                <td className='p-2 text-right'>
+                                    {fmt(
+                                        monthlyLoanPayment(
+                                            activeHouse.housingLoan
+                                        )
+                                    )}
+                                </td>
+                            </tr>
+                        )}
 
                         <tr className='odd:bg-background even:bg-muted/5'>
                             <td className='p-2'>Faste utgifter - bolig</td>
@@ -153,36 +198,41 @@ export default function Summary() {
                             </td>
                         </tr>
 
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Faste utgifter - personlig</td>
-                            <td className='p-2 text-right'>
-                                {fmt(personalFixed)}
-                            </td>
-                        </tr>
-
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Levekostnader</td>
-                            <td className='p-2 text-right'>
-                                {fmt(livingMonthly)}
-                            </td>
-                        </tr>
-
-                        <tr className='font-semibold'>
-                            <td className='p-2'>Totale månedlige utgifter</td>
+                        <tr className='border-t italic'>
+                            <td className='p-2'>Sum månedlige utgifter</td>
                             <td className='p-2 text-right'>
                                 {fmt(totalMonthlyExpenses)}
                             </td>
                         </tr>
 
-                        <tr className='mt-4 border-t'>
+                        <tr className='mt-4'>
+                            <td className='p-2 font-semibold' colSpan={2}>
+                            </td>
+                        </tr>
+
+                        <tr className='mt-4'>
                             <td className='p-2 font-semibold' colSpan={2}>
                                 Oppsummering
                             </td>
                         </tr>
 
-                        <tr className='text-lg font-bold bg-muted/10'>
+                        <tr>
+                            <td className='p-2'>Netto månedslønn</td>
+                            <td className='p-2 text-right'>
+                                {fmt(monthlyIncomeGross - monthlyTax)}
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td className='p-2'>Sum månedlige utgifter</td>
+                            <td className='p-2 text-right'>
+                                {fmt(totalMonthlyExpenses)}
+                            </td>
+                        </tr>
+
+                        <tr className='font-bold mt-2 border-t'>
                             <td className='p-2'>
-                                Balanse per måned (cash flow)
+                                Disponibelt beløp per måned
                             </td>
                             <td className='p-2 text-right'>{fmt(balance)}</td>
                         </tr>
