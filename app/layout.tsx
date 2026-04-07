@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/navbar';
+import Image from 'next/image';
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -44,9 +45,14 @@ export default function RootLayout({
                         >
                             Magnus Ouren
                         </a>
-                        .
                     </p>
                     <p className='mt-2'>Med forbehold om feil og mangler...</p>
+                    <div className='mt-4 w-full flex justify-center'>
+
+                        <a href="https://www.buymeacoffee.com/magnusouren" target="_blank">
+                            <Image src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width={120} height={80} />
+                        </a>
+                    </div>
                 </footer>
                 <Analytics />
             </body>
