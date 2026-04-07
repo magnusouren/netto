@@ -93,7 +93,7 @@ export default function Summary() {
             <TypographyH2>Oppsummering</TypographyH2>
 
             <div className='overflow-auto rounded-md border'>
-                <table className='w-full table-fixed text-sm'>
+                <table className='w-full table-auto text-sm'>
                     <thead>
                         <tr className='bg-muted'>
                             <th className='p-2 text-left'>Kategori</th>
