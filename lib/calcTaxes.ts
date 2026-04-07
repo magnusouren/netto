@@ -93,6 +93,18 @@ export const calculateAnnualTaxes = (data: EconomyData) => {
         }, 0),
     );
 
+    const allLoansInterestDetails = allLoans.map((loan) => {
+        const amort = computeLoanAmortization(loan);
+        const loanAnnualInterest = amort.monthly
+            .slice(0, 12)
+            .reduce((s, r) => s + r.interest, 0);
+
+        return {
+            description: loan.description,
+            annualInterest: roundNOK(loanAnnualInterest),
+        };
+    });
+
     // Viktig:
     // I selve skatteberegningen skal renter trekkes fra inntekten med fullt beløp.
     // Skatteverdien av dette blir automatisk 22 % gjennom beregningen av skatt på alminnelig inntekt.
@@ -156,6 +168,9 @@ export const calculateAnnualTaxes = (data: EconomyData) => {
         netAnnualIncome,
         netMonthlyIncome,
         totalTaxes,
+
+        // Renter
+        allLoansInterestDetails,
 
         // Deductions
         minstefradrag,
