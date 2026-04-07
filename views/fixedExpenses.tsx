@@ -55,9 +55,9 @@ export default function FixedExpenses() {
 
     return (
         <section className='w-full my-8'>
-            <TypographyH2>Faste personlige utgifter</TypographyH2>
+            <TypographyH2>Faste personlige kostnader</TypographyH2>
             <TypographyP>
-                Legg til dine faste personlige utgifter her. Boligrelaterte
+                Legg til dine faste personlige kostnader her. Boligrelaterte
                 kostnader administreres på boligsiden.
             </TypographyP>
 
