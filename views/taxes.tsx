@@ -56,15 +56,17 @@ export default function Taxes() {
                             </td>
                         </tr>
 
-                        <tr>
-                            <td className='p-2'>Renter</td>
-                            <td className='p-2 text-right'>
-                                {formatNumberToNOK(tax.totalPaidInterest)}
-                            </td>
-                        </tr>
+                        {tax.allLoansInterestDetails.map((loan, i) => (
+                            <tr key={i}>
+                                <td className='p-2'>{loan.description}</td>
+                                <td className='p-2 text-right'>
+                                    {formatNumberToNOK(loan.annualInterest)}
+                                </td>
+                            </tr>
+                        ))}
 
                         <tr className='border-t italic'>
-                            <td className='p-2'>Totalt renter</td>
+                            <td className='p-2'>Totale renter</td>
                             <td className='p-2 text-right'>
                                 {formatNumberToNOK(tax.totalPaidInterest)}
                             </td>
