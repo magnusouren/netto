@@ -29,6 +29,8 @@ export type HouseOption = {
 
     // depends on house
     houseMonthlyCosts: HouseMonthlyCosts;
+
+    URL?: string; // optional link to house listing or info page
 };
 
 export type HouseMonthlyCosts = {

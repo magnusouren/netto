@@ -71,6 +71,7 @@ export default function HousesPage() {
                         (personalEquity || 0) +
                         (house.purchase.closingCosts || 0),
                 },
+                URL: url,
             });
             setFinnURL('');
         } catch (e) {
@@ -755,6 +756,21 @@ export default function HousesPage() {
                                     </div>
                                 </div>
                             </div>
+                            {house.URL && (
+                                <div>
+                                    <h4 className='font-medium mb-2 text-sm text-muted-foreground'>
+                                        Kilde
+                                    </h4>
+                                    <a
+                                        href={house.URL}
+                                        target='_blank'
+                                        rel='noopener noreferrer'
+                                        className='hover:underline break-all text-xs text-primary'
+                                    >
+                                        {house.URL}
+                                    </a>
+                                </div>
+                            )}
                         </CardContent>
 
                         <CardFooter className='flex justify-between'>
