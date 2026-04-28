@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Plus, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Income } from '@/types';
@@ -61,11 +62,9 @@ export default function Incomes() {
                                         />
                                     </td>
                                     <td className='p-2'>
-                                        <Input
+                                        <NumericInput
                                             id={`income-amount-${index}`}
-                                            type='number'
-                                            value={income.amount || ''}
-                                            placeholder='500 000'
+                                            value={income.amount}
                                             onChange={(e) =>
                                                 updateIncome(index, {
                                                     amount: Number(

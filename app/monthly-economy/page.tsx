@@ -4,6 +4,7 @@ import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { generatePaymentPlan } from '@/lib/monthlyPaymentPlan';
 import useStore, { StoreState } from '@/lib/store';
@@ -41,9 +42,8 @@ export default function PaymentPlan() {
                         <Label htmlFor='sallary-annual-growth'>
                             Årlig lønnsvekst (%)
                         </Label>
-                        <Input
+                        <NumericInput
                             id='sallary-annual-growth'
-                            type='number'
                             value={sallaryAnnualGrowth}
                             className='mt-2'
                             onChange={(e) =>

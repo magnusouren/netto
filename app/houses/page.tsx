@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import useStore, { StoreState } from '@/lib/store';
 import type { HouseOption, HouseMonthlyCosts, Loan } from '@/types';
@@ -219,11 +220,10 @@ export default function HousesPage() {
                     </div>
                 </CardHeader>
                 <CardContent className='pt-0'>
-                    <Input
+                    <NumericInput
                         id='personalEquity'
-                        type='number'
                         className=' w-10/12 md:w-1/3'
-                        value={personalEquity || ''}
+                        value={personalEquity}
                         onChange={(e) =>
                             setPersonalEquity(Number(e.target.value) || 0)
                         }
@@ -401,9 +401,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Prisantydning
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={house.purchase.price || ''}
+                                        <NumericInput
+                                            value={house.purchase.price}
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -419,12 +418,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Omkostninger + gjeld
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.purchase.closingCosts ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.purchase.closingCosts}
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -439,11 +434,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Egenkapital brukt
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.purchase.equityUsed || ''
-                                            }
+                                        <NumericInput
+                                            value={house.purchase.equityUsed}
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -458,13 +450,9 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Forventet priskvekst %
                                         </Label>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             step='0.1'
-                                            value={
-                                                house.purchase
-                                                    .expectedGrowthPct ?? ''
-                                            }
+                                            value={house.purchase.expectedGrowthPct ?? 0}
                                             onChange={(e) =>
                                                 handlePurchaseChange(
                                                     house.id,
@@ -496,12 +484,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Lånebeløp
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.housingLoan.loanAmount ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.housingLoan.loanAmount}
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -515,13 +499,9 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Nominell rente %
                                         </Label>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             step='0.01'
-                                            value={
-                                                house.housingLoan
-                                                    .interestRate || ''
-                                            }
+                                            value={house.housingLoan.interestRate}
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -535,12 +515,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Nedbet. år
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.housingLoan.termYears ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.housingLoan.termYears}
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -578,12 +554,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Terminer per år
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.housingLoan
-                                                    .termsPerYear || ''
-                                            }
+                                        <NumericInput
+                                            value={house.housingLoan.termsPerYear}
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -597,12 +569,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Månedlig gebyr
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.housingLoan.monthlyFee ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.housingLoan.monthlyFee}
                                             onChange={(e) =>
                                                 handleLoanChange(
                                                     house.id,
@@ -629,12 +597,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Felleskost.
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts.hoa ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.hoa}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -646,12 +610,8 @@ export default function HousesPage() {
                                     </div>
                                     <div>
                                         <Label className='text-xs'>Strøm</Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts
-                                                    .electricity || ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.electricity}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -665,12 +625,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Internett
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts
-                                                    .internet || ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.internet}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -684,12 +640,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Forsikring
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts
-                                                    .insurance || ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.insurance}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -703,12 +655,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Eiendomsskatt
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts
-                                                    .propertyTax || ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.propertyTax}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -722,12 +670,8 @@ export default function HousesPage() {
                                         <Label className='text-xs'>
                                             Vedlikehold
                                         </Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts
-                                                    .maintenance || ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.maintenance}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -739,12 +683,8 @@ export default function HousesPage() {
                                     </div>
                                     <div className='col-span-2'>
                                         <Label className='text-xs'>Annet</Label>
-                                        <Input
-                                            type='number'
-                                            value={
-                                                house.houseMonthlyCosts.other ||
-                                                ''
-                                            }
+                                        <NumericInput
+                                            value={house.houseMonthlyCosts.other}
                                             onChange={(e) =>
                                                 handleMonthlyCostChange(
                                                     house.id,
@@ -838,10 +778,9 @@ export default function HousesPage() {
                                 <Label htmlFor='housePrice' className='my-2'>
                                     Prisantydning
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='housePrice'
-                                    type='number'
-                                    value={form.price || ''}
+                                    value={form.price}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -857,10 +796,9 @@ export default function HousesPage() {
                                 >
                                     Omkostninger + gjeld
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='houseClosingCosts'
-                                    type='number'
-                                    value={form.closingCosts ?? ''}
+                                    value={form.closingCosts ?? 0}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,
@@ -874,10 +812,9 @@ export default function HousesPage() {
                                 <Label htmlFor='houseEquity' className='my-2'>
                                     Egenkapital å bruke
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='houseEquity'
-                                    type='number'
-                                    value={form.equityUsed || ''}
+                                    value={form.equityUsed}
                                     onChange={(e) =>
                                         setForm({
                                             ...form,

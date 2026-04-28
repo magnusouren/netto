@@ -4,6 +4,7 @@ import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import { loanPaymentPlan } from '@/lib/loanPaymentPlan';
 import useStore, { StoreState } from '@/lib/store';
@@ -47,9 +48,8 @@ export default function Plan() {
                                 <Label htmlFor='price-increase'>
                                     Årlig prisstigning på bolig (%)
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='price-increase'
-                                    type='number'
                                     step={0.5}
                                     value={priceIncrease}
                                     onChange={(e) =>
@@ -63,9 +63,8 @@ export default function Plan() {
                                     Antall år å vise i planen
                                 </Label>
 
-                                <Input
+                                <NumericInput
                                     id='years-to-show'
-                                    type='number'
                                     value={yearsToShow}
                                     onChange={(e) =>
                                         setYearsToShow(Number(e.target.value))

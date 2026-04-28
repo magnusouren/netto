@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { GraduationCap, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
@@ -216,9 +217,8 @@ export default function Loans() {
                                     Ekstra lånebeløp – uten stipend (kr)
                                     <Questionmark helptext='Dersom du har ekstra lån som ikke kan omgjøres til stipend, kan du legge til det ekstra beløpet her.' />
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='extra-loan'
-                                    type='number'
                                     value={extraStudentLoan}
                                     onChange={(e) =>
                                         setExtraStudentLoan(
@@ -273,8 +273,7 @@ export default function Loans() {
                                         />
                                     </td>
                                     <td className='py-2 px-1'>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             value={loan.loanAmount}
                                             onChange={(e) =>
                                                 handleUpdate(idx, {
@@ -286,8 +285,7 @@ export default function Loans() {
                                         />
                                     </td>
                                     <td className='py-2 px-1'>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             step='0.01'
                                             value={loan.interestRate}
                                             onChange={(e) =>
@@ -300,8 +298,7 @@ export default function Loans() {
                                         />
                                     </td>
                                     <td className='py-2 px-1'>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             value={loan.termYears}
                                             onChange={(e) =>
                                                 handleUpdate(idx, {
@@ -313,8 +310,7 @@ export default function Loans() {
                                         />
                                     </td>
                                     <td className='py-2 px-1'>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             value={loan.termsPerYear}
                                             onChange={(e) =>
                                                 handleUpdate(idx, {
@@ -326,8 +322,7 @@ export default function Loans() {
                                         />
                                     </td>
                                     <td className='py-2 px-1'>
-                                        <Input
-                                            type='number'
+                                        <NumericInput
                                             value={loan.monthlyFee ?? 0}
                                             onChange={(e) =>
                                                 handleUpdate(idx, {
@@ -413,9 +408,8 @@ export default function Loans() {
                                     Lånebeløp (kr)
                                     <Questionmark helptext='Det totale lånebeløpet' />
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='loan-amount'
-                                    type='number'
                                     value={form.loanAmount}
                                     onChange={(e) =>
                                         setForm((p) => ({
@@ -432,10 +426,9 @@ export default function Loans() {
                                     Rente (%)
                                     <Questionmark helptext='Den nominelle renten på lånet.' />
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='loan-rate'
                                     step='0.01'
-                                    type='number'
                                     value={form.interestRate}
                                     onChange={(e) =>
                                         setForm((p) => ({
@@ -454,9 +447,8 @@ export default function Loans() {
                                 <Label htmlFor='loan-years'>
                                     Nedbetalingstid
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='loan-years'
-                                    type='number'
                                     value={form.termYears}
                                     onChange={(e) =>
                                         setForm((p) => ({
@@ -472,9 +464,8 @@ export default function Loans() {
                                 <Label htmlFor='loan-terms'>
                                     Betalinger/år
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='loan-terms'
-                                    type='number'
                                     value={form.termsPerYear}
                                     onChange={(e) =>
                                         setForm((p) => ({
@@ -513,9 +504,8 @@ export default function Loans() {
                                 <Label htmlFor='loan-monthly'>
                                     Månedsavgift
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='loan-monthly'
-                                    type='number'
                                     value={form.monthlyFee}
                                     onChange={(e) =>
                                         setForm((p) => ({

@@ -42,6 +42,7 @@ import type {
     HouseMonthlyCosts,
 } from '@/types';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@radix-ui/react-label';
 
 /* ===========================================================
@@ -1100,8 +1101,7 @@ export default function SummaryPage() {
                     <Label htmlFor='priceGrowth' className='font-medium'>
                         Prisvekst bolig (% per år):
                     </Label>
-                    <Input
-                        type='number'
+                    <NumericInput
                         value={priceGrowthInput}
                         onChange={(e) => {
                             setPriceGrowthInput(e.target.value);

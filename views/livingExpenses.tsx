@@ -11,6 +11,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { Label } from '@/components/ui/label';
 import {
     NativeSelect,
@@ -286,10 +287,8 @@ export default function LivingExpenses() {
                             </div>
                             <div className='space-y-1'>
                                 <Label htmlFor='alder0'>Alder</Label>
-                                <Input
+                                <NumericInput
                                     id='alder0'
-                                    type='number'
-                                    inputMode='numeric'
                                     value={autoForm.alder0}
                                     onChange={(e) =>
                                         handleAutoFormChange(
@@ -329,10 +328,8 @@ export default function LivingExpenses() {
                                 <Label htmlFor='antall_biler'>
                                     Antall fossilbiler
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='antall_biler'
-                                    type='number'
-                                    inputMode='numeric'
                                     value={autoForm.antall_biler}
                                     onChange={(e) =>
                                         handleAutoFormChange(
@@ -346,10 +343,8 @@ export default function LivingExpenses() {
                                 <Label htmlFor='antall_elbiler'>
                                     Antall elbiler
                                 </Label>
-                                <Input
+                                <NumericInput
                                     id='antall_elbiler'
-                                    type='number'
-                                    inputMode='numeric'
                                     value={autoForm.antall_elbiler}
                                     onChange={(e) =>
                                         handleAutoFormChange(
@@ -416,9 +411,8 @@ export default function LivingExpenses() {
                                     />
                                 </td>
                                 <td className='p-2 pb-0 pr-0 pl-0'>
-                                    <Input
+                                    <NumericInput
                                         id={`living-amount-${index}`}
-                                        type='number'
                                         value={item.amount}
                                         onChange={(e) =>
                                             updateLivingCost(index, {

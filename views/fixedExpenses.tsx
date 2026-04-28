@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/numeric-input';
 import useStore, { StoreState } from '@/lib/store';
 import type { FixedExpense } from '@/types';
 import { Trash } from 'lucide-react';
@@ -88,9 +89,8 @@ export default function FixedExpenses() {
                                         />
                                     </td>
                                     <td className='p-2 pl-0 pb-0 pr-0'>
-                                        <Input
+                                        <NumericInput
                                             id={`fixed-amount-${index}`}
-                                            type='number'
                                             value={item.amount}
                                             onChange={(e) =>
                                                 updateExpense(index, {
