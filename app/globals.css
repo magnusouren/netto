@@ -6,7 +6,7 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
+    --font-sans: var(--font-schibsted);
     --font-mono: var(--font-geist-mono);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -43,28 +43,48 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
+    /* Marine raw tokens — use as bg-accent-deep, text-ink-2, border-line, etc. */
+    --color-accent-deep: var(--accent-deep);
+    --color-accent-soft: var(--accent-soft);
+    --color-accent-light: var(--accent-light);
+    --color-accent-2: var(--accent-2);
+    --color-ink-2: var(--ink-2);
+    --color-line: var(--line);
+    --color-line-2: var(--line-2);
+    --color-surface-2: var(--surface-2);
 }
 
 :root {
     --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    /* shadcn token mapping — Marine palette */
+    --background: #f4f6f8;
+    --foreground: #121620;
+    --card: #ffffff;
+    --card-foreground: #121620;
+    --popover: #ffffff;
+    --popover-foreground: #121620;
+    --primary: #16365c;
+    --primary-foreground: #ffffff;
+    --secondary: #eceff3;
+    --secondary-foreground: #121620;
+    --muted: #eceff3;
+    --muted-foreground: #67707f;
+    --accent: #e6ebf2;
+    --accent-foreground: #16365c;
+    --destructive: #b4232a;
+    --border: #e1e5ea;
+    --input: #e1e5ea;
+    --ring: #16365c;
+    /* Marine raw tokens */
+    --accent-deep: #0f2542;
+    --accent-soft: #e6ebf2;
+    --accent-light: #8ea6c4;
+    --accent-2: #9a7320;
+    --ink-2: #3a4250;
+    --line: #e1e5ea;
+    --line-2: #edeff3;
+    --surface-2: #eceff3;
+    /* preserved brand + chart + sidebar tokens */
     --brandBlue: oklch(0.28 0.07 255);
     --brandOrange: oklch(0.74 0.16 60.7);
     --chart-1: oklch(0.646 0.222 41.116);
@@ -72,14 +92,14 @@
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: #ffffff;
+    --sidebar-foreground: #121620;
+    --sidebar-primary: #16365c;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #eceff3;
+    --sidebar-accent-foreground: #16365c;
+    --sidebar-border: #e1e5ea;
+    --sidebar-ring: #16365c;
 }
 
 .dark {
@@ -124,5 +144,11 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .tnum {
+        font-variant-numeric: tabular-nums;
     }
 }

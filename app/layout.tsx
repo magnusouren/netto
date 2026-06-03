@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Analytics } from "@vercel/analytics/next"
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Schibsted_Grotesk } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/navbar';
 import Image from 'next/image';
@@ -12,6 +12,12 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
     variable: '--font-geist-mono',
+    subsets: ['latin'],
+});
+
+const schibsted = Schibsted_Grotesk({
+    variable: '--font-schibsted',
+    weight: ['400', '500', '600', '700', '800'],
     subsets: ['latin'],
 });
 
@@ -28,7 +34,7 @@ export default function RootLayout({
     return (
         <html lang='en'>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+                className={`${schibsted.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
             >
                 <Navbar />
                 <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'>
