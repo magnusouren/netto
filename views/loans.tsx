@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/numeric-input';
-import { GraduationCap, Trash } from 'lucide-react';
+import { GraduationCap, Plus, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Loan } from '@/types';
 import {
@@ -19,10 +21,12 @@ import {
     DialogFooter,
     DialogClose,
 } from '@/components/ui/dialog';
-import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
 import { Questionmark } from '@/components/Questionmark';
 import { Datepicker } from '@/components/Datepicker';
+import { Glance } from '@/components/ledger/Glance';
+import { LabelMono } from '@/components/ledger/LabelMono';
+import { formatNumberToNOK } from '@/lib/utils';
 
 const loanAmounts: Record<string, number> = {
     '2025-2026': 166859,
@@ -109,7 +113,7 @@ export default function Loans() {
     );
     const [autoTo, setAutoTo] = useState<string>(
         sortedRanges[sortedRanges.length - 1]?.[0] ??
-            Object.keys(loanAmounts)[0]
+        Object.keys(loanAmounts)[0]
     );
     const [extraStudentLoan, setExtraStudentLoan] = useState<number>(0);
 
@@ -144,24 +148,223 @@ export default function Loans() {
         setAutoDialogOpen(false);
     }
 
+    const totalLoanAmount = loans.reduce(
+        (sum, l) => sum + (l.loanAmount || 0),
+        0
+    );
+
     return (
         <section className='w-full my-8'>
-            <TypographyH2>Lån</TypographyH2>
-            <TypographyP>
-                Legg inn informasjon om dine lån her. Dette kan være studielån,
-                billån eller andre typer lån du har.
-            </TypographyP>
-
             <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button className='w-full mb-2'>
-                        Beregn ditt studielån <GraduationCap className='ml-2' />
-                    </Button>
-                </DialogTrigger>
+                <Glance
+                    density='compact'
+                    title={
+                        <span className='inline-flex items-center gap-1.5'>
+                            Lån
+                            <Questionmark helptext='Studielån, billån eller andre lån. Bruk studielånskalkulatoren for å beregne basert på studieår.' />
+                        </span>
+                    }
+                    subtitle='Beløp, rente og nedbetalingsplan'
+                    indexLabel={`${loans.length} lån`}
+                >
+                    {loans.length === 0 ? (
+                        <p className='py-3 text-sm text-muted-foreground'>
+                            Ingen lån registrert ennå.
+                        </p>
+                    ) : (
+                        <>
+                            <div className='overflow-x-auto -mx-2'>
+                                <table className='w-full text-sm'>
+                                    <thead>
+                                        <tr className='[&>th]:py-1 [&>th]:px-2 [&>th]:text-left'>
+                                            <th className='min-w-32'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Beskrivelse
+                                                </LabelMono>
+                                            </th>
+                                            <th className='min-w-32'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Lånebeløp
+                                                </LabelMono>
+                                            </th>
+                                            <th className='min-w-24'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Rente %
+                                                </LabelMono>
+                                            </th>
+                                            <th className='min-w-16'>
+                                                <LabelMono className='text-[10px]'>År</LabelMono>
+                                            </th>
+                                            <th className='min-w-24'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Bet./år
+                                                </LabelMono>
+                                            </th>
+                                            <th className='min-w-24'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Mnd.avg
+                                                </LabelMono>
+                                            </th>
+                                            <th className='min-w-32'>
+                                                <LabelMono className='text-[10px]'>
+                                                    Startdato
+                                                </LabelMono>
+                                            </th>
+                                            <th className='w-10'></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {loans.map((loan, idx) => (
+                                            <tr
+                                                key={idx}
+                                                className='align-top [&>td]:py-1.5 [&>td]:px-2'
+                                            >
+                                                <td>
+                                                    <Input
+                                                        type='text'
+                                                        value={loan.description}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                description:
+                                                                    e.target.value,
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <NumericInput
+                                                        className='text-right font-mono'
+                                                        value={loan.loanAmount}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                loanAmount: Number(
+                                                                    e.target.value || 0
+                                                                ),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <NumericInput
+                                                        className='text-right font-mono'
+                                                        step='0.01'
+                                                        value={loan.interestRate}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                interestRate: Number(
+                                                                    e.target.value || 0
+                                                                ),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <NumericInput
+                                                        className='text-right font-mono'
+                                                        value={loan.termYears}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                termYears: Number(
+                                                                    e.target.value || 0
+                                                                ),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <NumericInput
+                                                        className='text-right font-mono'
+                                                        value={loan.termsPerYear}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                termsPerYear: Number(
+                                                                    e.target.value || 0
+                                                                ),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <NumericInput
+                                                        className='text-right font-mono'
+                                                        value={loan.monthlyFee ?? 0}
+                                                        onChange={(e) =>
+                                                            handleUpdate(idx, {
+                                                                monthlyFee: Number(
+                                                                    e.target.value || 0
+                                                                ),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <Datepicker
+                                                        label=''
+                                                        dateValue={
+                                                            loan.startDate
+                                                                ? new Date(
+                                                                    loan.startDate
+                                                                )
+                                                                : undefined
+                                                        }
+                                                        setDateValue={(date: Date) =>
+                                                            handleUpdate(idx, {
+                                                                startDate: date
+                                                                    .toISOString()
+                                                                    .slice(0, 10),
+                                                            })
+                                                        }
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <Button
+                                                        variant='ghost'
+                                                        size='icon'
+                                                        onClick={() =>
+                                                            handleDelete(idx)
+                                                        }
+                                                        className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+                                                    >
+                                                        <Trash />
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </>
+                    )}
+
+                    <button
+                        type='button'
+                        onClick={openAddDialog}
+                        className='w-full flex items-center justify-center gap-2 py-2 mt-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer'
+                    >
+                        <Plus className='h-3.5 w-3.5' /> Legg til lån
+                    </button>
+
+                    <DialogTrigger asChild>
+                        <button
+                            type='button'
+                            className='w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer'
+                        >
+                            <GraduationCap className='h-3.5 w-3.5' /> Beregn ditt studielån
+                        </button>
+                    </DialogTrigger>
+
+                    {loans.length !== 0 && (
+                        <Glance.Total
+                            label='Totalt lånebeløp'
+                            value={formatNumberToNOK(totalLoanAmount)}
+                        />
+                    )}
+                </Glance>
 
                 <DialogContent className='sm:max-w-lg'>
                     <DialogHeader>
-                        <DialogTitle>Beregn studielån</DialogTitle>
+                        <DialogTitle>Beregn ditt studielån</DialogTitle>
                         <TypographyP>
                             Velg tidsperiode for studielånet ditt og eventuelt
                             ekstra lånebeløp. Du vil da få lagt til et studielån
@@ -243,141 +446,7 @@ export default function Loans() {
                 </DialogContent>
             </Dialog>
 
-            {loans.length !== 0 && (
-                <div className='overflow-auto rounded-md border mt-2'>
-                    <table className='w-full table-auto text-sm'>
-                        <thead>
-                            <tr className='text-left bg-muted'>
-                                <th className='p-2 min-w-32'>Beskrivelse</th>
-                                <th className='p-2 min-w-32'>Lånebeløp (kr)</th>
-                                <th className='p-2 min-w-32'>Rente (%)</th>
-                                <th className='p-2 min-w-24'>År</th>
-                                <th className='p-2 min-w-28'>Betalinger/år</th>
-                                <th className='p-2 min-w-24'>Månedsavgift</th>
-                                <th className='p-2 min-w-24'>Startdato</th>
-                                <th className='w-12'></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loans.map((loan, idx) => (
-                                <tr key={idx} className='align-top'>
-                                    <td className='py-2 pl-2 pr-1 pb-0'>
-                                        <Input
-                                            type='text'
-                                            value={loan.description}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    description: e.target.value,
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <NumericInput
-                                            value={loan.loanAmount}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    loanAmount: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <NumericInput
-                                            step='0.01'
-                                            value={loan.interestRate}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    interestRate: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <NumericInput
-                                            value={loan.termYears}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    termYears: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <NumericInput
-                                            value={loan.termsPerYear}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    termsPerYear: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <NumericInput
-                                            value={loan.monthlyFee ?? 0}
-                                            onChange={(e) =>
-                                                handleUpdate(idx, {
-                                                    monthlyFee: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <Datepicker
-                                            label=''
-                                            dateValue={
-                                                loan.startDate
-                                                    ? new Date(loan.startDate)
-                                                    : undefined
-                                            }
-                                            setDateValue={(date: Date) =>
-                                                handleUpdate(idx, {
-                                                    startDate: date
-                                                        .toISOString()
-                                                        .slice(0, 10),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='py-2 px-1'>
-                                        <Button
-                                            variant='ghost'
-                                            size='icon'
-                                            onClick={() => handleDelete(idx)}
-                                            className='text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                        >
-                                            <Trash />
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button
-                        variant='outline'
-                        className='mt-2 w-full'
-                        size='sm'
-                        onClick={openAddDialog}
-                    >
-                        + Legg til lån
-                    </Button>
-                </DialogTrigger>
-
                 <DialogContent className='sm:max-w-lg'>
                     <DialogHeader>
                         <DialogTitle>Legg til lån</DialogTitle>

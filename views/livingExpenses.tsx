@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,10 +21,11 @@ import {
 } from '@/components/ui/native-select';
 import useStore, { StoreState } from '@/lib/store';
 import type { LivingCost } from '@/types';
-import { Cog, Trash } from 'lucide-react';
-import Link from 'next/link';
-import { TypographyH2 } from '@/components/typography/typographyH2';
-import { TypographyP } from '@/components/typography/typographyP';
+import { Cog, Plus, Trash } from 'lucide-react';
+import { Glance } from '@/components/ledger/Glance';
+import { LabelMono } from '@/components/ledger/LabelMono';
+import { Questionmark } from '@/components/Questionmark';
+import { formatNumberToNOK } from '@/lib/utils';
 
 type AutoFormState = {
     select_year: string;
@@ -148,7 +151,7 @@ export default function LivingExpenses() {
 
                     throw new Error(
                         payload?.error ??
-                            'Klarte ikke å hente levekostnader fra serveren'
+                        'Klarte ikke å hente levekostnader fra serveren'
                     );
                 }
 
@@ -205,29 +208,86 @@ export default function LivingExpenses() {
 
     return (
         <section className='w-full my-8'>
-            <TypographyH2>Levekostnader</TypographyH2>
-            <TypographyP>
-                Legg inn løpende levekostnader her. Første kolonne er en
-                beskrivelse, og beløp kan endres direkte. Du kan hente forslag
-                fra referansebudsjettet til{' '}
-                <Link
-                    href='https://www.oslomet.no/om/sifo/referansebudsjettet'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='underline hover:text-foreground'
-                >
-                    SIFO
-                </Link>{' '}
-                via knappen under tabellen og bruke de som et utgangspunkt for
-                dine egne kostnader.
-            </TypographyP>
-
             <Dialog open={autoDialogOpen} onOpenChange={setAutoDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button className=' w-full mb-4'>
-                        Autogenerer levekostnader <Cog />
-                    </Button>
-                </DialogTrigger>
+                <Glance
+                    density='compact'
+                    title={
+                        <span className='inline-flex items-center gap-1.5'>
+                            Levekostnader
+                            <Questionmark helptext='Løpende månedlige kostnader. Bruk autogenerator-knappen for å hente forslag fra SIFOs referansebudsjett.' />
+                        </span>
+                    }
+                    subtitle='Per måned'
+                    indexLabel={`${livingCosts.length} post${livingCosts.length === 1 ? '' : 'er'}`}
+                >
+                    <div className='grid grid-cols-[1fr_minmax(110px,160px)_36px] gap-2 items-center pb-1 border-b border-border/60'>
+                        <LabelMono className='text-[10px]'>Beskrivelse</LabelMono>
+                        <LabelMono className='text-[10px]'>Beløp</LabelMono>
+                        <span />
+                    </div>
+
+                    {livingCosts.map((item, index) => (
+                        <div
+                            key={index}
+                            className='grid grid-cols-[1fr_minmax(110px,160px)_36px] gap-2 items-center py-1.5'
+                        >
+                            <Input
+                                id={`living-description-${index}`}
+                                type='text'
+                                value={item.description}
+                                placeholder='Dagligvarer'
+                                onChange={(e) =>
+                                    updateLivingCost(index, {
+                                        description: e.target.value,
+                                    })
+                                }
+                            />
+                            <NumericInput
+                                id={`living-amount-${index}`}
+                                className='font-mono'
+                                value={item.amount}
+                                onChange={(e) =>
+                                    updateLivingCost(index, {
+                                        amount: Number(e.target.value || 0),
+                                    })
+                                }
+                            />
+                            <Button
+                                variant='ghost'
+                                size='icon'
+                                className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+                                onClick={() => deleteLivingCost(index)}
+                            >
+                                <Trash />
+                            </Button>
+                        </div>
+                    ))}
+
+                    <button
+                        type='button'
+                        onClick={addLivingCost}
+                        className='w-full flex items-center justify-center gap-2 py-2 mt-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer'
+                    >
+                        <Plus className='h-3.5 w-3.5' /> Legg til kostnad
+                    </button>
+
+                    <DialogTrigger asChild>
+                        <button
+                            type='button'
+                            className='w-full flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer'
+                        >
+                            <Cog className='h-3.5 w-3.5' /> Autogenerer levekostnader fra SIFO
+                        </button>
+                    </DialogTrigger>
+
+                    {livingCosts.length !== 0 && (
+                        <Glance.Total
+                            label='Totalt per måned'
+                            value={formatNumberToNOK(totalLivingCosts)}
+                        />
+                    )}
+                </Glance>
+
                 <DialogContent className='sm:max-w-lg'>
                     <DialogHeader>
                         <DialogTitle>
@@ -381,82 +441,6 @@ export default function LivingExpenses() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
-            <div className='overflow-auto rounded-md border'>
-                <table className='w-full table-fixed'>
-                    <thead>
-                        <tr className='bg-muted text-sm'>
-                            <th className='p-2 text-left w-3/4'>Beskrivelse</th>
-                            <th className='p-2 text-left w-1/4'>Beløp</th>
-                            <th className='w-12'> </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {livingCosts.map((item, index) => (
-                            <tr
-                                key={index}
-                                className='odd:bg-background even:bg-muted/5'
-                            >
-                                <td className='p-2 pb-0'>
-                                    <Input
-                                        id={`living-description-${index}`}
-                                        type='text'
-                                        value={item.description}
-                                        placeholder='Dagligvarer'
-                                        onChange={(e) =>
-                                            updateLivingCost(index, {
-                                                description: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </td>
-                                <td className='p-2 pb-0 pr-0 pl-0'>
-                                    <NumericInput
-                                        id={`living-amount-${index}`}
-                                        value={item.amount}
-                                        onChange={(e) =>
-                                            updateLivingCost(index, {
-                                                amount: Number(
-                                                    e.target.value || 0
-                                                ),
-                                            })
-                                        }
-                                    />
-                                </td>
-                                <td className='p-2 text-center pr-0 pl-0 pb-0'>
-                                    <Button
-                                        variant='ghost'
-                                        className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                        size='icon'
-                                        onClick={() => deleteLivingCost(index)}
-                                    >
-                                        <Trash />
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
-                        <tr>
-                            <td className='p-2 pb-0'> </td>
-                            <td className='p-2 pb-0'> </td>
-                            <td className='p-2 pb-0'> </td>
-                        </tr>
-                        <tr className='border-t font-semibold text-sm'>
-                            <td className='p-2 pl-4 '>Totalt</td>
-                            <td className='p-2 pl-4 ' colSpan={2}>
-                                {totalLivingCosts.toLocaleString()} kr / mnd
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <Button
-                variant='outline'
-                className='w-full mt-2'
-                onClick={addLivingCost}
-            >
-                + Legg til kostnad
-            </Button>
         </section>
     );
 }

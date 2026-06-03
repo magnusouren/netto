@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Analytics } from "@vercel/analytics/next"
-import { Geist, Geist_Mono, Schibsted_Grotesk } from 'next/font/google';
+import { Fraunces, Geist, Geist_Mono, Schibsted_Grotesk } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/navbar';
 import Image from 'next/image';
@@ -21,9 +21,53 @@ const schibsted = Schibsted_Grotesk({
     subsets: ['latin'],
 });
 
+const fraunces = Fraunces({
+    variable: '--font-fraunces',
+    subsets: ['latin'],
+    axes: ['SOFT', 'opsz'],
+});
+
 export const metadata: Metadata = {
-    title: 'Økonomikalkulator',
-    description: 'En enkel økonomikalkulator for privatpersoner',
+    metadataBase: new URL('https://netto.ouren.no'),
+    title: {
+        default: 'Netto — Personlig økonomi og boligkjøp',
+        template: '%s · Netto',
+    },
+    description:
+        'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med — alt lagret lokalt i nettleseren.',
+    applicationName: 'Netto',
+    keywords: [
+        'personlig økonomi',
+        'kontantstrøm',
+        'boligkjøp',
+        'boliglån',
+        'skatteberegning',
+        'nedbetalingsplan',
+        'budplanlegging',
+        'egenkapital',
+        'norsk økonomikalkulator',
+    ],
+    authors: [{ name: 'Magnus Ouren', url: 'https://www.magnus.ouren.no' }],
+    creator: 'Magnus Ouren',
+    openGraph: {
+        type: 'website',
+        locale: 'nb_NO',
+        url: 'https://netto.ouren.no',
+        siteName: 'Netto',
+        title: 'Netto — Personlig økonomi og boligkjøp',
+        description:
+            'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med — alt lagret lokalt i nettleseren.',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Netto — Personlig økonomi og boligkjøp',
+        description:
+            'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp.',
+    },
+    robots: {
+        index: true,
+        follow: true,
+    },
 };
 
 export default function RootLayout({
@@ -32,9 +76,9 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang='en'>
+        <html lang='nb'>
             <body
-                className={`${schibsted.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+                className={`${schibsted.variable} ${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased bg-background text-foreground`}
             >
                 <Navbar />
                 <main className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8'>

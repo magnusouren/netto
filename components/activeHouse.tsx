@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import useStore, { StoreState } from '@/lib/store';
-import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
+import { Glance } from '@/components/ledger/Glance';
+import { Questionmark } from '@/components/Questionmark';
+import { formatNumberToNOK } from '@/lib/utils';
 
 export default function ActiveHouse() {
     const activeHouse = useStore((s: StoreState) =>
@@ -12,38 +13,53 @@ export default function ActiveHouse() {
     const housesCount = useStore(
         (s: StoreState) => (s.data.houses || []).length
     );
-    return (
-        <div className='mb-8 p-4 border rounded-md bg-muted/30'>
-            <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-3'>
-                    <Home className='w-5 h-5 text-muted-foreground' />
-                    <div>
-                        <p className='font-medium'>
-                            {activeHouse
-                                ? `Aktiv bolig: ${activeHouse.name}`
-                                : 'Ingen bolig valgt'}
-                        </p>
-                        {activeHouse && (
-                            <p className='text-sm text-muted-foreground'>
-                                Lån:{' '}
-                                {activeHouse.housingLoan.loanAmount.toLocaleString(
-                                    'nb-NO'
-                                )}{' '}
-                                kr • Rente:{' '}
-                                {activeHouse.housingLoan.interestRate}%
-                            </p>
-                        )}
-                    </div>
-                </div>
 
-                <Link href='/houses'>
-                    <Button variant='outline'>
-                        {housesCount === 0
-                            ? 'Legg til bolig'
-                            : 'Administrer boliger'}
-                    </Button>
-                </Link>
-            </div>
-        </div>
+    return (
+        <section className='w-full my-8'>
+            <Glance
+                density='compact'
+                title={
+                    <span className='inline-flex items-center gap-1.5'>
+                        {activeHouse ? activeHouse.name : 'Ingen bolig valgt'}
+                        <Questionmark helptext='Boligen som brukes i beregningene. Boliglån og boligkostnader administreres på boligsiden — bytt eller legg til via lenken her.' />
+                    </span>
+                }
+                subtitle='Bolig & boliglån'
+                indexLabel={
+                    <Link
+                        href='/houses'
+                        className='inline-flex items-center gap-1.5 px-2.5 py-1 border border-foreground/40 text-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors'
+                    >
+                        {housesCount === 0 ? 'Legg til →' : 'Se boliger →'}
+                    </Link>
+                }
+            >
+                {activeHouse ? (
+                    <>
+                        <Glance.Row
+                            label='Pris'
+                            value={formatNumberToNOK(
+                                activeHouse.purchase.price
+                            )}
+                        />
+                        <Glance.Row
+                            label='Lånebeløp'
+                            value={formatNumberToNOK(
+                                activeHouse.housingLoan.loanAmount
+                            )}
+                        />
+                        <Glance.Row
+                            label='Rente'
+                            value={`${activeHouse.housingLoan.interestRate}%`}
+                        />
+                    </>
+                ) : (
+                    <p className='py-3 text-sm text-muted-foreground'>
+                        Velg en aktiv bolig fra boligsiden for å se nøkkeltall
+                        og koble lånet til budsjettet.
+                    </p>
+                )}
+            </Glance>
+        </section>
     );
 }

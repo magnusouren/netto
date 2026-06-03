@@ -17,7 +17,7 @@ const groups: NavGroup[] = [
     {
         label: 'Grunnlag',
         items: [
-            { href: '/data', label: 'Inntekter & Utgifter' },
+            { href: '/data', label: 'Inntekter og utgifter' },
             { href: '/houses', label: 'Boliger' },
         ],
     },
@@ -28,6 +28,7 @@ const groups: NavGroup[] = [
             { href: '/repayment-plans', label: 'Nedbetaling' },
             { href: '/equity-development', label: 'Egenkapital' },
             { href: '/monthly-economy', label: 'Månedlig' },
+            { href: '/bid-planning', label: 'Budplanlegging' },
         ],
     },
 ];
@@ -43,7 +44,15 @@ export default function Navbar() {
                 <div className='flex items-center justify-between h-16'>
                     {/* Logo */}
                     <div className='text-lg sm:text-2xl font-semibold text-brandBlue'>
-                        <Link href='/'>NETTO</Link>
+                        <Link href='/' className='group inline-flex items-baseline'>
+                            Netto<span className='text-brandOrange'>.</span>
+                            <span
+                                aria-hidden='true'
+                                className='inline-block overflow-hidden whitespace-nowrap text-brandOrange max-w-0 group-hover:max-w-[9ch] transition-[max-width] duration-700 [transition-timing-function:steps(8)]'
+                            >
+                                ouren.no
+                            </span>
+                        </Link>
                     </div>
 
                     {/* Desktop nav */}
@@ -132,18 +141,16 @@ function NavGroupPopover({
                         cancelClose();
                         setOpen(true);
                     }}
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                        groupActive
-                            ? 'text-foreground'
-                            : 'text-foreground/70 hover:text-foreground'
-                    }`}
+                    className={`flex items-center gap-1 text-sm font-medium transition-colors ${groupActive
+                        ? 'text-foreground'
+                        : 'text-foreground/70 hover:text-foreground'
+                        }`}
                 >
                     {group.label}
                     <ChevronDown
                         size={14}
-                        className={`transition-transform ${
-                            open ? 'rotate-180' : ''
-                        }`}
+                        className={`transition-transform ${open ? 'rotate-180' : ''
+                            }`}
                     />
                 </button>
             </PopoverTrigger>
@@ -163,11 +170,10 @@ function NavGroupPopover({
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setOpen(false)}
-                                className={`px-2 py-1.5 rounded-sm text-sm transition-colors ${
-                                    active
-                                        ? 'bg-muted text-foreground'
-                                        : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
-                                }`}
+                                className={`px-2 py-1.5 rounded-sm text-sm transition-colors ${active
+                                    ? 'bg-muted text-foreground'
+                                    : 'text-foreground/80 hover:bg-muted/50 hover:text-foreground'
+                                    }`}
                             >
                                 {item.label}
                             </Link>
@@ -219,18 +225,16 @@ function MobileNavGroup({
         <div className='flex flex-col'>
             <button
                 onClick={() => setExpanded(!expanded)}
-                className={`flex items-center justify-between py-2 text-sm font-medium transition-colors ${
-                    groupActive
-                        ? 'text-foreground'
-                        : 'text-foreground/70 hover:text-foreground'
-                }`}
+                className={`flex items-center justify-between py-2 text-sm font-medium transition-colors ${groupActive
+                    ? 'text-foreground'
+                    : 'text-foreground/70 hover:text-foreground'
+                    }`}
             >
                 <span>{group.label}</span>
                 <ChevronDown
                     size={16}
-                    className={`transition-transform ${
-                        expanded ? 'rotate-180' : ''
-                    }`}
+                    className={`transition-transform ${expanded ? 'rotate-180' : ''
+                        }`}
                 />
             </button>
             {expanded && (
@@ -242,11 +246,10 @@ function MobileNavGroup({
                                 key={item.href}
                                 href={item.href}
                                 onClick={onNavigate}
-                                className={`py-1.5 text-sm ${
-                                    active
-                                        ? 'text-foreground underline underline-offset-4'
-                                        : 'text-foreground/70 hover:text-foreground'
-                                }`}
+                                className={`py-1.5 text-sm ${active
+                                    ? 'text-foreground underline underline-offset-4'
+                                    : 'text-foreground/70 hover:text-foreground'
+                                    }`}
                             >
                                 {item.label}
                             </Link>
@@ -259,9 +262,8 @@ function MobileNavGroup({
 }
 
 function linkClass(active: boolean) {
-    return `text-sm font-medium transition-colors ${
-        active
-            ? 'text-foreground underline underline-offset-4'
-            : 'text-foreground/70 hover:text-foreground'
-    }`;
+    return `text-sm font-medium transition-colors ${active
+        ? 'text-foreground underline underline-offset-4'
+        : 'text-foreground/70 hover:text-foreground'
+        }`;
 }

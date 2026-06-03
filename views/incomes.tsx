@@ -1,12 +1,16 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/numeric-input';
 import { Plus, Trash } from 'lucide-react';
 import useStore, { StoreState } from '@/lib/store';
 import type { Income } from '@/types';
-import { TypographyH2 } from '@/components/typography/typographyH2';
-import { TypographyP } from '@/components/typography/typographyP';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Glance } from '@/components/ledger/Glance';
+import { LabelMono } from '@/components/ledger/LabelMono';
+import { Questionmark } from '@/components/Questionmark';
+import { formatNumberToNOK } from '@/lib/utils';
 
 export default function Incomes() {
     const incomes = useStore((s: StoreState) => s.data.incomes);
@@ -21,104 +25,90 @@ export default function Incomes() {
 
     return (
         <section className='w-full my-8'>
-            <TypographyH2>Inntekter</TypographyH2>
-            <TypographyP>
-                Legg til dine årlige netto faste inntekter nedenfor.
-            </TypographyP>
-            {incomes.length !== 0 && (
-                <div className='overflow-auto rounded-md border'>
-                    <table className='table-fixed text-sm'>
-                        <thead>
-                            <tr className='bg-muted'>
-                                <th className='p-2 w-5/12 text-left md:w-3/4'>
-                                    Kilde
-                                </th>
-                                <th className='p-2 w-5/12 md:w-1/4 text-left'>
-                                    Beløp
-                                </th>
-                                <th className=' w-1/12 md:w-12 text-center'>
-                                    Skattefritt
-                                </th>
-                                <th className='p-2 w-1/12 md:w-12'></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {incomes.map((income: Income, index: number) => (
-                                <tr
-                                    key={index}
-                                    className='odd:bg-background even:bg-muted/5'
-                                >
-                                    <td className='p-2'>
-                                        <Input
-                                            id={`income-source-${index}`}
-                                            type='text'
-                                            value={income.source || ''}
-                                            placeholder={`Fast jobb`}
-                                            onChange={(e) =>
-                                                updateIncome(index, {
-                                                    source: e.target.value,
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='p-2'>
-                                        <NumericInput
-                                            id={`income-amount-${index}`}
-                                            value={income.amount}
-                                            onChange={(e) =>
-                                                updateIncome(index, {
-                                                    amount: Number(
-                                                        e.target.value || 0
-                                                    ),
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='p-2 text-center'>
-                                        <Checkbox
-                                            id={`income-taxFree-${index}`}
-                                            checked={!!income.taxFree}
-                                            className='h-4 w-4 border'
-                                            onCheckedChange={(checked) =>
-                                                updateIncome(index, {
-                                                    taxFree: !!checked,
-                                                })
-                                            }
-                                        />
-                                    </td>
-                                    <td className='text-center p-2'>
-                                        <Button
-                                            variant='ghost'
-                                            className=' text-destructive border-destructive hover:bg-destructive/10 hover:border-destructive hover:text-destructive'
-                                            size='icon'
-                                            onClick={() => deleteIncome(index)}
-                                        >
-                                            <Trash />
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-
-                            <tr className='border-t font-semibold'>
-                                <td className='p-2 pl-4 '>Totalt</td>
-                                <td className='p-2 pl-4 '>
-                                    {totalIncome.toLocaleString()}
-                                </td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            )}
-            <Button
-                variant='outline'
-                size='sm'
-                className='mt-2 w-full'
-                onClick={() => addIncome()}
+            <Glance
+                density='compact'
+                title={
+                    <span className='inline-flex items-center gap-1.5'>
+                        Inntekter
+                        <Questionmark helptext='Årlige netto faste inntekter — både skattepliktige og skattefrie kilder.' />
+                    </span>
+                }
+                subtitle='Årlige beløp'
+                indexLabel={`${incomes.length} kilde${incomes.length === 1 ? '' : 'r'}`}
             >
-                <Plus /> Legg til inntekt
-            </Button>
+                {incomes.length !== 0 && (
+                    <div className='grid grid-cols-[1fr_minmax(110px,160px)_80px_36px] gap-2 items-center pb-1 border-b border-border/60'>
+                        <LabelMono className='text-[10px]'>Kilde</LabelMono>
+                        <LabelMono className='text-[10px]'>Beløp</LabelMono>
+                        <LabelMono className='text-[10px]'>Skattefritt</LabelMono>
+                        <span />
+                    </div>
+                )}
+
+                {incomes.map((income: Income, index: number) => (
+                        <div
+                            key={index}
+                            className='grid grid-cols-[1fr_minmax(110px,160px)_80px_36px] gap-2 items-center py-1.5'
+                        >
+                            <Input
+                                id={`income-source-${index}`}
+                                type='text'
+                                value={income.source || ''}
+                                placeholder='Fast jobb'
+                                onChange={(e) =>
+                                    updateIncome(index, {
+                                        source: e.target.value,
+                                    })
+                                }
+                            />
+                            <NumericInput
+                                id={`income-amount-${index}`}
+                                className='font-mono'
+                                value={income.amount}
+                                onChange={(e) =>
+                                    updateIncome(index, {
+                                        amount: Number(e.target.value || 0),
+                                    })
+                                }
+                            />
+                            <div className='flex justify-center'>
+                                <Checkbox
+                                    id={`income-taxFree-${index}`}
+                                    checked={!!income.taxFree}
+                                    className='h-4 w-4 border'
+                                    onCheckedChange={(checked) =>
+                                        updateIncome(index, {
+                                            taxFree: !!checked,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <Button
+                                variant='ghost'
+                                size='icon'
+                                className='text-destructive hover:bg-destructive/10 hover:text-destructive'
+                                onClick={() => deleteIncome(index)}
+                            >
+                                <Trash />
+                            </Button>
+                        </div>
+                    ))}
+
+                <button
+                    type='button'
+                    onClick={() => addIncome()}
+                    className='w-full flex items-center justify-center gap-2 py-2 mt-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors cursor-pointer'
+                >
+                    <Plus className='h-3.5 w-3.5' /> Legg til inntekt
+                </button>
+
+                {incomes.length !== 0 && (
+                    <Glance.Total
+                        label='Totalt per år'
+                        value={formatNumberToNOK(totalIncome)}
+                    />
+                )}
+            </Glance>
         </section>
     );
 }

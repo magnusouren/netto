@@ -1,7 +1,10 @@
-import { TypographyH2 } from '@/components/typography/typographyH2';
+'use client';
+
+import { Glance } from '@/components/ledger/Glance';
 import useStore, { StoreState } from '@/lib/store';
-import type { Loan, HouseMonthlyCosts } from '@/types';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
+import { formatNumberToNOK } from '@/lib/utils';
+import type { Loan, HouseMonthlyCosts } from '@/types';
 
 function monthlyLoanPayment(loan: Loan): number {
     const principal = loan.loanAmount || 0;
@@ -31,214 +34,134 @@ function totalHouseMonthlyCosts(costs: HouseMonthlyCosts): number {
     );
 }
 
+const fmt = (n: number) => formatNumberToNOK(Math.round(n));
+
 export default function Summary() {
     const data = useStore((s: StoreState) => s.data);
 
-    // Get active house
     const activeHouse = (data.houses || []).find(
         (h) => h.id === data.activeHouseId
     );
 
-    // ---- Income ----
     const totalIncomeAnnual = (data.incomes || []).reduce(
         (s, i) => s + i.amount,
         0
     );
     const monthlyIncomeGross = totalIncomeAnnual / 12;
 
-    // ---- TAX ----
     const tax = calculateAnnualTaxes(data);
     const monthlyTax = tax.totalTaxes / 12;
 
-    // ---- Loan monthly payments ----
-    // Regular loans + active house's housing loan
-    const allLoans: Loan[] = [
-        ...data.loans,
-        ...(activeHouse ? [activeHouse.housingLoan] : []),
-    ];
-    const loanMonthlyPayments = allLoans.reduce(
-        (s, l) => s + monthlyLoanPayment(l),
-        0
-    );
-
-    // ---- Fixed monthly expenses ----
-    // Housing costs from active house
     const housingFixed = activeHouse
         ? totalHouseMonthlyCosts(activeHouse.houseMonthlyCosts)
         : 0;
-
-    // Personal fixed expenses
     const personalFixed = (data.personalFixedExpenses || []).reduce(
         (s, f) => s + f.amount,
         0
     );
-
-    // Living costs
     const livingMonthly = (data.livingCosts || []).reduce(
         (s, l) => s + l.amount,
         0
     );
 
+    const personalLoansMonthly = data.loans.reduce(
+        (s, l) => s + (l.loanAmount > 0 ? monthlyLoanPayment(l) : 0),
+        0
+    );
+    const housingLoanMonthly = activeHouse
+        ? monthlyLoanPayment(activeHouse.housingLoan)
+        : 0;
+
     const totalMonthlyExpenses =
-        housingFixed + personalFixed + livingMonthly + loanMonthlyPayments;
+        housingFixed +
+        personalFixed +
+        livingMonthly +
+        personalLoansMonthly +
+        housingLoanMonthly;
 
     const balance = monthlyIncomeGross - monthlyTax - totalMonthlyExpenses;
 
-    function fmt(n: number) {
-        return Math.round(n).toLocaleString('nb-NO');
-    }
-
     return (
         <section className='w-full my-8'>
-            <TypographyH2>Oppsummering</TypographyH2>
+            <Glance
+                density='compact'
+                title='Oppsummering'
+                subtitle='Månedlig kontantstrøm'
+                indexLabel={
+                    activeHouse ? `Med ${activeHouse.name}` : 'Uten bolig'
+                }
+                footnote={
+                    <>
+                        <span>Netto inntekt − sum utgifter</span>
+                        <span className='font-mono tabular-nums'>
+                            {fmt(monthlyIncomeGross - monthlyTax)} −{' '}
+                            {fmt(totalMonthlyExpenses)}
+                        </span>
+                    </>
+                }
+            >
+                <Glance.Section>Inntekter</Glance.Section>
+                <Glance.Row
+                    label='Brutto inntekt'
+                    value={'+ ' + fmt(monthlyIncomeGross)}
+                />
+                <Glance.Row
+                    label='Skatt per måned'
+                    value={'− ' + fmt(monthlyTax)}
+                />
 
-            <div className='overflow-auto rounded-md border'>
-                <table className='w-full table-auto text-sm'>
-                    <thead>
-                        <tr className='bg-muted'>
-                            <th className='p-2 text-left'>Kategori</th>
-                            <th className='p-2 text-right'>Per måned (kr)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                                Inntekter
-                            </td>
-                        </tr>
+                <Glance.Section>Utgifter</Glance.Section>
+                <Glance.Row
+                    label='Faste personlige kostnader'
+                    value={'− ' + fmt(personalFixed)}
+                />
+                <Glance.Row
+                    label='Variable kostnader'
+                    value={'− ' + fmt(livingMonthly)}
+                />
+                {data.loans.map((loan, i) => (
+                    <Glance.Row
+                        key={`loan-${i}`}
+                        label={`Terminbeløp · ${loan.description}`}
+                        value={
+                            '− ' +
+                            fmt(loan.loanAmount > 0 ? monthlyLoanPayment(loan) : 0)
+                        }
+                    />
+                ))}
 
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Brutto inntekt</td>
-                            <td className='p-2 text-right'>
-                                {fmt(monthlyIncomeGross)}
-                            </td>
-                        </tr>
+                {activeHouse && (
+                    <>
+                        <Glance.Section>
+                            Boligkostnader · {activeHouse.name}
+                        </Glance.Section>
+                        <Glance.Row
+                            label={`Terminbeløp · ${activeHouse.housingLoan.description}`}
+                            value={'− ' + fmt(housingLoanMonthly)}
+                        />
+                        <Glance.Row
+                            label='Faste utgifter · bolig'
+                            value={'− ' + fmt(housingFixed)}
+                        />
+                    </>
+                )}
 
-                        <tr>
-                            <td className='p-2'>Skatt per måned</td>
-                            <td className='p-2 text-right'>
-                                {fmt(monthlyTax)}
-                            </td>
-                        </tr>
-
-                        <tr className='border-t italic'>
-                            <td className='p-2'>Netto månedslønn</td>
-                            <td className='p-2 text-right'>
-                                {fmt(monthlyIncomeGross - monthlyTax)}
-                            </td>
-                        </tr>
-
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                            </td>
-                        </tr>
-
-
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                                Utgifter
-                            </td>
-                        </tr>
-
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Faste personlige kostnader</td>
-                            <td className='p-2 text-right'>
-                                {fmt(personalFixed)}
-                            </td>
-                        </tr>
-
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Variable kostnader</td>
-                            <td className='p-2 text-right'>
-                                {fmt(livingMonthly)}
-                            </td>
-                        </tr>
-
-                        {data.loans.map((loan, i) => (
-                            <tr
-                                key={i}
-                            >
-                                <td className='p-2'>Terminbeløp - {loan.description}</td>
-                                <td className='p-2 text-right'>
-                                    {fmt(loan.loanAmount > 0 ? monthlyLoanPayment(loan) : 0)}
-                                </td>
-                            </tr>
-                        ))}
-
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                                Boligkostnader
-                                {activeHouse && (
-                                    <span className='font-normal text-muted-foreground ml-2'>
-                                        (ved kjøp av {activeHouse.name})
-                                    </span>
-                                )}
-                            </td>
-                        </tr>
-
-                        {activeHouse?.housingLoan && (
-                            <tr>
-                                <td className='p-2'>
-                                    Terminbeløp - {activeHouse.housingLoan.description}
-                                </td>
-                                <td className='p-2 text-right'>
-                                    {fmt(
-                                        monthlyLoanPayment(
-                                            activeHouse.housingLoan
-                                        )
-                                    )}
-                                </td>
-                            </tr>
-                        )}
-
-                        <tr className='odd:bg-background even:bg-muted/5'>
-                            <td className='p-2'>Faste utgifter - bolig</td>
-                            <td className='p-2 text-right'>
-                                {fmt(housingFixed)}
-                            </td>
-                        </tr>
-
-                        <tr className='border-t italic'>
-                            <td className='p-2'>Sum månedlige utgifter</td>
-                            <td className='p-2 text-right'>
-                                {fmt(totalMonthlyExpenses)}
-                            </td>
-                        </tr>
-
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                            </td>
-                        </tr>
-
-                        <tr className='mt-4'>
-                            <td className='p-2 font-semibold' colSpan={2}>
-                                Oppsummering
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td className='p-2'>Netto månedslønn</td>
-                            <td className='p-2 text-right'>
-                                {fmt(monthlyIncomeGross - monthlyTax)}
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td className='p-2'>Sum månedlige utgifter</td>
-                            <td className='p-2 text-right'>
-                                {fmt(totalMonthlyExpenses)}
-                            </td>
-                        </tr>
-
-                        <tr className='font-bold mt-2 border-t'>
-                            <td className='p-2'>
-                                Disponibelt beløp per måned
-                            </td>
-                            <td className='p-2 text-right'>{fmt(balance)}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                <Glance.Total
+                    label='Disponibelt per måned'
+                    value={
+                        <span
+                            className={
+                                balance >= 0
+                                    ? 'text-emerald-600'
+                                    : 'text-destructive'
+                            }
+                        >
+                            {(balance >= 0 ? '+ ' : '− ') +
+                                fmt(Math.abs(balance))}
+                        </span>
+                    }
+                />
+            </Glance>
         </section>
     );
 }

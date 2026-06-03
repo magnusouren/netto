@@ -7,15 +7,8 @@ import { Calculator, HandCoins, PiggyBank, TrendingUp } from 'lucide-react';
 import { TypographyH1 } from '@/components/typography/typographyH1';
 import { TypographyH2 } from '@/components/typography/typographyH2';
 import { TypographyP } from '@/components/typography/typographyP';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
+import { Glance } from '@/components/ledger/Glance';
 import useStore, { StoreState } from '@/lib/store';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
 import { formatNumberToNOK } from '@/lib/utils';
@@ -159,8 +152,8 @@ export default function Home() {
 
                     <TypographyP>
                         NETTO samler inntekter, lån og utgifter på ett sted og
-                        viser nøyaktig hvor mye du sitter igjen med etter skatt
-                        og faste kostnader — hver måned.
+                        viser hvor mye du sitter igjen med etter skatt
+                        og faste kostnader per måned. Planlegg ditt boligkjøp og se hvordan ulike faktorer påvirker din økonomi!
                     </TypographyP>
 
                     <div className='flex flex-wrap gap-3 pt-1'>
@@ -173,84 +166,60 @@ export default function Home() {
                     </div>
                 </div>
 
-                <Card className='overflow-hidden border-border/60 shadow-xl pt-0'>
-                    <div className='h-1 bg-gradient-to-r from-brandBlue via-brandBlue/50 to-brandOrange' />
-                    <CardHeader className='pb-3'>
-                        <div className='flex items-center justify-between'>
-                            <CardTitle className='text-base font-semibold'>
-                                Månedlig kontantstrøm
-                            </CardTitle>
-                            {!hasData && (
-                                <Badge variant='outline' className='text-xs font-normal'>
-                                    Eksempel
-                                </Badge>
-                            )}
-                        </div>
-                        <CardDescription>
-                            {hasData
-                                ? 'Basert på dine innlagte tall'
-                                : 'Legg inn dine tall for å se ditt regnskap'}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className={!hasData ? 'opacity-60' : ''}>
-                        <div className='space-y-4 text-sm font-mono'>
-                            <div>
-                                <p className='text-[10px] font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-2'>
-                                    Inntekt
-                                </p>
-                                <div className='space-y-1.5'>
-                                    <div className='flex justify-between'>
-                                        <span className='text-muted-foreground'>Bruttoinntekt</span>
-                                        <span>+ {formatNumberToNOK(animated.gross)}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-muted-foreground'>Skatt</span>
-                                        <span className='text-destructive'>− {formatNumberToNOK(animated.tax)}</span>
-                                    </div>
-                                </div>
-                                <div className='flex justify-between mt-2 pt-2 border-t border-dashed font-semibold'>
-                                    <span>Nettoinntekt</span>
-                                    <span>{formatNumberToNOK(animated.net)}</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <p className='text-[10px] font-sans font-semibold uppercase tracking-widest text-muted-foreground mb-2'>
-                                    Utgifter
-                                </p>
-                                <div className='space-y-1.5'>
-                                    <div className='flex justify-between'>
-                                        <span className='text-muted-foreground'>Boligutgifter (fast)</span>
-                                        <span className='text-destructive'>− {formatNumberToNOK(animated.housing)}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-muted-foreground'>Personlige faste utgifter</span>
-                                        <span className='text-destructive'>− {formatNumberToNOK(animated.personal)}</span>
-                                    </div>
-                                    <div className='flex justify-between'>
-                                        <span className='text-muted-foreground'>Levekostnader</span>
-                                        <span className='text-destructive'>− {formatNumberToNOK(animated.living)}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className='-mx-6 -mb-6 mt-2 bg-brandBlue flex justify-between items-center px-6 py-4'>
-                                <span className='font-sans text-xs font-semibold uppercase tracking-widest text-white/60'>
-                                    Kontantstrøm
-                                </span>
-                                <span className={`text-base font-bold ${display.cashflow >= 0 ? 'text-emerald-600' : 'text-red-400'}`}>
-                                    {display.cashflow >= 0 ? '+' : '−'} {formatNumberToNOK(Math.abs(animated.cashflow))}
-                                </span>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <Glance
+                    className={!hasData ? 'opacity-80' : undefined}
+                    title='Månedlig kontantstrøm'
+                    subtitle={
+                        hasData
+                            ? 'Basert på dine innlagte tall'
+                            : 'Legg inn dine tall for å se ditt regnskap'
+                    }
+                    indexLabel={!hasData ? 'Eksempel' : undefined}
+                >
+                    <Glance.Row
+                        label='Bruttoinntekt'
+                        value={'+ ' + formatNumberToNOK(animated.gross)}
+                    />
+                    <Glance.Row
+                        label='Skatt'
+                        value={'− ' + formatNumberToNOK(animated.tax)}
+                    />
+                    <Glance.Row
+                        label='Boligutgifter (fast)'
+                        value={'− ' + formatNumberToNOK(animated.housing)}
+                    />
+                    <Glance.Row
+                        label='Personlige faste utgifter'
+                        value={'− ' + formatNumberToNOK(animated.personal)}
+                    />
+                    <Glance.Row
+                        label='Levekostnader'
+                        value={'− ' + formatNumberToNOK(animated.living)}
+                    />
+                    <Glance.Total
+                        label='Kontantstrøm'
+                        value={
+                            <span
+                                className={
+                                    display.cashflow >= 0
+                                        ? 'text-emerald-600'
+                                        : 'text-destructive'
+                                }
+                            >
+                                {(display.cashflow >= 0 ? '+ ' : '− ') +
+                                    formatNumberToNOK(
+                                        Math.abs(animated.cashflow)
+                                    )}
+                            </span>
+                        }
+                    />
+                </Glance>
             </section>
 
             {/* ── How it works ── */}
-            <section className='space-y-10'>
+            <section className='space-y-10 bg-brandBlue/10 p-8 rounded-lg'>
                 <div className='space-y-2'>
-                    <TypographyH2>Kom i gang på tre minutter</TypographyH2>
+                    <TypographyH2>Kom i gang på tre steg</TypographyH2>
                     <TypographyP>
                         Tre enkle steg for å få full kontroll på kontantstrømmen din.
                     </TypographyP>
@@ -260,7 +229,7 @@ export default function Home() {
                         {
                             step: '01',
                             title: 'Legg inn inntekter',
-                            desc: 'Oppgi bruttoinntekt fra jobb, kapital eller andre kilder. NETTO beregner skatten automatisk.',
+                            desc: 'Oppgi bruttoinntekt fra jobb, kapital eller andre kilder, så beregnes skatten automatisk.',
                         },
                         {
                             step: '02',
@@ -269,8 +238,8 @@ export default function Home() {
                         },
                         {
                             step: '03',
-                            title: 'Se din kontantstrøm',
-                            desc: 'Få en klar oversikt over hva som er igjen etter alle faste utgifter — og hvor mye du kan spare.',
+                            title: 'Se din oppsummering',
+                            desc: 'Få en klar oversikt over hva som er igjen etter alle faste utgifter, og hvor mye du kan spare.',
                         },
                     ].map(({ step, title, desc }) => (
                         <div key={step} className='flex flex-col gap-4'>
@@ -295,52 +264,38 @@ export default function Home() {
                     </TypographyP>
                 </div>
                 <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
-                    <Card className='border-l-4 border-l-brandOrange hover:shadow-md transition-shadow duration-200'>
-                        <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange shrink-0'>
-                                <Calculator className='h-5 w-5' />
-                            </div>
-                            <div>
-                                <CardTitle className='text-base'>Presise kalkulatorer</CardTitle>
-                                <CardDescription className='mt-1'>
-                                    Beregn skatt, lån og nedbetalingsplaner med
-                                    norske forutsetninger og oppdaterte satser.
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                    </Card>
+                    <Glance
+                        title='Presise beregninger'
+                        subtitle='Skatt · Lån · Nedbetaling'
+                        indexLabel={<Calculator className='h-3 w-3' />}
+                    >
+                        <p className='py-3 text-sm text-muted-foreground leading-relaxed'>
+                            Beregn skatt, lån og nedbetalingsplaner med norske
+                            forutsetninger og oppdaterte satser.
+                        </p>
+                    </Glance>
 
-                    <Card className='border-l-4 border-l-brandOrange hover:shadow-md transition-shadow duration-200'>
-                        <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange shrink-0'>
-                                <TrendingUp className='h-5 w-5' />
-                            </div>
-                            <div>
-                                <CardTitle className='text-base'>Helhetlig oversikt</CardTitle>
-                                <CardDescription className='mt-1'>
-                                    Kombiner inntekter, lån og utgifter for å se
-                                    hvordan kontantstrømmen din faktisk ser ut
-                                    per måned.
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                    </Card>
+                    <Glance
+                        title='Helhetlig oversikt'
+                        subtitle='Inntekter · Lån · Utgifter'
+                        indexLabel={<TrendingUp className='h-3 w-3' />}
+                    >
+                        <p className='py-3 text-sm text-muted-foreground leading-relaxed'>
+                            Kombiner inntekter, lån og utgifter for å se hvordan
+                            kontantstrømmen din faktisk ser ut per måned.
+                        </p>
+                    </Glance>
 
-                    <Card className='border-l-4 border-l-brandOrange hover:shadow-md transition-shadow duration-200'>
-                        <CardHeader className='flex flex-row items-start gap-3'>
-                            <div className='rounded-full bg-brandBlue/90 p-2 text-brandOrange shrink-0'>
-                                <PiggyBank className='h-5 w-5' />
-                            </div>
-                            <div>
-                                <CardTitle className='text-base'>Plan for sparing</CardTitle>
-                                <CardDescription className='mt-1'>
-                                    Følg egenkapital over tid og se hvordan små
-                                    justeringer påvirker hvor mye du kan legge
-                                    til side.
-                                </CardDescription>
-                            </div>
-                        </CardHeader>
-                    </Card>
+                    <Glance
+                        title='Plan for sparing'
+                        subtitle='Egenkapital · Buffere'
+                        indexLabel={<PiggyBank className='h-3 w-3' />}
+                    >
+                        <p className='py-3 text-sm text-muted-foreground leading-relaxed'>
+                            Følg egenkapital over tid og se hvordan små
+                            justeringer påvirker hvor mye du kan legge til side.
+                        </p>
+                    </Glance>
                 </div>
             </section>
         </div>

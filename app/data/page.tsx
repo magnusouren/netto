@@ -13,7 +13,7 @@ export default function Data() {
     return (
         <>
             <div className='container my-8 min-h-24'>
-                <TypographyH1>Grunnlagsdata</TypographyH1>
+                <TypographyH1>Inntekter og utgifter</TypographyH1>
                 <TypographyP>
                     Her legger du inn all din økonomiske data for å få en
                     oversikt over din økonomi på tvers av de ulike sidene som du
@@ -23,11 +23,11 @@ export default function Data() {
             </div>
 
             <section className='container'>
-                <ActiveHouse />
                 <Incomes />
-                <StudentLoan />
                 <FixedExpenses />
                 <LivingExpenses />
+                <ActiveHouse />
+                <StudentLoan />
                 <Summary />
             </section>
         </>
