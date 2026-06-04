@@ -197,12 +197,12 @@ export default function Loans() {
                                             </th>
                                             <th className='min-w-24'>
                                                 <LabelMono className='text-[10px]'>
-                                                    Bet./år
+                                                    Term. /år
                                                 </LabelMono>
                                             </th>
                                             <th className='min-w-24'>
                                                 <LabelMono className='text-[10px]'>
-                                                    Mnd.avg
+                                                    Mnd. avgift
                                                 </LabelMono>
                                             </th>
                                             <th className='min-w-32'>

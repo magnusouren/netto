@@ -30,6 +30,7 @@ const createDefaultHouse = (name = 'New House'): HouseOption => ({
         equityUsed: 0,
         expectedGrowthPct: 0,
         closingCosts: 0,
+        commonDebt: 0,
     },
     housingLoan: {
         description: 'Boliglån',

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/numeric-input';
@@ -26,8 +27,13 @@ import {
     Sparkles,
     Link2,
     Info,
+    ArrowRight,
 } from 'lucide-react';
 import { cn, formatNumberToNOK } from '@/lib/utils';
+import {
+    computeHousingLoanAmount,
+    totalPurchasePrice,
+} from '@/lib/houseFinance';
 import { autoFetchHouseData } from './fetchHousedata';
 import Summary from '@/views/summary';
 import { TypographyH1 } from '@/components/typography/typographyH1';
@@ -53,18 +59,16 @@ export default function HousesPage() {
         setIsFetchingFinn(true);
         try {
             const house = await autoFetchHouseData(url);
+            const purchase = {
+                ...house.purchase,
+                equityUsed: personalEquity || 0,
+            };
             addHouse({
                 ...house,
-                purchase: {
-                    ...house.purchase,
-                    equityUsed: personalEquity || 0,
-                },
+                purchase,
                 housingLoan: {
                     ...house.housingLoan,
-                    loanAmount:
-                        (house.purchase.price || 0) -
-                        (personalEquity || 0) +
-                        (house.purchase.closingCosts || 0),
+                    loanAmount: computeHousingLoanAmount(purchase),
                 },
                 URL: url,
             });
@@ -96,6 +100,7 @@ export default function HousesPage() {
         equityUsed: 0,
         expectedGrowthPct: 2,
         closingCosts: 0,
+        commonDebt: 0,
     });
 
     function openAddDialog() {
@@ -105,13 +110,12 @@ export default function HousesPage() {
             equityUsed: personalEquity || 0,
             expectedGrowthPct: 2,
             closingCosts: 0,
+            commonDebt: 0,
         });
         setDialogOpen(true);
     }
 
     function submitAdd() {
-        const loanAmount = form.price - form.equityUsed + form.closingCosts;
-
         if (form.equityUsed > form.price + form.closingCosts) {
             setForm((prev) => ({
                 ...prev,
@@ -120,17 +124,20 @@ export default function HousesPage() {
             return;
         }
 
+        const purchase = {
+            price: form.price,
+            equityUsed: form.equityUsed,
+            expectedGrowthPct: form.expectedGrowthPct,
+            closingCosts: form.closingCosts,
+            commonDebt: form.commonDebt,
+        };
+
         addHouse({
             name: form.name || 'Ny bolig',
-            purchase: {
-                price: form.price,
-                equityUsed: form.equityUsed,
-                expectedGrowthPct: form.expectedGrowthPct,
-                closingCosts: form.closingCosts,
-            },
+            purchase,
             housingLoan: {
                 description: 'Boliglån',
-                loanAmount: loanAmount > 0 ? loanAmount : 0,
+                loanAmount: computeHousingLoanAmount(purchase),
                 interestRate: 4.5,
                 termYears: 25,
                 termsPerYear: 12,
@@ -154,12 +161,8 @@ export default function HousesPage() {
             field === 'equityUsed' ||
             field === 'closingCosts'
         ) {
-            const loanAmount =
-                newPurchase.price -
-                newPurchase.equityUsed +
-                (newPurchase.closingCosts || 0);
             updateHouseLoan(houseId, {
-                loanAmount: loanAmount > 0 ? loanAmount : 0,
+                loanAmount: computeHousingLoanAmount(newPurchase),
             });
         }
     }
@@ -180,18 +183,6 @@ export default function HousesPage() {
         updateHouseMonthlyCosts(houseId, { [field]: value });
     }
 
-    function getTotalMonthlyCosts(costs: HouseMonthlyCosts): number {
-        return (
-            (costs.hoa || 0) +
-            (costs.electricity || 0) +
-            (costs.internet || 0) +
-            (costs.insurance || 0) +
-            (costs.propertyTax || 0) +
-            (costs.maintenance || 0) +
-            (costs.other || 0)
-        );
-    }
-
     return (
         <main className='container my-8 min-h-24'>
             <TypographyH1>Boliger</TypographyH1>
@@ -199,6 +190,18 @@ export default function HousesPage() {
                 Her kan du legge til ulike boligalternativer for å sammenligne
                 dem. Den valgte boligen brukes i beregningene du finner på de andre sidene.
             </TypographyP>
+
+            {houses.length >= 2 && (
+                <div className='mt-2'>
+                    <Link
+                        href='/sammenligning'
+                        className='inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors'
+                    >
+                        Sammenlign boligene side ved side
+                        <ArrowRight className='h-3.5 w-3.5' />
+                    </Link>
+                </div>
+            )}
 
             {/* Personal Equity */}
             <div className='my-6'>
@@ -314,9 +317,7 @@ export default function HousesPage() {
             <div className='grid gap-6 md:grid-cols-2 2xl:grid-cols-3 my-6'>
                 {houses.map((house) => {
                     const isActive = house.id === activeHouseId;
-                    const totalPrice =
-                        (house.purchase.price || 0) +
-                        (house.purchase.closingCosts || 0);
+                    const totalPrice = totalPurchasePrice(house.purchase);
 
                     return (
                         <Glance
@@ -376,13 +377,25 @@ export default function HousesPage() {
                                     }
                                 />
                                 <NumericField
-                                    label='Omkostninger + gjeld'
+                                    label='Omkostninger'
                                     value={house.purchase.closingCosts || 0}
                                     onChange={(v) =>
                                         handlePurchaseChange(
                                             house.id,
                                             house,
                                             'closingCosts',
+                                            v
+                                        )
+                                    }
+                                />
+                                <NumericField
+                                    label='Fellesgjeld'
+                                    value={house.purchase.commonDebt || 0}
+                                    onChange={(v) =>
+                                        handlePurchaseChange(
+                                            house.id,
+                                            house,
+                                            'commonDebt',
                                             v
                                         )
                                     }
@@ -399,10 +412,12 @@ export default function HousesPage() {
                                         )
                                     }
                                 />
-                                <ReadonlyField
-                                    label='Totalpris'
-                                    value={formatNumberToNOK(totalPrice)}
-                                />
+                                <div className='col-span-2'>
+                                    <ReadonlyField
+                                        label='Totalpris'
+                                        value={formatNumberToNOK(totalPrice)}
+                                    />
+                                </div>
                             </div>
 
                             <Glance.Section>Lån</Glance.Section>
@@ -702,7 +717,7 @@ export default function HousesPage() {
                                     htmlFor='houseClosingCosts'
                                     className='my-2'
                                 >
-                                    Omkostninger + gjeld
+                                    Omkostninger
                                 </Label>
                                 <NumericInput
                                     id='houseClosingCosts'
@@ -711,6 +726,26 @@ export default function HousesPage() {
                                         setForm({
                                             ...form,
                                             closingCosts:
+                                                Number(e.target.value) || 0,
+                                        })
+                                    }
+                                />
+                            </div>
+                            <div>
+                                <Label
+                                    htmlFor='houseCommonDebt'
+                                    className='my-2 inline-flex items-center gap-1.5'
+                                >
+                                    Fellesgjeld
+                                    <Questionmark helptext='Fellesgjeld inngår ikke i ditt personlige boliglån — den betjenes via felleskostnader.' />
+                                </Label>
+                                <NumericInput
+                                    id='houseCommonDebt'
+                                    value={form.commonDebt ?? 0}
+                                    onChange={(e) =>
+                                        setForm({
+                                            ...form,
+                                            commonDebt:
                                                 Number(e.target.value) || 0,
                                         })
                                     }
@@ -735,15 +770,9 @@ export default function HousesPage() {
 
                             <p className='text-sm text-muted-foreground'>
                                 Beregnet lån:{' '}
-                                {(form.price -
-                                    form.equityUsed +
-                                    form.closingCosts >
-                                    0
-                                    ? form.price -
-                                    form.equityUsed +
-                                    form.closingCosts
-                                    : 0
-                                ).toLocaleString('nb-NO')}{' '}
+                                {computeHousingLoanAmount(form).toLocaleString(
+                                    'nb-NO'
+                                )}{' '}
                                 kr
                             </p>
                         </div>
@@ -802,6 +831,35 @@ function ReadonlyField({
             <div className='h-9 px-3 py-1 flex items-center font-mono text-sm text-foreground/80 border border-input/60 rounded-md bg-muted/30'>
                 {value}
             </div>
+        </div>
+    );
+}
+
+function NumericFieldWithHelp({
+    label,
+    helptext,
+    value,
+    onChange,
+    step,
+}: {
+    label: string;
+    helptext: string;
+    value: number;
+    onChange: (v: number) => void;
+    step?: string;
+}) {
+    return (
+        <div className='space-y-1'>
+            <Label className='inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground'>
+                {label}
+                <Questionmark helptext={helptext} />
+            </Label>
+            <NumericInput
+                step={step}
+                className='font-mono'
+                value={value}
+                onChange={(e) => onChange(Number(e.target.value) || 0)}
+            />
         </div>
     );
 }

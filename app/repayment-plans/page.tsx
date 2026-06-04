@@ -48,13 +48,14 @@ export default function Loans() {
                         const schedule = computeLoanAmortization(housingLoan);
 
                         return (
-                            <div className='overflow-auto my-4'>
+                            <div className='my-4'>
                                 <TypographyH3>
                                     {housingLoan.description}
                                 </TypographyH3>
 
-                                <table className='w-full table-auto text-sm border-collapse'>
-                                    <thead className='bg-gray-100'>
+                                <div className='overflow-auto max-h-[70vh] border rounded-md'>
+                                    <table className='w-full table-auto text-sm border-collapse'>
+                                        <thead className='sticky top-0 z-10 bg-gray-100'>
                                         <tr>
                                             <th className='p-2 text-left'>
                                                 Termin
@@ -189,6 +190,7 @@ export default function Loans() {
                                         </tr>
                                     </tfoot>
                                 </table>
+                                </div>
                             </div>
                         );
                     })()}
@@ -209,13 +211,14 @@ export default function Loans() {
                         const schedule = computeLoanAmortization(loan);
 
                         return (
-                            <div key={index} className='my-8 overflow-auto'>
+                            <div key={index} className='my-8'>
                                 <TypographyH3>
                                     Nedbetalingsoversikt, {loan.description}
                                 </TypographyH3>
 
-                                <table className='w-full table-auto text-sm border-collapse'>
-                                    <thead className='bg-gray-100'>
+                                <div className='overflow-auto max-h-[70vh] border rounded-md'>
+                                    <table className='w-full table-auto text-sm border-collapse'>
+                                        <thead className='sticky top-0 z-10 bg-gray-100'>
                                         <tr>
                                             <th className='p-2 text-left'>
                                                 Termin
@@ -349,6 +352,7 @@ export default function Loans() {
                                         </tr>
                                     </tfoot>
                                 </table>
+                                </div>
                             </div>
                         );
                     })}

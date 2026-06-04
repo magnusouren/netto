@@ -12,10 +12,12 @@
   "include": [
     "lib/amortization.ts",
     "lib/calcTaxes.ts",
+    "lib/houseFinance.ts",
     "lib/loanPaymentPlan.ts",
     "lib/monthlyPaymentPlan.ts",
     "lib/amortization.test.ts",
     "lib/calcTaxes.test.ts",
+    "lib/houseFinance.test.ts",
     "lib/monthlyPaymentPlan.test.ts",
     "types/test-shims.d.ts",
     "types.ts"

@@ -23,6 +23,8 @@ export type HouseOption = {
         expectedGrowthPct?: number;
         // optional: closing costs (dokumentavgift, megler etc.)
         closingCosts?: number;
+        // optional: fellesgjeld — served via felleskostnader, not the personal mortgage
+        commonDebt?: number;
     };
 
     housingLoan: Loan; // loanAmount derived OR stored
@@ -85,6 +87,7 @@ export function createDefaultHouseOption(id: string): HouseOption {
             equityUsed: 0,
             expectedGrowthPct: 0,
             closingCosts: 0,
+            commonDebt: 0,
         },
         housingLoan: {
             description: 'Boliglån',

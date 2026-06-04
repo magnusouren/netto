@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { HouseOption } from '@/types';
+import { computeHousingLoanAmount } from '@/lib/houseFinance';
 
 type FinnRequestBody = {
     url?: string;
@@ -80,17 +81,15 @@ const buildHouseFromExtraction = (
         other: toAmount(extraction.other),
     } satisfies HouseOption['houseMonthlyCosts'];
 
-    // TODO - common debt as own field?
     const purchase = {
         price,
         equityUsed: 0,
         expectedGrowthPct: Number.isFinite(expectedGrowthPct)
             ? expectedGrowthPct
             : 2,
-        closingCosts: closingCosts + commonDebt,
+        closingCosts,
+        commonDebt,
     } satisfies HouseOption['purchase'];
-
-    const loanAmount = price - purchase.equityUsed + closingCosts;
 
     return {
         id: crypto.randomUUID(),
@@ -98,7 +97,7 @@ const buildHouseFromExtraction = (
         purchase,
         housingLoan: {
             description: 'Boliglån',
-            loanAmount: loanAmount > 0 ? loanAmount : 0,
+            loanAmount: computeHousingLoanAmount(purchase),
             interestRate: 4.5,
             termYears: 25,
             termsPerYear: 12,

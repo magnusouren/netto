@@ -220,16 +220,16 @@ export default function LivingExpenses() {
                     subtitle='Per måned'
                     indexLabel={`${livingCosts.length} post${livingCosts.length === 1 ? '' : 'er'}`}
                 >
-                    <div className='grid grid-cols-[1fr_minmax(110px,160px)_36px] gap-2 items-center pb-1 border-b border-border/60'>
+                    <div className='grid grid-cols-[1fr_minmax(80px,110px)_36px] gap-2 items-center pb-1 border-b border-border/60'>
                         <LabelMono className='text-[10px]'>Beskrivelse</LabelMono>
-                        <LabelMono className='text-[10px]'>Beløp</LabelMono>
+                        <LabelMono className='text-[10px]'>Beløp /mnd</LabelMono>
                         <span />
                     </div>
 
                     {livingCosts.map((item, index) => (
                         <div
                             key={index}
-                            className='grid grid-cols-[1fr_minmax(110px,160px)_36px] gap-2 items-center py-1.5'
+                            className='grid grid-cols-[1fr_minmax(80px,110px)_36px] gap-2 items-center py-1.5'
                         >
                             <Input
                                 id={`living-description-${index}`}
@@ -242,16 +242,24 @@ export default function LivingExpenses() {
                                     })
                                 }
                             />
-                            <NumericInput
-                                id={`living-amount-${index}`}
-                                className='font-mono'
-                                value={item.amount}
-                                onChange={(e) =>
-                                    updateLivingCost(index, {
-                                        amount: Number(e.target.value || 0),
-                                    })
-                                }
-                            />
+                            <div className='relative'>
+                                <NumericInput
+                                    id={`living-amount-${index}`}
+                                    className='font-mono pr-10'
+                                    value={item.amount}
+                                    onChange={(e) =>
+                                        updateLivingCost(index, {
+                                            amount: Number(e.target.value || 0),
+                                        })
+                                    }
+                                />
+                                <span
+                                    aria-hidden
+                                    className='pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-muted-foreground'
+                                >
+                                    /mnd
+                                </span>
+                            </div>
                             <Button
                                 variant='ghost'
                                 size='icon'

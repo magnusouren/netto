@@ -1,38 +1,14 @@
 'use client';
 
 import { Glance } from '@/components/ledger/Glance';
+import { AIFeedback } from '@/components/ledger/AIFeedback';
 import useStore, { StoreState } from '@/lib/store';
 import { calculateAnnualTaxes } from '@/lib/calcTaxes';
 import { formatNumberToNOK } from '@/lib/utils';
-import type { Loan, HouseMonthlyCosts } from '@/types';
-
-function monthlyLoanPayment(loan: Loan): number {
-    const principal = loan.loanAmount || 0;
-    const termsPerYear = loan.termsPerYear || 12;
-    const termYears = loan.termYears || 0;
-    const n = termYears * termsPerYear;
-    if (n <= 0 || principal <= 0) return 0;
-
-    const r = (loan.interestRate || 0) / 100 / termsPerYear;
-
-    let paymentPerTerm = 0;
-    if (r === 0) paymentPerTerm = principal / n;
-    else paymentPerTerm = (principal * r) / (1 - Math.pow(1 + r, -n));
-
-    return paymentPerTerm * (12 / termsPerYear) + (loan.monthlyFee || 0);
-}
-
-function totalHouseMonthlyCosts(costs: HouseMonthlyCosts): number {
-    return (
-        (costs.hoa || 0) +
-        (costs.electricity || 0) +
-        (costs.internet || 0) +
-        (costs.insurance || 0) +
-        (costs.propertyTax || 0) +
-        (costs.maintenance || 0) +
-        (costs.other || 0)
-    );
-}
+import {
+    monthlyLoanPayment,
+    totalHouseMonthlyCosts,
+} from '@/lib/houseFinance';
 
 const fmt = (n: number) => formatNumberToNOK(Math.round(n));
 
@@ -162,6 +138,25 @@ export default function Summary() {
                     }
                 />
             </Glance>
+
+            <AIFeedback
+                payload={{
+                    monthlyIncomeGross,
+                    monthlyTax,
+                    monthlyNet: monthlyIncomeGross - monthlyTax,
+                    personalFixed,
+                    livingMonthly,
+                    personalLoansMonthly,
+                    housingLoanMonthly,
+                    housingFixed,
+                    totalMonthlyExpenses,
+                    balance,
+                    activeHouseName: activeHouse?.name,
+                    personalEquity: data.personalEquity,
+                    housePrice: activeHouse?.purchase.price,
+                    housingLoanAmount: activeHouse?.housingLoan.loanAmount,
+                }}
+            />
         </section>
     );
 }

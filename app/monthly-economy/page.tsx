@@ -73,9 +73,9 @@ export default function PaymentPlan() {
                         tid, både med og uten avdrag.
                     </TypographyP>
                 </div>
-                <div className='my-2 overflow-auto'>
+                <div className='my-2 overflow-auto max-h-[70vh] border rounded-md'>
                     <table className='w-full table-auto text-sm border-collapse'>
-                        <thead>
+                        <thead className='sticky top-0 z-10 bg-muted'>
                             <tr className='bg-muted'>
                                 <th className='p-2 text-left'>Måned</th>
                                 <th className='p-2 text-right'>Inntekter</th>

@@ -82,12 +82,13 @@ export default function Plan() {
                     </TypographyP>
                 )}
                 {activeHouse && activeHouse.housingLoan.loanAmount > 0 && (
-                    <div className='mt-8 overflow-auto '>
+                    <div className='mt-8'>
                         <TypographyH2>{activeHouse.name}</TypographyH2>
 
-                        <table className='w-full mt-4 table-auto text-sm border-collapse rounded-md'>
-                            <thead>
-                                <tr className='bg-muted'>
+                        <div className='mt-4 overflow-auto max-h-[70vh] border rounded-md'>
+                            <table className='w-full table-auto text-sm border-collapse'>
+                                <thead className='sticky top-0 z-10 bg-muted'>
+                                    <tr className='bg-muted'>
                                     <th className='p-2 text-left'>Måned</th>
                                     <th className='p-2 text-right'>
                                         Restgjeld
@@ -155,6 +156,7 @@ export default function Plan() {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 )}
             </section>

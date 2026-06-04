@@ -28,6 +28,8 @@ const groups: NavGroup[] = [
             { href: '/repayment-plans', label: 'Nedbetaling' },
             { href: '/equity-development', label: 'Egenkapital' },
             { href: '/monthly-economy', label: 'Månedlig' },
+            { href: '/interest-sensitivity', label: 'Rentefølsomhet' },
+            { href: '/sammenligning', label: 'Boligsammenligning' },
             { href: '/bid-planning', label: 'Budplanlegging' },
         ],
     },
