@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 
 import { TypographyH1 } from '@/components/typography/typographyH1';
@@ -47,11 +47,19 @@ function simulate(
         housingLoan: {
             ...activeHouse.housingLoan,
             loanAmount: newLoanAmount,
+            startDate,
         },
     };
 
+    // Anchor every existing loan's startDate to the simulation start so plan[0]
+    // contains a row for each one. Without this, loans whose own startDate is
+    // after `startDate` (e.g. a studielån booked later in time than the
+    // housing loan's startDate) are dropped from month 1, understating
+    // expenses. Termin is invariant to anchor; only the interest/principal
+    // split shifts, which is acceptable for bid comparison.
     const modifiedData: EconomyData = {
         ...data,
+        loans: (data.loans || []).map((l) => ({ ...l, startDate })),
         houses: (data.houses || []).map((h) =>
             h.id === activeHouse.id ? modifiedHouse : h
         ),
@@ -90,14 +98,24 @@ export default function BidPlanning() {
     );
 
     const startDate = useMemo(() => {
+        const loanStart = activeHouse?.housingLoan.startDate;
+        if (loanStart) return loanStart;
         const d = new Date();
         d.setDate(1);
         return d.toISOString().slice(0, 10);
-    }, []);
+    }, [activeHouse?.housingLoan.startDate]);
     const salaryAnnualGrowth = 2;
 
     const listPrice = activeHouse?.purchase.price ?? 0;
     const [bid, setBid] = useState(listPrice);
+
+    // Reset bid to list price when the active house changes (or first appears
+    // after Zustand hydration). Without this, useState's initial value is
+    // captured on the first render — before hydration — when listPrice is 0.
+    useEffect(() => {
+        if (activeHouse) setBid(activeHouse.purchase.price);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeHouse?.id]);
 
     if (!activeHouse) {
         return (

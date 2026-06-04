@@ -50,12 +50,19 @@ export const generatePaymentPlan = (
     start.setDate(1);
     const totalMonths = years * 12;
 
-    // Precompute amortization for all loans
-    const amortizations = loans.map((loan) => ({
-        loan,
-        startDate: new Date(loan.startDate),
-        amort: computeLoanAmortization(loan),
-    }));
+    // Precompute amortization for all loans. The comparison startDate is
+    // normalized to first-of-month so a loan that starts mid-month (e.g. the
+    // 15th) still contributes to that month's plan row, which is also pinned
+    // to the first of the month.
+    const amortizations = loans.map((loan) => {
+        const loanStart = new Date(loan.startDate);
+        loanStart.setDate(1);
+        return {
+            loan,
+            startDate: loanStart,
+            amort: computeLoanAmortization(loan),
+        };
+    });
 
     // Income setup
     let annualTaxableIncome = incomes

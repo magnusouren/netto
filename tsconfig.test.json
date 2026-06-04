@@ -15,10 +15,12 @@
     "lib/houseFinance.ts",
     "lib/loanPaymentPlan.ts",
     "lib/monthlyPaymentPlan.ts",
+    "lib/share.ts",
     "lib/amortization.test.ts",
     "lib/calcTaxes.test.ts",
     "lib/houseFinance.test.ts",
     "lib/monthlyPaymentPlan.test.ts",
+    "lib/share.test.ts",
     "types/test-shims.d.ts",
     "types.ts"
   ],

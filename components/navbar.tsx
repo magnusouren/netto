@@ -3,12 +3,14 @@
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { Check, ChevronDown, Menu, Share2, X } from 'lucide-react';
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import useStore, { StoreState } from '@/lib/store';
+import { buildShareUrl, isDataEmpty } from '@/lib/share';
 
 type NavItem = { href: string; label: string };
 type NavGroup = { label: string; items: NavItem[] };
@@ -60,6 +62,7 @@ export default function Navbar() {
                     {/* Desktop nav */}
                     <nav className='hidden sm:flex items-center gap-4'>
                         <DesktopNavLinks />
+                        <ShareButton />
                     </nav>
 
                     {/* Mobile hamburger */}
@@ -77,6 +80,9 @@ export default function Navbar() {
                     <nav className='sm:hidden pb-4 animate-in slide-in-from-top-2 fade-in-0 bg-background'>
                         <div className='flex flex-col gap-1 mt-2'>
                             <MobileNavLinks onNavigate={() => setOpen(false)} />
+                            <div className='pt-2 mt-1 border-t border-border'>
+                                <ShareButton fullWidth />
+                            </div>
                         </div>
                     </nav>
                 )}
@@ -268,4 +274,47 @@ function linkClass(active: boolean) {
         ? 'text-foreground underline underline-offset-4'
         : 'text-foreground/70 hover:text-foreground'
         }`;
+}
+
+function ShareButton({ fullWidth = false }: { fullWidth?: boolean }) {
+    const data = useStore((s: StoreState) => s.data);
+    const hasHydrated = useStore((s: StoreState) => s._hasHydrated);
+    const [status, setStatus] = useState<'idle' | 'copied' | 'empty'>('idle');
+
+    const handleClick = async () => {
+        if (!hasHydrated) return;
+        if (isDataEmpty(data)) {
+            setStatus('empty');
+            setTimeout(() => setStatus('idle'), 1800);
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(buildShareUrl(data));
+            setStatus('copied');
+            setTimeout(() => setStatus('idle'), 1800);
+        } catch {
+            // Clipboard unavailable — leave status idle.
+        }
+    };
+
+    const label =
+        status === 'copied'
+            ? 'Lenke kopiert'
+            : status === 'empty'
+                ? 'Ingen data å dele'
+                : 'Del';
+
+    const Icon = status === 'copied' ? Check : Share2;
+
+    return (
+        <button
+            onClick={handleClick}
+            className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors text-foreground/70 hover:text-foreground ${fullWidth ? 'w-full justify-start py-2' : ''
+                }`}
+            aria-label='Del dine data via lenke'
+        >
+            <Icon size={14} />
+            {label}
+        </button>
+    );
 }
