@@ -10,7 +10,7 @@ type NumericInputProps = Omit<React.ComponentProps<'input'>, 'type'> & {
 const THOUSAND_SEP = ' '
 
 const sanitize = (raw: string) => {
-    const cleaned = raw.replace(/[^\d.-]/g, '')
+    const cleaned = raw.replace(/,/g, '.').replace(/[^\d.-]/g, '')
     const negative = cleaned.startsWith('-')
     const unsigned = cleaned.replace(/-/g, '')
     const firstDot = unsigned.indexOf('.')
