@@ -37,7 +37,10 @@ const groups: NavGroup[] = [
     },
 ];
 
-const standalone: NavItem = { href: '/summary', label: 'Oppsummering' };
+const standalones: NavItem[] = [
+    { href: '/summary', label: 'Oppsummering' },
+    { href: '/about', label: 'Om' },
+];
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
@@ -103,12 +106,15 @@ function DesktopNavLinks() {
                     pathname={pathname}
                 />
             ))}
-            <Link
-                href={standalone.href}
-                className={linkClass(pathname === standalone.href)}
-            >
-                {standalone.label}
-            </Link>
+            {standalones.map((item) => (
+                <Link
+                    key={item.href}
+                    href={item.href}
+                    className={linkClass(pathname === item.href)}
+                >
+                    {item.label}
+                </Link>
+            ))}
         </>
     );
 }
@@ -206,13 +212,16 @@ function MobileNavLinks({ onNavigate }: { onNavigate: () => void }) {
                     onNavigate={onNavigate}
                 />
             ))}
-            <Link
-                href={standalone.href}
-                onClick={onNavigate}
-                className={`py-2 ${linkClass(pathname === standalone.href)}`}
-            >
-                {standalone.label}
-            </Link>
+            {standalones.map((item) => (
+                <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={`py-2 ${linkClass(pathname === item.href)}`}
+                >
+                    {item.label}
+                </Link>
+            ))}
         </>
     );
 }
@@ -293,7 +302,7 @@ function ShareButton({ fullWidth = false }: { fullWidth?: boolean }) {
             setStatus('copied');
             setTimeout(() => setStatus('idle'), 1800);
         } catch {
-            // Clipboard unavailable — leave status idle.
+            // Clipboard unavailable. Leave status idle.
         }
     };
 

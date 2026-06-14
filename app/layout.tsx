@@ -30,11 +30,11 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
     metadataBase: new URL('https://netto.ouren.no'),
     title: {
-        default: 'Netto — Personlig økonomi og boligkjøp',
+        default: 'Netto. Personlig økonomi og boligkjøp',
         template: '%s · Netto',
     },
     description:
-        'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med — alt lagret lokalt i nettleseren.',
+        'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med. Alt lagres lokalt i nettleseren.',
     applicationName: 'Netto',
     keywords: [
         'personlig økonomi',
@@ -54,13 +54,13 @@ export const metadata: Metadata = {
         locale: 'nb_NO',
         url: 'https://netto.ouren.no',
         siteName: 'Netto',
-        title: 'Netto — Personlig økonomi og boligkjøp',
+        title: 'Netto. Personlig økonomi og boligkjøp',
         description:
-            'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med — alt lagret lokalt i nettleseren.',
+            'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp. Sammenlign boliger, planlegg bud og se hva du sitter igjen med. Alt lagres lokalt i nettleseren.',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Netto — Personlig økonomi og boligkjøp',
+        title: 'Netto. Personlig økonomi og boligkjøp',
         description:
             'Få full oversikt over månedlig økonomi, skatt, lån og boligkjøp.',
     },

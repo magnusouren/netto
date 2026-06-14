@@ -13,7 +13,7 @@ function useDensity() {
 }
 
 /**
- * Glance — the "receipt" pattern. Used on the landing page to summarise
+ * Glance is the "receipt" pattern. Used on the landing page to summarise
  * the current month's numbers as a side panel. Visual signature is the
  * dotted edges (top and bottom) that mimic a torn ticket.
  *

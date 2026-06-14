@@ -111,7 +111,7 @@ export default function BidPlanning() {
 
     // Reset bid to list price when the active house changes (or first appears
     // after Zustand hydration). Without this, useState's initial value is
-    // captured on the first render — before hydration — when listPrice is 0.
+    // captured on the first render, before hydration, when listPrice is 0.
     useEffect(() => {
         if (activeHouse) setBid(activeHouse.purchase.price);
         // eslint-disable-next-line react-hooks/exhaustive-deps

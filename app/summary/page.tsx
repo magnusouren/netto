@@ -9,7 +9,7 @@ import Summary from '@/views/summary';
 export const metadata: Metadata = {
     title: 'Oppsummering',
     description:
-        'Månedsregnskapet ditt på ett blikk — netto inn, faste utgifter ut, og hva som er igjen til sparing og forbruk.',
+        'Månedsregnskapet ditt på ett blikk. Netto inn, faste utgifter ut, og hva som er igjen til sparing og forbruk.',
 };
 
 export default function SummaryPage() {

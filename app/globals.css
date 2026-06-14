@@ -44,7 +44,7 @@
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);
     --radius-xl: calc(var(--radius) + 4px);
-    /* Marine raw tokens — use as bg-accent-deep, text-ink-2, border-line, etc. */
+    /* Marine raw tokens. Use as bg-accent-deep, text-ink-2, border-line, etc. */
     --color-accent-deep: var(--accent-deep);
     --color-accent-soft: var(--accent-soft);
     --color-accent-light: var(--accent-light);
@@ -57,7 +57,7 @@
 
 :root {
     --radius: 0.625rem;
-    /* shadcn token mapping — Marine palette */
+    /* shadcn token mapping for the Marine palette */
     --background: #f4f6f8;
     --foreground: #121620;
     --card: #ffffff;

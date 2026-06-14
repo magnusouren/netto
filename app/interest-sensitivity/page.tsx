@@ -230,7 +230,7 @@ export default function InterestSensitivityPage() {
                                                     )}
                                                 >
                                                     {isBaseline
-                                                        ? '—'
+                                                        ? '-'
                                                         : fmtSignedNOK(diff)}
                                                 </td>
                                             </tr>

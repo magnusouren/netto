@@ -737,7 +737,7 @@ export default function HousesPage() {
                                     className='my-2 inline-flex items-center gap-1.5'
                                 >
                                     Fellesgjeld
-                                    <Questionmark helptext='Fellesgjeld inngår ikke i ditt personlige boliglån — den betjenes via felleskostnader.' />
+                                    <Questionmark helptext='Fellesgjeld inngår ikke i ditt personlige boliglån. Den betjenes via felleskostnader.' />
                                 </Label>
                                 <NumericInput
                                     id='houseCommonDebt'

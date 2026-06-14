@@ -99,7 +99,7 @@ export default function DelPage() {
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
         } catch {
-            // ignore — older browsers without clipboard API
+            // ignore: older browsers without clipboard API
         }
     };
 

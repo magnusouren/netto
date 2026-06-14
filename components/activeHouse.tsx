@@ -21,7 +21,7 @@ export default function ActiveHouse() {
                 title={
                     <span className='inline-flex items-center gap-1.5'>
                         {activeHouse ? activeHouse.name : 'Ingen bolig valgt'}
-                        <Questionmark helptext='Boligen som brukes i beregningene. Boliglån og boligkostnader administreres på boligsiden — bytt eller legg til via lenken her.' />
+                        <Questionmark helptext='Boligen som brukes i beregningene. Boliglån og boligkostnader administreres på boligsiden. Bytt eller legg til via lenken her.' />
                     </span>
                 }
                 subtitle='Bolig & boliglån'

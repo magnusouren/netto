@@ -36,7 +36,7 @@ export default function Incomes() {
                 title={
                     <span className='inline-flex items-center gap-1.5'>
                         Inntekter
-                        <Questionmark helptext='Årlige netto faste inntekter — både skattepliktige og skattefrie kilder.' />
+                        <Questionmark helptext='Årlige netto faste inntekter, både skattepliktige og skattefrie kilder.' />
                     </span>
                 }
                 subtitle='Årlige beløp'

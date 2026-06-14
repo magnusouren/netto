@@ -23,7 +23,7 @@ export type HouseOption = {
         expectedGrowthPct?: number;
         // optional: closing costs (dokumentavgift, megler etc.)
         closingCosts?: number;
-        // optional: fellesgjeld — served via felleskostnader, not the personal mortgage
+        // optional: fellesgjeld, served via felleskostnader, not the personal mortgage
         commonDebt?: number;
     };
 
