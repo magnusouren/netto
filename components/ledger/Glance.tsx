@@ -109,14 +109,14 @@ function Row({
     return (
         <div
             className={cn(
-                'grid grid-cols-[1fr_auto] items-baseline border-b border-border/60 last:border-b-0',
+                'flex items-baseline justify-between gap-2 border-b border-border/60 last:border-b-0',
                 isCompact ? 'py-1.5' : 'py-3.5'
             )}
         >
-            <span className='text-xs text-foreground/80'>{label}</span>
+            <span className='min-w-0 truncate text-xs text-foreground/80'>{label}</span>
             <span
                 className={cn(
-                    'font-mono tabular-nums',
+                    'shrink-0 whitespace-nowrap font-mono tabular-nums',
                     isCompact ? 'text-[13px]' : 'text-base'
                 )}
             >
@@ -137,14 +137,14 @@ function Total({
     return (
         <div
             className={cn(
-                'grid grid-cols-[1fr_auto] items-baseline border-t border-foreground',
+                'flex items-baseline justify-between gap-2 border-t border-foreground',
                 isCompact ? 'pt-2.5 mt-1' : 'pt-4'
             )}
         >
-            <span className='text-sm font-semibold'>{label}</span>
+            <span className='min-w-0 truncate text-sm font-semibold'>{label}</span>
             <span
                 className={cn(
-                    'font-serif font-normal leading-none tracking-tight',
+                    'shrink-0 whitespace-nowrap font-serif font-normal leading-none tracking-tight',
                     isCompact ? 'text-2xl' : 'text-3xl'
                 )}
             >
