@@ -68,6 +68,57 @@ export const metadata: Metadata = {
         index: true,
         follow: true,
     },
+    alternates: {
+        canonical: '/',
+    },
+    category: 'finance',
+};
+
+const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+        {
+            '@type': 'WebApplication',
+            '@id': 'https://netto.ouren.no/#app',
+            name: 'Netto',
+            url: 'https://netto.ouren.no',
+            description:
+                'Nettbasert verktøy for personlig økonomi og boligkjøp i Norge. Beregner skatt, lån, boligkostnader og månedlig kontantstrøm. Data lagres lokalt i nettleseren.',
+            applicationCategory: 'FinanceApplication',
+            operatingSystem: 'Any',
+            inLanguage: 'nb-NO',
+            offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'NOK',
+            },
+            featureList: [
+                'Skatteberegning etter norske regler',
+                'Nedbetalingsplan for boliglån',
+                'Sammenligning av boligalternativer',
+                'Budplanlegging',
+                'Rentefølsomhetsanalyse',
+                'Egenkapitalutvikling over tid',
+            ],
+            author: {
+                '@id': 'https://netto.ouren.no/#person',
+            },
+        },
+        {
+            '@type': 'Person',
+            '@id': 'https://netto.ouren.no/#person',
+            name: 'Magnus Ouren',
+            url: 'https://www.magnus.ouren.no',
+        },
+        {
+            '@type': 'WebSite',
+            '@id': 'https://netto.ouren.no/#website',
+            url: 'https://netto.ouren.no',
+            name: 'Netto',
+            inLanguage: 'nb-NO',
+            publisher: { '@id': 'https://netto.ouren.no/#person' },
+        },
+    ],
 };
 
 export default function RootLayout({
@@ -77,6 +128,12 @@ export default function RootLayout({
 }>) {
     return (
         <html lang='nb'>
+            <head>
+                <script
+                    type='application/ld+json'
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            </head>
             <body
                 className={`${schibsted.variable} ${geistSans.variable} ${geistMono.variable} ${fraunces.variable} antialiased bg-background text-foreground`}
             >

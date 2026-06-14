@@ -1,0 +1,40 @@
+# Netto
+
+> Netto er et norsk, nettbasert verktøy for personlig økonomi og boligkjøp. Det samler inntekter, lån, skatt og boligkostnader på ett sted og viser hva du sitter igjen med per måned. Alle data lagres lokalt i nettleseren – ingen kontoer, ingen server.
+
+Netto bruker norske skatteregler og satser. Verktøyet er laget for å hjelpe privatpersoner med å forstå månedlig kontantstrøm, planlegge boligkjøp, sammenligne boliger, simulere bud, og se hvordan rentenivå og nedbetaling påvirker økonomien over tid.
+
+Verktøyet er bygget av Magnus Ouren som et personlig prosjekt. Det erstatter ikke profesjonell økonomisk rådgivning.
+
+## Hovedsider
+
+- [Forside](https://netto.ouren.no/): Introduksjon til Netto og oversikt over månedlig kontantstrøm.
+- [Om Netto](https://netto.ouren.no/about): Bakgrunn, personvern, og hva verktøyet kan brukes til.
+- [Legg inn data](https://netto.ouren.no/data): Skjema for å registrere inntekter, lån, faste utgifter og levekostnader.
+- [Oppsummering](https://netto.ouren.no/summary): Månedsregnskap med netto inntekt, faste utgifter og kontantstrøm.
+- [Detaljert oppsummering](https://netto.ouren.no/summary/details): Utvidet visning av økonomisk status.
+
+## Bolig og lån
+
+- [Boliger](https://netto.ouren.no/houses): Registrer en eller flere boliger med pris, lån, fellesutgifter og driftskostnader. Støtter import fra Finn.no.
+- [Sammenligning](https://netto.ouren.no/sammenligning): Sammenlign flere boliger side om side på totalkostnad og månedlig belastning.
+- [Budplanlegging](https://netto.ouren.no/bid-planning): Simuler ulike bud og se hvordan budprisen påvirker lån, månedskostnad og kontantstrøm.
+- [Nedbetalingsplaner](https://netto.ouren.no/repayment-plans): Månedlig nedbetalingsplan per lån med rente og avdrag.
+- [Egenkapitalutvikling](https://netto.ouren.no/equity-development): Utvikling av egenkapital over tid basert på nedbetaling og sparing.
+- [Rentefølsomhet](https://netto.ouren.no/interest-sensitivity): Se hvordan endringer i rentenivå påvirker månedlig kostnad og total rentebelastning.
+
+## Skatt
+
+- [Skattedetaljer](https://netto.ouren.no/tax-details): Detaljert oppdeling av norsk skatteberegning: trinnskatt, trygdeavgift, formuesskatt og rentefradrag.
+
+## Månedsbudsjett
+
+- [Månedlig økonomi](https://netto.ouren.no/monthly-economy): Måned-for-måned-visning av inntekter, utgifter og sparing.
+
+## Om personvern
+
+Netto lagrer all brukerdata i nettleserens localStorage. Ingen data sendes til en server, og det finnes ingen brukerkontoer. Brukere kan dele oppsettet sitt via en lenke som koder data i URL-en – den lenken indekseres ikke.
+
+## Optional
+
+- [Kildekode (kontakt forfatter)](https://www.magnus.ouren.no): Mer informasjon om utvikleren bak verktøyet.
